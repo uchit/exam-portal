@@ -136,6 +136,13 @@ function toast(msg) {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 1800);
 }
 
+// ---------- telemetry (anonymous, aggregate only — no ids, fire-and-forget) ----------
+function sendTelemetry(payload) {
+  try {
+    fetch("/api/telemetry", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), keepalive: true }).catch(() => {});
+  } catch {}
+}
+
 // ---------- shared render bits ----------
 function domainTag(d) {
   const dom = DOMAINS[d];
@@ -671,6 +678,7 @@ function runExam(questions, minutes) {
     const pass = pct >= PASS_PERCENT;
     progress.exams.push({ date: Date.now(), pct, correct, total: questions.length, pass });
     saveProgress();
+    sendTelemetry({ pass, scaledScore: scaledScore(pct), perDomain });
     showResults({ questions, answers, correct, pct, pass, perDomain });
   }
   render();

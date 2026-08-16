@@ -68,7 +68,28 @@
       <p>That last part matters: most of this bank can be regenerated against the current Claude API and exam guide on demand, rather than drifting out of date the way a fixed, hand-written bank does.</p>
       <div class="callout"><b>Freshness</b>Content on this site was last verified against the Claude API and the CCA-F exam guide on August 16, 2026. When Anthropic changes the exam guide, we aim to publish a changelog entry within 24-48 hours — see the <a href="/changelog">changelog</a> for the update history.</div>
       <h2>What "free" means here</h2>
-      <p>Every practice mode, the full mock exam, the diagnostic, the glossary, and the quick reference are free with no account or sign-up. Progress is saved in your browser only — nothing is sent to a server.</p>
+      <p>Every practice mode, the full mock exam, the diagnostic, the glossary, and the quick reference are free with no account or sign-up. Your personal progress, flags, and history are saved in your browser only. When you finish a mock exam, an anonymous, aggregate result (pass/fail, score, per-domain breakdown — no identifiers of any kind) is added to the community stats below; nothing else is ever sent anywhere.</p>
+      <h2>Community stats</h2>
+      <p>Real numbers, not a vanity metric — updated as mock exams are completed. If nobody has finished one yet, this section says so instead of making something up.</p>
+      <div class="card" id="communityStats">
+        <p style="color:var(--text-3);font-size:14px;margin:0">Loading…</p>
+      </div>
+      <script>
+      (function(){
+        fetch("/api/telemetry").then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+          var el = document.getElementById("communityStats");
+          if (!d || !d.attempts) { el.innerHTML = '<p style="color:var(--text-3);font-size:14px;margin:0">No mock exams completed yet since this launched \u2014 check back soon.</p>'; return; }
+          var html = '<div class="statline">'
+            + '<div class="stat-card"><div class="n">' + d.attempts.toLocaleString() + '</div><div class="l">Mock exams taken</div></div>'
+            + (d.passRate !== null ? '<div class="stat-card"><div class="n">' + d.passRate + '%</div><div class="l">Passed (720+)</div></div>' : '')
+            + (d.avgScore !== null ? '<div class="stat-card"><div class="n">' + d.avgScore + '</div><div class="l">Average score / 1000</div></div>' : '')
+            + '</div>';
+          el.innerHTML = html;
+        }).catch(function(){
+          document.getElementById("communityStats").innerHTML = '<p style="color:var(--text-3);font-size:14px;margin:0">Community stats are temporarily unavailable.</p>';
+        });
+      })();
+      </script>
       <h2>Disclaimer</h2>
       <p>This is an unofficial study aid. The domain blueprint mirrors publicly described CCA-F exam information; all questions are original practice material, not reproductions of real exam items.</p>
     </div>

@@ -80,6 +80,37 @@
     
       
     </article>
+    
+    <div class="card" style="margin-top:24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <button class="btn btn-outline" id="completeBtn">Mark lesson complete</button>
+      <span id="completeNote" style="color:var(--text-3);font-size:13px"></span>
+    </div>
+    <script>
+    (function(){
+      var KEY = "claudecert.progress.v1", SLUG = "1-5-multi-agent-systems", TOTAL = 30;
+      function load(){ try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch(e){ return {}; } }
+      function save(p){ try { localStorage.setItem(KEY, JSON.stringify(p)); } catch(e){} }
+      var btn = document.getElementById("completeBtn"), note = document.getElementById("completeNote");
+      function render(){
+        var p = load();
+        var done = p.completedLessons && p.completedLessons[SLUG];
+        btn.textContent = done ? "Completed \u2713" : "Mark lesson complete";
+        btn.classList.toggle("btn-solid", !!done);
+        btn.classList.toggle("btn-outline", !done);
+        var count = p.completedLessons ? Object.keys(p.completedLessons).length : 0;
+        note.textContent = count + " / " + TOTAL + " lessons complete";
+      }
+      btn.addEventListener("click", function(){
+        var p = load();
+        if (!p.completedLessons) p.completedLessons = {};
+        if (p.completedLessons[SLUG]) delete p.completedLessons[SLUG];
+        else p.completedLessons[SLUG] = Date.now();
+        save(p);
+        render();
+      });
+      render();
+    })();
+    </script>
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px">
       <a class="btn btn-outline" href="/learn/1/1-4-parallel-vs-sequential">← Parallel vs. Sequential Execution</a>
       <a class="btn btn-solid" href="/learn/1/1-6-failure-modes">Failure Modes in Agentic Loops →</a>
@@ -90,6 +121,7 @@
       <span>Unofficial study aid · Not affiliated with Anthropic.</span>
       <nav class="footer-nav" aria-label="More">
         <a href="/learn">Curriculum</a>
+        <a href="/handbook">Handbook</a>
         <a href="/glossary">Glossary</a>
         <a href="/reference">Quick Reference</a>
         <a href="/blog">Blog</a>

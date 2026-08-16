@@ -16,6 +16,7 @@
   <url><loc>https://thatclaude.com/blog</loc><lastmod>2026-08-16</lastmod></url>
   <url><loc>https://thatclaude.com/learn</loc><lastmod>2026-08-16</lastmod></url>
   <url><loc>https://thatclaude.com/certifications</loc><lastmod>2026-08-16</lastmod></url>
+  <url><loc>https://thatclaude.com/handbook</loc><lastmod>2026-08-16</lastmod></url>
   <url><loc>https://thatclaude.com/glossary/1</loc><lastmod>2026-08-16</lastmod></url>
   <url><loc>https://thatclaude.com/reference/1</loc><lastmod>2026-08-16</lastmod></url>
   <url><loc>https://thatclaude.com/learn/1</loc><lastmod>2026-08-16</lastmod></url>
@@ -64,4 +65,9 @@
   <url><loc>https://thatclaude.com/learn/5/5-4-idempotency-error-propagation</loc><lastmod>2026-08-16</lastmod></url>
   <url><loc>https://thatclaude.com/learn/5/5-5-escalation-ambiguity</loc><lastmod>2026-08-16</lastmod></url>
   <url><loc>https://thatclaude.com/learn/5/5-6-evals-provenance</loc><lastmod>2026-08-16</lastmod></url>
+  <url><loc>https://thatclaude.com/handbook/agentic-architecture</loc><lastmod>2026-08-16</lastmod></url>
+  <url><loc>https://thatclaude.com/handbook/tool-design-mcp</loc><lastmod>2026-08-16</lastmod></url>
+  <url><loc>https://thatclaude.com/handbook/claude-code-config</loc><lastmod>2026-08-16</lastmod></url>
+  <url><loc>https://thatclaude.com/handbook/prompt-engineering</loc><lastmod>2026-08-16</lastmod></url>
+  <url><loc>https://thatclaude.com/handbook/context-reliability</loc><lastmod>2026-08-16</lastmod></url>
 </urlset>

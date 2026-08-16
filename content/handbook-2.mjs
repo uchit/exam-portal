@@ -1,0 +1,142 @@
+export const HANDBOOK = {
+  slug: "tool-design-mcp",
+  title: "Designing Tools and MCP Integrations",
+  dek: "How to write tool schemas Claude calls correctly, wire up the tool_use loop, and decide when MCP is the right integration layer.",
+  minutes: 12,
+  bodyHtml: `
+    <p>Giving a model access to tools is easy to get working and easy to get wrong in ways that only surface in production: the model calls the wrong tool, sends malformed arguments, or silently treats a failed call as a success. Most of that traces back to two things — how the tool is described, and how failure is communicated back. Once you're wiring up multiple tools, or reaching for someone else's integration instead of writing your own, the Model Context Protocol (MCP) becomes the relevant layer to understand. This piece covers both: designing tools the model can actually use, and knowing when MCP is — and isn't — the right way to expose a capability.</p>
+
+    <h2>What makes a tool description good vs bad</h2>
+    <p>A tool definition is JSON Schema: a <code>name</code>, a <code>description</code>, and an <code>input_schema</code>. At inference time, this is the entire interface the model has to your tool — no source code, no internal docs, nothing beyond these three fields. A vague description produces vague behavior in exactly the ways you'd expect: wrong tool picked, wrong arguments filled in, wrong assumptions about format.</p>
+    <p>The single most common mistake is treating the tool <strong>name</strong> as the primary signal and the description as an afterthought. It's the reverse. A tool named <code>x1</code> with a precise, example-rich description will outperform a tool named <code>search</code> with three words of description. Renaming a tool rarely fixes a selection problem; rewriting the description almost always does.</p>
+    <p>A good description states what the tool does, when to use it — and when not to — what each parameter means, the exact format for anything ambiguous (Unix time or ISO 8601? cents or dollars?), and what happens on edge cases like an empty result or a duplicate. Here's the difference in practice:</p>
+    <pre><code>// Bad — the model has to guess format, units, and edge-case behavior
+{
+  "name": "cancel_subscription",
+  "description": "Cancels a subscription.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "subscription_id": { "type": "string" },
+      "reason": { "type": "string" }
+    },
+    "required": ["subscription_id"]
+  }
+}
+
+// Good — format, constraints, and behavior are explicit
+{
+  "name": "cancel_subscription",
+  "description": "Cancels an active subscription immediately. Use this only when the user explicitly confirms they want to cancel — do not call it speculatively while just discussing options. If the subscription is already canceled, this call is a no-op and returns the existing cancellation date rather than an error.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "subscription_id": {
+        "type": "string",
+        "description": "The subscription identifier, formatted like 'sub_4f9a2b1c'. Found in the user's account summary, not their email or username."
+      },
+      "reason": {
+        "type": "string",
+        "enum": ["too_expensive", "not_using_it", "switching_provider", "other"],
+        "description": "Why the user is canceling. Used for internal reporting only; does not change the cancellation outcome."
+      }
+    },
+    "required": ["subscription_id"]
+  }
+}</code></pre>
+    <p>Notice the <code>enum</code> on <code>reason</code>. Wherever a parameter's valid values form a closed set, constrain it with <code>enum</code> rather than describing the valid format in prose. A model asked to send a status string with no constraint will send "closed", "Closed", and "resolved" more or less interchangeably; a schema constraint is far more reliable than an instruction the model has to remember and infer correctly on every call.</p>
+
+    <h2>Parameter design and scoping</h2>
+    <p>Keep required parameters to the minimum the tool actually needs, and give optional parameters sensible defaults stated in the schema text — the model has no visibility into your server-side default logic, so if it isn't in the description, it doesn't exist. Prefer flat, explicit parameter names over deeply nested objects for tools called often: nesting increases the odds of malformed input, particularly from smaller or faster models.</p>
+    <p>Scope each tool to one well-defined action. If a description needs branching logic — "if action is create, do X; if delete, do Y" — that's a sign the tool should split into two tools with two names and descriptions. A mode flag is harder for the model to select correctly than two narrowly scoped tools, and it makes per-action error handling and permissioning messier on your end.</p>
+    <p>Also read a tool's description next to every other tool's in the same set. Two tools that sound similar but differ critically — one previews a change, one commits it — are a common source of picking the wrong one. Put the distinguishing detail (read-only vs. mutating, reversible vs. not) early in the description. A useful review technique: hand the bare schema to a fresh conversation with a few realistic requests and check whether the resulting call matches what you'd have written by hand — mismatches point straight at where the description underspecifies something.</p>
+
+    <h2>The tool_use / tool_result contract</h2>
+    <p>Tool calling is a turn-based loop between your application and the model, not a single request-response. Getting the direction backwards is a common source of confusion, so it's worth being precise about it.</p>
+    <p>When the model decides to call a tool, it emits a <code>tool_use</code> content block inside its own assistant message — containing the tool <code>name</code>, a unique call <code>id</code>, and the <code>input</code> arguments — and stops with <code>stop_reason: "tool_use"</code>. The model never executes anything itself. Execution is your client's job: read the block, run the corresponding function, and construct a <code>tool_result</code> block sent back inside a new user-role message. The <code>tool_result</code>'s <code>tool_use_id</code> must match the original call's <code>id</code>, which is how the model correlates results with calls — especially once multiple tools are called in parallel.</p>
+    <p>A single assistant turn can contain several <code>tool_use</code> blocks at once, representing parallel calls. Execute them concurrently where safe, then return a single user message containing one <code>tool_result</code> per <code>tool_use_id</code> — all together, not spread across separate follow-up requests. Splitting parallel results across multiple messages breaks the expected shape of the protocol.</p>
+    <p>Signaling failure correctly is the part people skip. When a call fails — timeout, semantically invalid input that passed schema validation, a missing resource — set <code>is_error: true</code> on the <code>tool_result</code> and put a clear, human-readable explanation in its content. This is how the model learns a call failed and can retry or fall back to a different approach. Omit <code>is_error</code> and stuff an error string into a normal-looking result, and the model may treat the failure as valid and build a confident, wrong conclusion on top of it.</p>
+    <pre><code>// Client-side: constructing a tool_result for a failed call
+{
+  "role": "user",
+  "content": [
+    {
+      "type": "tool_result",
+      "tool_use_id": "toolu_01AbCdEfGhIjKlMnOpQr",
+      "is_error": true,
+      "content": "No customer found with id cus_004. Check that the id starts with 'cus_' and matches the format shown in the customer list."
+    }
+  ]
+}</code></pre>
+    <p>That last field matters more than it looks. A raw stack trace or a bare error code ("KeyError: 'cus_004' at db/lookup.py:52") gives the model nothing to act on and can leak implementation details. Catch the underlying exception and translate it into a short sentence describing what went wrong and, where possible, what a valid retry looks like.</p>
+    <p>The full loop: your client sends a request with <code>tools</code> defined; the model responds with a <code>tool_use</code> block; your client executes and sends a <code>tool_result</code>; the model reads it and either answers or issues another <code>tool_use</code> block. This can chain for many rounds, and nothing in the protocol caps how many — that's your client's job, typically a maximum iteration count. Every prior pair stays in the conversation unless you prune it, which drives token growth in long agent sessions.</p>
+
+    <h2>MCP architecture: when to reach for it</h2>
+    <p>The Model Context Protocol standardizes how an application connects to external tools, data, and prompt templates. Before MCP, every integration between a model-powered app and a ticketing system or database was bespoke; an MCP server written once can be used by any MCP-compatible host with no custom glue code. It defines three roles, easy to conflate:</p>
+    <ul>
+      <li><strong>Server</strong> — exposes capabilities over the protocol, wrapping one external system. A GitHub server exposes GitHub operations; a Postgres server exposes database queries. The server owns the details of talking to that system.</li>
+      <li><strong>Client</strong> — maintains a 1:1 connection to exactly one server. It is not a general-purpose consumer of many servers.</li>
+      <li><strong>Host</strong> — the application the user actually opens (a coding assistant, a chat app, a custom agent). The host runs one client per connected server, aggregates what they expose, and enforces permissions.</li>
+    </ul>
+    <p>A single host might run three clients concurrently — one each to a GitHub server, a Postgres server, and a Slack server — and present a unified surface on top. This partitioning also isolates failure: if one server crashes, only its client is affected, and the host decides whether to surface that degraded state without taking down the whole session.</p>
+    <p>A minimal MCP server tool definition looks like this — the same shape of contract as a Messages API tool, since the model consumes it the same way:</p>
+    <pre><code>// Pseudocode for a minimal MCP server exposing one tool
+const server = new McpServer({ name: "inventory-server", version: "1.0.0" });
+
+server.tool(
+  "check_stock",
+  "Look up current stock count for a SKU in the warehouse system. " +
+  "Use this before confirming an order can ship. Returns 0 (not an " +
+  "error) if the SKU exists but is out of stock.",
+  {
+    sku: {
+      type: "string",
+      description: "Product SKU, formatted like 'WH-4471'."
+    }
+  },
+  async ({ sku }) => {
+    const count = await warehouseDb.getStock(sku);
+    return {
+      content: [{ type: "text", text: String(count) }]
+    };
+  }
+);
+
+server.connect(new StdioServerTransport());</code></pre>
+    <p>MCP servers expose three distinct primitive types, each invoked by a different party — picking the wrong one produces an awkward integration even when the code works fine.</p>
+    <ul>
+      <li><strong>Tools</strong> — actions the model itself decides to invoke, the same way it calls any other tool, when the decision to act belongs to the model reasoning in context.</li>
+      <li><strong>Resources</strong> — contextual data (a file, a schema, a config document) the user or host selects and attaches, not something the model autonomously fetches. Static, frequently-reused reference material fits better as a Resource than as a Tool the model has to search for every session.</li>
+      <li><strong>Prompts</strong> — reusable, parameterized templates a user explicitly invokes, often surfaced as a slash-command-style menu, to kick off a known workflow.</li>
+    </ul>
+    <p>The deciding question: who decides when this activates? The model, reasoning in context, means Tool. The user browsing means Resource. The user invoking a known workflow by name means Prompt. A single server commonly exposes more than one — a wiki server might start as a search Tool and later add a specific onboarding document as a Resource once it's clear that page gets attached in nearly every session.</p>
+
+    <h2>Transport choice: stdio vs. Streamable HTTP</h2>
+    <p>MCP separates the message format (JSON-RPC) from how messages physically travel, and that transport choice is a deployment decision, not a capability one — both carry Tools, Resources, and Prompts equally well.</p>
+    <p><strong>stdio</strong> is for local, trusted subprocesses: the host launches the server as a child process and talks over stdin/stdout, no network involved. This is the right choice when the server runs on the same machine as the host, is trusted, and doesn't need to be shared — a local filesystem or git server are the canonical cases. The tradeoff is that the server's lifecycle is tied to the host that spawned it and it can only serve that one host.</p>
+    <p><strong>Streamable HTTP</strong> is for servers that run independently of any one host, potentially serving many hosts and users concurrently — reach for it when the server needs network reachability, wraps a credential you'd rather centralize than distribute, or needs to be shared by a team. It replaced the older HTTP+SSE transport, over standard HTTP.</p>
+    <p>The operational profiles differ, too. A stdio server's failure is local and contained — restart the host, it respawns. A Streamable HTTP server fails like any remote service and needs its own monitoring, and authentication is asymmetric: stdio inherits trust from being launched locally, while HTTP has to authenticate every caller independently, since anyone reachable over the network is a potential caller. Designing that auth layer is part of the real cost of choosing HTTP.</p>
+    <p>A quick check: does this need infrastructure separate from the host's machine? Do multiple people or hosts need the same running instance? Would you rather centralize a credential than distribute it? A "yes" to any of those points at Streamable HTTP. Purely local tooling for one developer is simpler on stdio, with no hosting infrastructure at all.</p>
+
+    <h2>Built-in tool, MCP server, or skill?</h2>
+    <p>Given some capability you want an agent to have, there are three common ways to expose it, and defaulting to MCP for everything is itself a mistake:</p>
+    <ul>
+      <li><strong>Built-in tool</strong> — if something like Bash, a text editor tool, or web fetch already does the job, use it. Rebuilding "run a shell command" as a custom MCP tool adds maintenance burden for no benefit over what's already shipped.</li>
+      <li><strong>MCP server</strong> — for integrations with an external system, especially one reused across multiple projects or hosts. The value of MCP is standardizing an integration once so it's portable; a single-project, no-external-system need is more infrastructure than the problem requires.</li>
+      <li><strong>Skill or slash command</strong> — for a project-local workflow that talks to no external system: a house style, a repeatable procedure specific to one codebase. There's no external system to integrate with, so a server is unnecessary overhead.</li>
+    </ul>
+    <p>A concrete split: a repo-local lint check before commit is a skill; a query against a shared production database is an MCP server; fetching arbitrary web pages is the built-in web fetch tool.</p>
+
+    <h2>Common mistakes</h2>
+    <ul>
+      <li><strong>Renaming a tool instead of rewriting its description.</strong> When a tool is called with wrong or missing arguments, the fix is almost always a more precise description — examples, format details, when-to-call guidance — not a punchier name.</li>
+      <li><strong>Constraining format in prose instead of in the schema.</strong> "Use the correct status format" in a description is far weaker than an <code>enum</code> listing the exact valid values. If the value space is closed, constrain it in the schema.</li>
+      <li><strong>Returning raw exceptions as tool_result content.</strong> <code>is_error: true</code> is necessary but not sufficient — the content also has to be a clear, actionable sentence. A stack trace with the flag set correctly is still a broken error response.</li>
+      <li><strong>Splitting a parallel tool_result across multiple follow-up messages.</strong> When the model issues several <code>tool_use</code> blocks in one turn, all of the corresponding results belong in a single subsequent user message, matched by <code>tool_use_id</code>.</li>
+      <li><strong>Confusing "the application I opened" with "the client."</strong> The client is an internal MCP component scoped to one server connection; the host is the application coordinating all of them and enforcing permissions.</li>
+      <li><strong>Modeling static reference data as a Tool.</strong> If a user selects which document to include, that's a Resource. Forcing the model to search for the same onboarding page every session wastes latency and tokens versus attaching it once.</li>
+      <li><strong>Defaulting to MCP for purely local, single-project workflows,</strong> or choosing stdio for something that needs to be shared across hosts and machines — both are the wrong tool for the deployment shape, not a matter of taste.</li>
+      <li><strong>Letting the tool-use loop run unbounded.</strong> Nothing in the protocol caps how many rounds of tool_use/tool_result can chain together — enforce a maximum iteration count or timeout yourself.</li>
+    </ul>
+  `
+};

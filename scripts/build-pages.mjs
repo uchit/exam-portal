@@ -15,12 +15,18 @@ import { LESSONS as LESSONS_2 } from "../content/lessons-2.mjs";
 import { LESSONS as LESSONS_3 } from "../content/lessons-3.mjs";
 import { LESSONS as LESSONS_4 } from "../content/lessons-4.mjs";
 import { LESSONS as LESSONS_5 } from "../content/lessons-5.mjs";
+import { HANDBOOK as HANDBOOK_1 } from "../content/handbook-1.mjs";
+import { HANDBOOK as HANDBOOK_2 } from "../content/handbook-2.mjs";
+import { HANDBOOK as HANDBOOK_3 } from "../content/handbook-3.mjs";
+import { HANDBOOK as HANDBOOK_4 } from "../content/handbook-4.mjs";
+import { HANDBOOK as HANDBOOK_5 } from "../content/handbook-5.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SITE = "https://thatclaude.com";
 const BUILD_DATE = new Date().toISOString().slice(0, 10);
 const BUILD_DATE_DISPLAY = new Date(`${BUILD_DATE}T00:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
 const LESSONS_BY_DOMAIN = { 1: LESSONS_1, 2: LESSONS_2, 3: LESSONS_3, 4: LESSONS_4, 5: LESSONS_5 };
+const HANDBOOK_BY_DOMAIN = { 1: HANDBOOK_1, 2: HANDBOOK_2, 3: HANDBOOK_3, 4: HANDBOOK_4, 5: HANDBOOK_5 };
 
 // ---------------------------------------------------------------- chrome ---
 const HEAD_ICON = `<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235B4FE0'/%3E%3Ctext x='50' y='69' font-size='56' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'%3EC%3C/text%3E%3C/svg%3E" />`;
@@ -122,6 +128,7 @@ const FOOTER = `  <footer class="footer">
       <span>Unofficial study aid · Not affiliated with Anthropic.</span>
       <nav class="footer-nav" aria-label="More">
         <a href="/learn">Curriculum</a>
+        <a href="/handbook">Handbook</a>
         <a href="/glossary">Glossary</a>
         <a href="/reference">Quick Reference</a>
         <a href="/blog">Blog</a>
@@ -283,6 +290,44 @@ const SCHEMA_LINTER_WIDGET = `
       check();
     })();
     </script>`;
+
+// Per-lesson completion toggle — every lesson page gets one. Writes to the
+// same localStorage key/shape js/app.js uses (progress.completedLessons),
+// so /progress and the curriculum badge see it immediately. A plain inline
+// script, not a module — lesson pages don't load js/app.js as a module dep.
+function lessonCompleteWidget(slug) {
+  return `
+    <div class="card" style="margin-top:24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <button class="btn btn-outline" id="completeBtn">Mark lesson complete</button>
+      <span id="completeNote" style="color:var(--text-3);font-size:13px"></span>
+    </div>
+    <script>
+    (function(){
+      var KEY = "claudecert.progress.v1", SLUG = ${JSON.stringify(slug)}, TOTAL = 30;
+      function load(){ try { return JSON.parse(localStorage.getItem(KEY) || "{}"); } catch(e){ return {}; } }
+      function save(p){ try { localStorage.setItem(KEY, JSON.stringify(p)); } catch(e){} }
+      var btn = document.getElementById("completeBtn"), note = document.getElementById("completeNote");
+      function render(){
+        var p = load();
+        var done = p.completedLessons && p.completedLessons[SLUG];
+        btn.textContent = done ? "Completed \\u2713" : "Mark lesson complete";
+        btn.classList.toggle("btn-solid", !!done);
+        btn.classList.toggle("btn-outline", !done);
+        var count = p.completedLessons ? Object.keys(p.completedLessons).length : 0;
+        note.textContent = count + " / " + TOTAL + " lessons complete";
+      }
+      btn.addEventListener("click", function(){
+        var p = load();
+        if (!p.completedLessons) p.completedLessons = {};
+        if (p.completedLessons[SLUG]) delete p.completedLessons[SLUG];
+        else p.completedLessons[SLUG] = Date.now();
+        save(p);
+        render();
+      });
+      render();
+    })();
+    </script>`;
+}
 
 // FAQ — used for /prep's FAQPage structured data. Keep in sync with the
 // matching visible FAQ block rendered by viewPrep() in js/app.js.
@@ -580,9 +625,57 @@ for (const d of DOMAINS) {
       ${l.bodyHtml}
       ${l.slug === "1-1-agentic-loop" ? STOP_REASON_WIDGET : l.slug === "2-1-tool-schemas" ? SCHEMA_LINTER_WIDGET : ""}
     </article>
+    ${lessonCompleteWidget(l.slug)}
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px">
       ${prev ? `<a class="btn btn-outline" href="/learn/${prev.domain.id}/${prev.slug}">← ${prev.title}</a>` : ""}
       ${next ? `<a class="btn btn-solid" href="/learn/${next.domain.id}/${next.slug}">${next.title} →</a>` : `<a class="btn btn-solid" href="/practice?d=${d.id}">Practice ${escAttr(d.short)} →</a>`}
+    </div>`
+    }));
+  });
+}
+
+// ============================================================================
+// GENERATE: handbook — practical Claude patterns, no exam framing. For
+// people who want to build with Claude whether or not they ever sit CCA-F.
+// ============================================================================
+write("handbook/index.html", staticPage({
+  title: "Handbook — Claude Cert Prep",
+  description: "Practical Claude patterns for building real systems — agentic architecture, tool design & MCP, Claude Code configuration, prompt engineering, and context management. No exam framing.",
+  path: "/handbook", active: "handbook",
+  jsonLd: [breadcrumbLd([{ name: "Handbook", path: "/handbook" }])],
+  bodyHtml: `    <div class="page-head prose"><h1>Handbook</h1><p class="prose-dek">The same five domains as the CCA-F curriculum, written for building — not for passing a test. No exam-trap callouts, just what actually works in production, with real code. If you're studying for the exam, the <a href="/learn">curriculum</a> is the version tuned for that.</p></div>
+    ${DOMAINS.map((d) => { const h = HANDBOOK_BY_DOMAIN[d.id]; return `<div class="card" style="margin-top:14px"><span class="card-accent" style="background:${d.color}"></span><h3 style="font-weight:800;font-size:16px;margin-bottom:6px">${h.title}</h3><p style="color:var(--text-2);font-size:14px;margin-bottom:10px">${h.dek}</p><a class="btn btn-outline btn-sm" href="/handbook/${h.slug}">Read →</a></div>`; }).join("")}`
+}));
+
+{
+  const HANDBOOK_LIST = DOMAINS.map((d) => ({ ...HANDBOOK_BY_DOMAIN[d.id], domain: d }));
+  HANDBOOK_LIST.forEach((h, idx) => {
+    const prev = HANDBOOK_LIST[idx - 1], next = HANDBOOK_LIST[idx + 1];
+    write(`handbook/${h.slug}.html`, staticPage({
+      title: `${h.title} — Claude Cert Prep Handbook`,
+      description: h.dek,
+      path: `/handbook/${h.slug}`, active: "handbook",
+      ogType: "article",
+      jsonLd: [
+        breadcrumbLd([{ name: "Handbook", path: "/handbook" }, { name: h.title, path: `/handbook/${h.slug}` }]),
+        {
+          "@type": "TechArticle",
+          headline: h.title, description: h.dek, url: `${SITE}/handbook/${h.slug}`,
+          author: AUTHOR, publisher: { "@type": "Organization", name: SITE_NAME, url: SITE },
+          datePublished: BUILD_DATE, dateModified: BUILD_DATE,
+          mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE}/handbook/${h.slug}` }, image: OG_IMAGE
+        }
+      ],
+      bodyHtml: `    <article class="prose page-head">
+      <h1>${h.title}</h1>
+      <p class="prose-dek">${h.dek}</p>
+      <div class="prose-meta"><span style="color:${h.domain.color};font-weight:700">${escAttr(h.domain.short)}</span><span>·</span><span>${h.minutes} min</span></div>
+      ${h.bodyHtml}
+    </article>
+    <div class="card" style="margin-top:26px"><p style="color:var(--text-2);font-size:14px;margin:0">Studying for the CCA-F exam? The <a href="/learn/${h.domain.id}">${escAttr(h.domain.short)} curriculum</a> covers this with exam-trap callouts and scenario practice.</p></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:20px">
+      ${prev ? `<a class="btn btn-outline" href="/handbook/${prev.slug}">← ${prev.title}</a>` : ""}
+      ${next ? `<a class="btn btn-solid" href="/handbook/${next.slug}">${next.title} →</a>` : `<a class="btn btn-solid" href="/handbook">All articles →</a>`}
     </div>`
     }));
   });
@@ -914,12 +1007,13 @@ write("progress.html", appPage({
 // ============================================================================
 const staticRoutes = [
   "/", "/practice", "/exam", "/diagnostic", "/drill", "/browse", "/prep", "/progress",
-  "/about", "/resources", "/changelog", "/glossary", "/reference", "/blog", "/learn", "/certifications"
+  "/about", "/resources", "/changelog", "/glossary", "/reference", "/blog", "/learn", "/certifications", "/handbook"
 ];
 const domainRoutes = DOMAINS.flatMap((d) => [`/glossary/${d.id}`, `/reference/${d.id}`, `/learn/${d.id}`]);
 const blogRoutes = POSTS.map((p) => `/blog/${p.slug}`);
 const lessonRoutes = FLAT_LESSONS.map((l) => `/learn/${l.domain.id}/${l.slug}`);
-const allRoutes = [...staticRoutes, ...domainRoutes, ...blogRoutes, ...lessonRoutes];
+const handbookRoutes = DOMAINS.map((d) => `/handbook/${HANDBOOK_BY_DOMAIN[d.id].slug}`);
+const allRoutes = [...staticRoutes, ...domainRoutes, ...blogRoutes, ...lessonRoutes, ...handbookRoutes];
 
 write("sitemap.xml", `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

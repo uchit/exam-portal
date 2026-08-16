@@ -4,6 +4,7 @@
 import { DOMAINS, DIFFICULTY, EXAM_LENGTH, EXAM_MINUTES, PASS_PERCENT, EXAM_NAME, EXAM_CODE } from "./blueprint.js";
 import { ALL_QUESTIONS, STATS, buildExam, buildPractice, buildDiagnostic, search, getById } from "./bank.js";
 import { ICONS } from "./icons.js";
+import { drawBadge, downloadBadge } from "./badge.js";
 
 const app = document.getElementById("app");
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
@@ -31,7 +32,8 @@ function scaledScore(pct) {
 
 // ---------- progress (localStorage) ----------
 const PKEY = "claudecert.progress.v1";
-const defaultProgress = () => ({ answered: {}, flags: {}, exams: [], streak: 0, bestStreak: 0, attempts: 0, correct: 0, recent: [], srs: {} });
+const defaultProgress = () => ({ answered: {}, flags: {}, exams: [], streak: 0, bestStreak: 0, attempts: 0, correct: 0, recent: [], srs: {}, completedLessons: {} });
+const TOTAL_LESSONS = 30;
 const RECENT_CAP = 300; // remember the last N served questions to avoid repeats
 let progress = loadProgress();
 function loadProgress() {
@@ -786,6 +788,9 @@ function viewProgress() {
         <div class="bd-val" style="color:${e.pass ? "var(--success)" : "var(--error)"}">${scaledScore(e.pct)}</div>
       </div>`).join("")}</div>` : `<div class="empty">No mock exams yet. <a href="/exam" style="color:var(--primary);font-weight:700">Take one →</a></div>`}
 
+    <p class="section-title" style="margin-top:32px">Badges</p>
+    <div class="grid grid-2" id="badgeGrid"></div>
+
     ${flagged.length ? `<p class="section-title" style="margin-top:32px">Flagged for review (${flagged.length})</p>
       <div>${flagged.map(getById).filter(Boolean).slice(0, 50).map(browseItem).join("")}</div>` : ""}
 
@@ -796,6 +801,51 @@ function viewProgress() {
     if (confirm("Erase all saved progress, flags and exam history?")) {
       progress = defaultProgress(); saveProgress(); toast("Progress reset"); router();
     }
+  });
+  renderBadges(v.querySelector("#badgeGrid"));
+}
+
+function renderBadges(grid) {
+  const completedLessons = progress.completedLessons || {};
+  const completedCount = Object.keys(completedLessons).length;
+  const passes = progress.exams.filter((e) => e.pass);
+  const bestPass = passes.length ? passes.reduce((a, b) => (scaledScore(b.pct) > scaledScore(a.pct) ? b : a)) : null;
+  const curriculumDone = completedCount >= TOTAL_LESSONS;
+  const curriculumDate = curriculumDone ? Math.max(...Object.values(completedLessons)) : null;
+
+  const specs = [
+    {
+      id: "exam", earned: !!bestPass,
+      unlockedNote: bestPass ? `Best passing score: ${scaledScore(bestPass.pct)}/1000` : "",
+      lockedNote: "Pass a full mock exam (720+) to earn this",
+      filename: "cca-f-mock-exam-badge.png",
+      draw: bestPass && { theme: "violet", title: "CCA-F Mock Exam", subtitle: "Practice Certified", ribbon: `Passed · ${scaledScore(bestPass.pct)}/1000`, meta: `Earned ${new Date(bestPass.date).toLocaleDateString()}` }
+    },
+    {
+      id: "curriculum", earned: curriculumDone,
+      unlockedNote: `All ${TOTAL_LESSONS} lessons complete`,
+      lockedNote: `${completedCount} / ${TOTAL_LESSONS} lessons complete`,
+      filename: "cca-f-curriculum-badge.png",
+      draw: curriculumDone && { theme: "emerald", title: "CCA-F Curriculum", subtitle: `${TOTAL_LESSONS} Lessons Complete`, ribbon: "Complete", meta: `Earned ${new Date(curriculumDate).toLocaleDateString()}` }
+    }
+  ];
+
+  grid.innerHTML = specs.map((s) => `
+    <div class="card badge-card ${s.earned ? "" : "locked"}">
+      ${s.earned ? `<canvas id="badge-${s.id}"></canvas>` : `<div class="badge-placeholder">${ICONS.target(28)}</div>`}
+      <p style="font-size:13.5px;color:var(--text-2);margin-top:4px">${s.earned ? s.unlockedNote : s.lockedNote}</p>
+      ${s.earned ? `<button class="btn btn-outline btn-sm" data-dl="${s.id}">Download badge</button>` : ""}
+    </div>`).join("");
+
+  specs.filter((s) => s.earned).forEach((s) => {
+    const canvas = grid.querySelector(`#badge-${s.id}`);
+    drawBadge(canvas, s.draw);
+  });
+  grid.querySelectorAll("[data-dl]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const s = specs.find((x) => x.id === btn.dataset.dl);
+      downloadBadge(grid.querySelector(`#badge-${s.id}`), s.filename);
+    });
   });
 }
 

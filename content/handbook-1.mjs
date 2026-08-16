@@ -1,0 +1,108 @@
+export const HANDBOOK = {
+  slug: "agentic-architecture",
+  title: "Agentic Loops and Multi-Agent Orchestration",
+  dek: "How the model-tool loop actually runs, five patterns for structuring multi-step work, and what breaks when agent systems go to production.",
+  minutes: 12,
+  bodyHtml: `
+    <p>Every agent built on Claude, no matter how sophisticated, reduces to the same mechanical core: the model looks at the conversation, decides whether it needs to call a tool, your code runs that tool and feeds the result back, and the cycle repeats until the model is done. Everything else — orchestration patterns, subagents, evaluators — is structure built around that core loop to make it reliable at scale. This article covers the loop mechanism itself, the handful of patterns that cover most multi-step agent designs, how to think about subagent context, and the failure modes that show up once these systems reach production.</p>
+
+    <h2>The agentic loop and stop_reason</h2>
+    <p>On every turn, the Claude API response includes a <code>stop_reason</code> field that tells you why generation stopped. This is the only signal your control flow should trust. The values that matter:</p>
+    <ul>
+      <li><code>end_turn</code> — the model considers the response complete. No further tool calls are pending. Exit the loop.</li>
+      <li><code>tool_use</code> — the model wants to call one or more tools. Execute them, append the results as <code>tool_result</code> blocks in a new user turn, and continue the loop.</li>
+      <li><code>max_tokens</code> — generation was cut off mid-thought. Treat this as an error condition, not a natural stop; the output may be a truncated tool call or malformed JSON.</li>
+      <li><code>stop_sequence</code> — a configured stop sequence was hit. Also not a natural end of task, and worth handling explicitly rather than ignoring.</li>
+    </ul>
+    <p>A minimal loop looks like this:</p>
+    <pre><code>messages = [{ role: "user", content: userPrompt }]
+
+loop:
+  response = client.messages.create(model, messages, tools)
+
+  if response.stop_reason == "tool_use":
+    results = []
+    for block in response.content:
+      if block.type == "tool_use":
+        output = run_tool(block.name, block.input)
+        results.append(tool_result(block.id, output))
+    messages.append({ role: "assistant", content: response.content })
+    messages.append({ role: "user", content: results })
+    continue loop
+
+  if response.stop_reason == "end_turn":
+    return final_answer(response)
+
+  if response.stop_reason in ("max_tokens", "stop_sequence"):
+    log_error(response.stop_reason)
+    handle_as_failure(response)
+    break loop</code></pre>
+    <p>A common shortcut is to skip <code>stop_reason</code> entirely and scan the response for a <code>tool_use</code> content block, or scan the assistant's text for phrases like "done" or "next steps." Both are weaker proxies: a single turn can contain both prose and a tool call, and model phrasing isn't a contract — it shifts across model versions in ways that quietly break a text-parsing heuristic. <code>stop_reason</code> is the structured, documented field built to be machine-readable; treat it as the single source of truth for your control flow.</p>
+    <p>Every production loop also needs a hard iteration cap. Its job is narrow: prevent runaway cost and infinite loops when something upstream is broken, not decide when a task is finished. If "stop after N iterations" is your actual termination logic, you've built a timer, not an agent. In a correctly functioning system, the cap should almost never be the thing that ends the loop; if it is, that's a signal something failed to converge, not proof the task is done.</p>
+
+    <h2>Choosing an orchestration pattern</h2>
+    <p>Anthropic's guidance on building effective agents draws a useful distinction between workflows, where your code defines the control flow, and agents, where the model decides its own path. Most production systems don't need a fully autonomous agent; they need one of five well-understood patterns, chosen based on how predictable the task decomposition is and whether steps depend on each other.</p>
+
+    <h3>Prompt chaining</h3>
+    <p>A fixed sequence of calls where each step's output feeds the next — the workflow equivalent of a Unix pipe. Use it when a task decomposes into an ordered set of subtasks known in advance, and each stage benefits from narrower, more focused attention than one call trying to do everything. Outline, then draft, then edit for tone is the classic shape. If you find yourself wanting to skip steps conditionally based on intermediate results, you've drifted past pure chaining into routing or something more dynamic.</p>
+
+    <h3>Routing</h3>
+    <p>Classify the input first, then send it down one of several specialized paths, each with its own prompt, tools, or even model. Use routing when inputs fall into genuinely distinct categories that benefit from separate handling — a support system sending billing questions one way and technical issues another. The classification step is usually cheap. The failure mode is reaching for routing when the categories aren't actually distinct enough to need separate handling, adding a maintenance burden for no real benefit over one well-written prompt.</p>
+
+    <h3>Parallelization</h3>
+    <p>Run multiple calls at once, in two flavors. Sectioning splits a task into independent subtasks dispatched simultaneously and then combined — reviewing a diff for security, performance, and style concerns at once. Voting runs the same task multiple times and aggregates for consensus — useful when a single pass isn't reliably confident enough, such as a policy-violation check. Sectioning buys speed; voting buys reliability at the cost of extra calls. Both require true independence between the parallel branches — see the dependency test below before assuming a set of subtasks is safe to parallelize.</p>
+
+    <h3>Orchestrator-workers</h3>
+    <p>When the decomposition itself can't be planned in advance — the set of subtasks depends on what earlier subtasks discover — a static pattern isn't flexible enough. A lead agent examines the task, decides how to break it up (possibly adjusting as it goes), dispatches worker subagents for the pieces, and synthesizes their results. The distinguishing feature versus plain parallelization is that the split is a runtime judgment call, not a fixed plan written into your code. A research task where the number of sub-questions depends on what the first pass turns up is a natural fit. If you can enumerate the subtasks at design time, use sectioning instead.</p>
+
+    <h3>Evaluator-optimizer</h3>
+    <p>One call generates a candidate solution; a second evaluates it against explicit criteria and feeds back specific critique; this loops until the output passes. Suited to tasks where quality criteria are clear and checkable but a single generation pass isn't reliably good enough — a draft-and-critique loop against a strict rubric. This is easy to confuse with orchestrator-workers, since both involve more than one call working toward a shared goal, but the shape differs: orchestrator-workers decomposes a task into independent pieces run by different subagents, while evaluator-optimizer iteratively refines one piece of output through feedback.</p>
+
+    <h3>A decision framework</h3>
+    <p>In practice, three questions get you to the right pattern quickly:</p>
+    <ol>
+      <li><strong>Is the decomposition known before any agent runs?</strong> If yes, use a static pattern (chaining, routing, or sectioning). If the decomposition depends on what's discovered mid-task, use orchestrator-workers.</li>
+      <li><strong>Do the subtasks depend on each other's output?</strong> If step B needs step A's result, that's a sequential edge — chain it. If the subtasks are genuinely independent, parallelize them.</li>
+      <li><strong>Is the goal decomposition or refinement?</strong> Splitting one task into several independent pieces is orchestrator-workers or sectioning. Iteratively improving a single piece of output against a rubric is evaluator-optimizer.</li>
+    </ol>
+    <p>A concrete illustration of the dependency question: three checks against the same pull request — security, style, performance — read the same diff and write to separate output sections, with no check depending on another's findings. That's a clean sectioning case: dispatch three calls at once and merge. Contrast that with a step that needs to know whether an earlier security check found anything before deciding whether to run at all — a real dependency that forces sequencing regardless of how independent the tasks look on paper.</p>
+    <p>Independence of the task description is not the same as independence of the actual side effects. Three subagents each asked to "update a shared summary document" look independent until you notice they're all writing to the same file — a race condition waiting to happen, not a parallelization opportunity. Either sequence the updates or have a single agent own the merge step. And parallel execution isn't free of infrastructure constraints just because the tasks are logically independent: firing off a large number of concurrent calls can hit rate limits, and fanning out to fifty parallel subagents when five would do can spend more time backing off from throttling than it saves in wall-clock time. Cap concurrency deliberately rather than assuming "independent" means "safe to run all at once."</p>
+
+    <h2>Subagent context design</h2>
+    <p>A subagent is a separate agentic loop with its own context window, dispatched for a bounded task, that reports a result back to whatever invoked it. Two decisions dominate whether this works well in practice: how much context the subagent gets on the way in, and how much it returns on the way out.</p>
+    <p>On the way out, a parent does not receive a subagent's full transcript — the intermediate tool calls, the false starts, the reasoning. It receives whatever final result the subagent was instructed to produce. That's what makes subagents useful for context management in the first place: if the parent absorbed every subagent's full internal transcript, you'd gain nothing over doing the work directly in the parent's context, just at a higher token cost. This makes the subagent's return value a real prompt-engineering surface. A subagent that returns "done, see above" is useless to a parent that never sees "above." Instruct subagents explicitly to produce a self-contained summary: what they did, what they found, and any caveats.</p>
+    <p>On the way in, the default should be isolation: give the subagent only what it needs for its specific subtask, not the orchestrator's entire history. Dumping the full parent context into every subagent call defeats the point of decomposing the task — you're back to one giant context, just split across multiple calls that each pay for the same tokens. Isolation has a quality benefit beyond cost, too: a subagent handed a narrow, well-scoped brief stays focused, while one handed an entire conversation history has to guess which parts are relevant, which invites drift.</p>
+    <p>A hub-and-spoke dispatch, where subagents report only to the orchestrator and never to each other, looks like this in pseudocode:</p>
+    <pre><code>function orchestrate(task):
+  plan = lead_agent.decide_subtasks(task)   // decided at runtime, not hardcoded
+  results = []
+
+  for subtask in plan:
+    brief = {
+      instruction: subtask.description,
+      relevant_context: subtask.only_what_it_needs,  // not orchestrator.full_history
+      output_format: subtask.expected_shape
+    }
+    worker_result = dispatch_subagent(subtask.type, brief)
+    results.append(worker_result)   // final summary only, not the worker's transcript
+
+  return lead_agent.synthesize(results)  // reconcile, dedupe, don't just concatenate</code></pre>
+    <p>Notice two things in that shape. First, workers never see each other and never talk to each other — everything routes through the orchestrator, which keeps the failure surface centralized. If something goes wrong, it's traceable to either a worker's output or the orchestrator's synthesis, not to an emergent interaction between two workers that never should have known about each other. Second, <code>synthesize</code> is real work, not string concatenation. Worker results often disagree, overlap, or arrive in a form that needs reconciling — two workers might flag the same underlying issue from different angles. A synthesis step that just stitches outputs together produces a report, not an answer.</p>
+    <p>The right amount of context for a given subtask is usually: the specific task description, any directly relevant facts or file contents, and explicit output-format expectations — not the full history that led up to this point. Too little and the subagent can't do its job or has to re-derive things the parent already knows. Too much and you've reintroduced the bloat isolation was meant to prevent.</p>
+    <p>Subagent naming and description matter more than they first appear to, because in any system where an orchestrator picks which subagent to invoke, that description is the interface. A vague description like "helper agent" gives the orchestrator nothing to route on. A specific one — "reviews code diffs for security vulnerabilities; does not check style or performance" — lets it dispatch correctly without inspecting internals. This scales badly if ignored: with two or three subagents ambiguity is survivable, but with a dozen, overlapping descriptions cause misrouting that's hard to debug because the symptom looks like a bad result, not an obviously wrong routing decision. The same logic argues for single-responsibility subagents. One scoped to "run tests and interpret failures" is easier to prompt, test, and route to than one scoped to "handle all quality assurance," which tends to quietly expand into linting, security scanning, and documentation review over time.</p>
+
+    <h2>Common mistakes</h2>
+    <ul>
+      <li><strong>Inferring completion from text instead of stop_reason.</strong> Scanning output for phrases like "task complete" is fragile — it couples your control flow to model phrasing that isn't a stable contract, and misses turns that mix prose with a pending tool call.</li>
+      <li><strong>Treating the iteration cap as the termination logic.</strong> If a loop only stops because it hit its cap, something upstream isn't converging — a tool silently failing and being retried, or an underspecified task the model can't recognize as finished. Raising the cap delays the failure and increases cost without fixing the cause.</li>
+      <li><strong>Swallowing tool errors instead of forwarding them.</strong> If a tool call fails and your client only forwards successful results, the model has no signal its last action didn't work, and will often repeat the broken call or hallucinate a result and proceed as if it succeeded. Every tool_result, success or failure, needs to go back to the model.</li>
+      <li><strong>Forwarding a subagent's full transcript back to the parent.</strong> This defeats the context-management benefit of using subagents at all. Instruct subagents to return a distilled, self-contained summary, not a log of everything they did.</li>
+      <li><strong>Passing an orchestrator's entire history into every subagent call "to be safe."</strong> More context isn't free, and an unscoped brief invites drift — the subagent spends effort figuring out what's relevant instead of doing its task. Default to a narrow, deliberately scoped context per subtask.</li>
+      <li><strong>Letting subagents communicate peer-to-peer to save a round trip.</strong> This breaks hub-and-spoke topology and multiplies the ways a multi-agent system can fail — race conditions, circular dependencies, inconsistent shared state. Route everything through the orchestrator, even when direct exchange looks more efficient on paper.</li>
+      <li><strong>Parallelizing tasks that share a hidden dependency.</strong> Independence of the task description doesn't guarantee independence of side effects. Two subagents writing to the same file, or each expected to make a "final" call on something, will produce race conditions even though the tasks look independent at a glance.</li>
+      <li><strong>Fanning out to unnecessary concurrency.</strong> Dispatching far more parallel workers than a task needs can trip rate limits and spend more time backing off from throttling than it saves in latency. Cap concurrency deliberately.</li>
+      <li><strong>Reaching for a dynamic orchestrator when the decomposition is already known.</strong> If you can enumerate the subtasks at design time — "check these five files" — a fixed fan-out is simpler than a lead agent deciding the plan at runtime.</li>
+      <li><strong>Building an overloaded subagent that quietly accumulates responsibilities.</strong> A subagent that starts as "run tests" and grows into "handle all QA" becomes harder to prompt, test, and route to correctly. Keep scope narrow enough that the name alone says what it does and doesn't do.</li>
+    </ul>
+  `
+};

@@ -5,6 +5,7 @@ import { DOMAINS, DIFFICULTY, EXAM_LENGTH, EXAM_MINUTES, PASS_PERCENT, EXAM_NAME
 import { ALL_QUESTIONS, STATS, buildExam, buildPractice, buildDiagnostic, search, getById } from "./bank.js";
 import { ICONS } from "./icons.js";
 import { drawBadge, downloadBadge } from "./badge.js";
+import { CERTS } from "./certs.js";
 
 const app = document.getElementById("app");
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
@@ -221,7 +222,7 @@ function viewHome() {
     <section class="hero">
       <span class="hero-badge">● ${esc(EXAM_CODE)} · ${esc(EXAM_NAME)}</span>
       <h1>Pass the Claude Certified Architect exam with confidence.</h1>
-      <p>A free, open practice portal built on the official 5-domain blueprint. Mock exams use ${fmt(STATS.byStyle.scenario + STATS.byStyle.recall)} architecture-decision scenarios — the real exam's shape — backed by a ${fmt(STATS.total)}-question bank for unlimited drilling, with hints and an explanation on every answer.</p>
+      <p>A free, open practice portal built on the official 5-domain blueprint. Mock exams use ${fmt(STATS.byStyle.scenario + STATS.byStyle.recall)} architecture-decision scenarios — the real exam's shape — backed by a ${fmt(STATS.total)}-question bank for unlimited drilling, with hints and an explanation on every answer. Part of a growing effort to cover <a href="/certifications" style="color:inherit;text-decoration:underline">all four Anthropic certification tracks</a>, one built fully before the next starts.</p>
       <div class="hero-stats">
         <div class="hero-stat"><div class="n">${fmt(STATS.total)}</div><div class="l">Questions</div></div>
         <div class="hero-stat"><div class="n">5</div><div class="l">Domains</div></div>
@@ -235,6 +236,15 @@ function viewHome() {
       </div>
       <p class="hero-note">New here? <a href="/diagnostic">Take the 15-minute diagnostic →</a> to see which domain to study first.</p>
     </section>
+
+    <p class="section-title">The Claude certification program</p>
+    <div class="grid grid-auto" style="margin-bottom:34px">
+      ${CERTS.map((c) => `<a class="card interactive cert-tile" href="${c.status === "live" ? "/exam" : "/certifications/" + c.slug}">
+        <span class="tag" style="background:color-mix(in srgb, ${c.status === "live" ? "var(--success)" : "var(--warning)"} 14%, transparent);color:${c.status === "live" ? "var(--success)" : "var(--warning)"}">${c.status === "live" ? "Live on this site" : "Blueprint available"}</span>
+        <h3>${esc(c.code)} — ${esc(c.name.replace("Claude Certified ", ""))}</h3>
+        <p>${esc(c.audience)}</p>
+      </a>`).join("")}
+    </div>
 
     <p class="section-title">Choose how you want to study</p>
     <div class="grid grid-3" style="margin-bottom:34px">

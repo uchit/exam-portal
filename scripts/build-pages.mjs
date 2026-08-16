@@ -8,7 +8,7 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { readFileSync } from "node:fs";
-import { CERTS } from "../js/certs.js";
+import { CERTS, UPCOMING_TRACK_MECHANICS } from "../js/certs.js";
 import { ICONS } from "../js/icons.js";
 import { LESSONS as LESSONS_1 } from "../content/lessons-1.mjs";
 import { LESSONS as LESSONS_2 } from "../content/lessons-2.mjs";
@@ -95,6 +95,7 @@ function head(title, description, path, { ogType = "website", jsonLd = null } = 
 function header(active) {
   const items = [
     ["/", "home", "Home"],
+    ["/certifications", "certifications", "Certifications"],
     ["/practice", "practice", "Practice"],
     ["/exam", "exam", "Mock Exam"],
     ["/browse", "browse", "Bank"],
@@ -107,7 +108,7 @@ function header(active) {
         <span class="brand-mark">C</span>
         <span class="brand-text">
           <strong>Claude Cert Prep</strong>
-          <span class="brand-sub">CCA-F · Architect</span>
+          <span class="brand-sub">All Claude Certifications</span>
         </span>
       </a>
       <nav class="topnav" aria-label="Primary">
@@ -137,7 +138,7 @@ const FOOTER = `  <footer class="footer">
         <a href="/about">About</a>
         <a href="/changelog">Changelog</a>
       </nav>
-      <span>Blueprint mirrors the Claude Certified Architect — Foundations (CCA-F).</span>
+      <span>Covering Anthropic's full Claude certification program, one track at a time. CCA-F is live today.</span>
       <span>Developed by <a href="https://hellouchit.com" target="_blank" rel="noopener noreferrer">Uchit Vyas</a></span>
     </div>
   </footer>
@@ -711,10 +712,63 @@ write("certifications.html", staticPage({
       <p style="color:var(--text-2);font-size:14.5px;margin-bottom:8px">${escAttr(c.audience)}</p>
       <p style="color:var(--text-3);font-size:13px;margin-bottom:12px">${c.examLength} items · ${c.examMinutes} minutes · ${c.domainCount} domains</p>
       <p style="color:var(--text-2);font-size:14px;margin-bottom:14px">${escAttr(c.blurb)}</p>
-      ${c.status === "live" ? `<a class="btn btn-outline btn-sm" href="/exam">Start CCA-F mock exam →</a><div style="color:var(--text-3);font-size:12px;margin-top:10px">Last verified against the Claude API and exam guide: ${BUILD_DATE_DISPLAY}</div>` : `<span style="color:var(--text-3);font-size:13px;font-weight:600">Question bank and curriculum not yet published — domain breakdown will follow Anthropic's exam guide as it's released.</span>`}
+      ${c.status === "live" ? `<a class="btn btn-outline btn-sm" href="/exam">Start CCA-F mock exam →</a><div style="color:var(--text-3);font-size:12px;margin-top:10px">Last verified against the Claude API and exam guide: ${BUILD_DATE_DISPLAY}</div>` : `<a class="btn btn-outline btn-sm" href="/certifications/${c.slug}">View domain blueprint →</a><div style="color:var(--text-3);font-size:12px;margin-top:10px">Question bank and curriculum not yet published on this site.</div>`}
     </div>`).join("")}
     <p style="color:var(--text-3);font-size:12.5px;margin-top:20px">Track names, item counts, and domain counts mirror publicly described Anthropic certification program information. This is an unofficial resource — not affiliated with, endorsed by, or sponsored by Anthropic.</p>`
 }));
+
+// Dedicated blueprint pages for the three not-yet-live tracks — full domain
+// breakdown, exam mechanics, real content later. Not thin placeholders: this
+// is genuinely everything publicly known about each track today.
+for (const c of CERTS.filter((x) => x.status !== "live")) {
+  write(`certifications/${c.slug}.html`, staticPage({
+    title: `${c.code} Domain Blueprint — Claude Cert Prep`,
+    description: `${c.name}: exam format, domain weights, and prerequisites — the full publicly known blueprint for this Anthropic certification track.`,
+    path: `/certifications/${c.slug}`, active: "certifications",
+    jsonLd: [
+      breadcrumbLd([{ name: "Certifications", path: "/certifications" }, { name: c.code, path: `/certifications/${c.slug}` }]),
+      {
+        "@type": "EducationalOccupationalCredential",
+        name: c.name, description: c.blurb, credentialCategory: "certificate",
+        url: `${SITE}/certifications/${c.slug}`,
+        competencyRequired: c.domains ? c.domains.map((d) => d.name) : undefined
+      }
+    ],
+    bodyHtml: `    <div class="prose page-head">
+      <h1>${c.code} — ${escAttr(c.name)}</h1>
+      <p class="prose-dek">${escAttr(c.blurb)}</p>
+    </div>
+    <div class="callout"><b>Status</b>This certification is live and administered by Anthropic via Pearson VUE. Free practice content for it isn't published on thatclaude.com yet — we build one track at a time, fully; <a href="/exam">CCA-F is live today</a>. This page has the domain blueprint to help you start planning, and we'll link real practice content here as it ships. Watch the <a href="/changelog">changelog</a> for updates.</div>
+
+    <p class="section-title">Exam format</p>
+    <div class="card">
+      <ul class="prep-list">
+        <li><b>${c.examLength} items</b> · ${c.examMinutes} minutes</li>
+        <li>Pass mark <b>${c.passScore}/1000</b>${c.fee ? ` · ${escAttr(c.fee)}` : ""}</li>
+        <li>${escAttr(UPCOMING_TRACK_MECHANICS)}</li>
+      </ul>
+    </div>
+
+    <p class="section-title" style="margin-top:26px">Who it's for</p>
+    <div class="card">
+      <p style="color:var(--text-2);font-size:14.5px;margin:0">${escAttr(c.audience)}</p>
+      ${c.prereq ? `<p style="color:var(--text-3);font-size:13px;margin-top:8px">${escAttr(c.prereq)}</p>` : ""}
+    </div>
+
+    ${c.domains ? `<p class="section-title" style="margin-top:26px">Domain blueprint</p>
+    <div class="breakdown card">
+      ${c.domains.map((d) => `<div class="bd-row"><div class="bd-name">${escAttr(d.name)}</div>
+        <div class="bd-bar progress-track"><div class="progress-fill" style="width:${d.weight * 3}%;background:var(--warning)"></div></div>
+        <div class="bd-val">${d.weight}%</div></div>`).join("")}
+    </div>
+    <p style="font-size:12.5px;color:var(--text-3);margin-top:10px">Domain names and weights mirror Anthropic's publicly described Exam Guide v1.0 (effective July 2026) as relayed by third-party sources — not yet independently confirmed against an Anthropic-owned page. We'll update this the moment we can verify directly against official Anthropic material.</p>` : ""}
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px">
+      <a class="btn btn-outline" href="/certifications">← All certifications</a>
+      <a class="btn btn-outline" href="/changelog">Get updates</a>
+    </div>`
+  }));
+}
 
 // ============================================================================
 // GENERATE: about / resources / changelog
@@ -1013,7 +1067,8 @@ const domainRoutes = DOMAINS.flatMap((d) => [`/glossary/${d.id}`, `/reference/${
 const blogRoutes = POSTS.map((p) => `/blog/${p.slug}`);
 const lessonRoutes = FLAT_LESSONS.map((l) => `/learn/${l.domain.id}/${l.slug}`);
 const handbookRoutes = DOMAINS.map((d) => `/handbook/${HANDBOOK_BY_DOMAIN[d.id].slug}`);
-const allRoutes = [...staticRoutes, ...domainRoutes, ...blogRoutes, ...lessonRoutes, ...handbookRoutes];
+const certTrackRoutes = CERTS.filter((c) => c.status !== "live").map((c) => `/certifications/${c.slug}`);
+const allRoutes = [...staticRoutes, ...domainRoutes, ...blogRoutes, ...lessonRoutes, ...handbookRoutes, ...certTrackRoutes];
 
 write("sitemap.xml", `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

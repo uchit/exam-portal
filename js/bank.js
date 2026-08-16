@@ -5,15 +5,41 @@ import { CURATED_QUESTIONS } from "./curated.js";
 import { generateQuestions } from "./generator.js";
 import { DOMAINS, EXAM_LENGTH } from "./blueprint.js";
 
+// Deterministic per-question hash so option shuffling is stable across
+// reloads/sessions (same id always shuffles the same way) without needing to
+// store a shuffled order anywhere — it's just recomputed from the id.
+function hashStr(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  return h;
+}
+function shuffleOptions(options, correctIdx, seed) {
+  const r = rng(seed);
+  const order = options.map((_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(r() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  return { options: order.map((i) => options[i]), correct: order.indexOf(correctIdx) };
+}
+
 function normalize(q, idx, prefix) {
+  const id = q.id || `${prefix}-${idx}`;
+  // curated.js and seeds.js are hand-authored with the correct answer almost
+  // always at the same position (A/B) — an exploitable bias. generator.js
+  // already shuffles its own options, so only fix it here for these two.
+  const needsShuffle = prefix === "seed" || prefix === "curated";
+  const { options, correct } = needsShuffle
+    ? shuffleOptions(q.options, q.correct, hashStr(id))
+    : { options: q.options, correct: q.correct };
   return {
-    id: q.id || `${prefix}-${idx}`,
+    id,
     domain: q.domain,
     difficulty: q.difficulty || 2,
     scenario: q.scenario || "",
     question: q.question,
-    options: q.options,
-    correct: q.correct,
+    options,
+    correct,
     explanation: q.explanation || "",
     cat: q.cat || prefix,
     src: q.src || prefix,

@@ -10,7 +10,7 @@ export const SEED_QUESTIONS = [
       "Nothing -- this is a recommended pattern",
       "It should check for 'DONE' instead",
       "It parses natural language for loop termination instead of using the stop_reason field",
-      "The loop should never terminate automatically"
+      "It should check for 'TASK_COMPLETE' at the start of the response instead of anywhere in it"
     ],
     "correct": 2,
     "explanation": "Parsing natural language signals is an anti-pattern. Use stop_reason ('end_turn' vs 'tool_use') for reliable loop control.",
@@ -58,7 +58,7 @@ export const SEED_QUESTIONS = [
     "scenario": "Identity verification before financial operations is enforced via system prompt: 'Always verify identity before processing refunds.'",
     "question": "Why is this insufficient for production?",
     "options": [
-      "System prompts are ignored",
+      "System prompts should repeat the instruction multiple times for emphasis",
       "Prompt instructions have non-zero failure rate -- use programmatic enforcement for deterministic compliance",
       "The instruction should be in CLAUDE.md",
       "The prompt needs more detail"
@@ -145,8 +145,8 @@ export const SEED_QUESTIONS = [
     "options": [
       "One agent for the whole PR",
       "Per-file local analysis plus separate cross-file integration pass",
-      "One agent per line",
-      "Random file assignment"
+      "One agent per function, regardless of file boundaries",
+      "Split files evenly by line count among agents"
     ],
     "correct": 1,
     "explanation": "Per-file passes + cross-file integration avoids attention dilution while catching both local and integration issues.",
@@ -197,7 +197,7 @@ export const SEED_QUESTIONS = [
       "Three sequential Task calls across three turns",
       "Emit multiple Task tool calls in a single coordinator response",
       "Create three separate sessions",
-      "Use threading"
+      "Spawn subagents using a background job queue outside the conversation"
     ],
     "correct": 1,
     "explanation": "Spawn parallel subagents by emitting multiple Task calls in one response, not across separate turns.",
@@ -298,7 +298,7 @@ export const SEED_QUESTIONS = [
     "options": [
       "The message is too short",
       "Uniform errors prevent the agent from making appropriate recovery decisions",
-      "Errors should be suppressed",
+      "The tool should retry internally and never surface errors to Claude",
       "Only transient errors need messages"
     ],
     "correct": 1,
@@ -332,7 +332,7 @@ export const SEED_QUESTIONS = [
     "options": [
       "Better prompt instructions",
       "Restrict the synthesis agent's tools to only those relevant to its role",
-      "Give it more tools",
+      "Add a system reminder before each turn telling it not to search",
       "Use a smarter model"
     ],
     "correct": 1,
@@ -364,10 +364,10 @@ export const SEED_QUESTIONS = [
     "scenario": "You have 18 tools registered for one agent.",
     "question": "What's the likely issue?",
     "options": [
-      "Not enough tools",
+      "The tools need clearer names, but the count is fine",
       "Too many tools degrade selection reliability -- restrict to 4-5 relevant tools per agent",
       "Tools should be combined",
-      "All tools should be available"
+      "Group the 18 tools into categories the agent can browse"
     ],
     "correct": 1,
     "explanation": "Giving an agent too many tools increases decision complexity and degrades selection accuracy.",
@@ -570,8 +570,8 @@ export const SEED_QUESTIONS = [
     "options": [
       "Delete existing tests first",
       "Provide existing test files in context so Claude avoids duplicates",
-      "Use a different model",
-      "Set max_tokens lower"
+      "Ask Claude to check its own output for duplicates after generating",
+      "Instruct Claude to be more creative with test scenarios"
     ],
     "correct": 1,
     "explanation": "Including existing tests in context helps Claude generate complementary, non-duplicate test scenarios.",
@@ -689,8 +689,8 @@ export const SEED_QUESTIONS = [
     "options": [
       "Retry without changes",
       "Add few-shot examples showing correct extraction from varied document formats",
-      "Use OCR instead",
-      "Increase max_tokens"
+      "Ask the model to infer missing fields from context when not explicitly stated",
+      "Simplify the schema by removing the fields that return null"
     ],
     "correct": 1,
     "explanation": "Few-shot examples demonstrating extraction from varied formats reduce empty/null extraction errors.",
@@ -823,7 +823,7 @@ export const SEED_QUESTIONS = [
     "scenario": "Developers dismiss most code review findings as false positives.",
     "question": "How to restore trust?",
     "options": [
-      "Generate more findings",
+      "Lower the confidence threshold so more findings surface",
       "Temporarily disable high-FP categories while improving prompts for those categories",
       "Remove the code review system",
       "Add confidence scores"
@@ -874,10 +874,10 @@ export const SEED_QUESTIONS = [
     "scenario": "Agent research report omits findings from the middle section of a long input.",
     "question": "What causes this?",
     "options": [
-      "Bug in the agent",
+      "The middle section was summarized more aggressively during compaction",
       "The 'lost in the middle' effect -- models process beginning and end more reliably",
       "Token limit reached",
-      "Context corruption"
+      "The tokenizer splits mid-section content into malformed tokens"
     ],
     "correct": 1,
     "explanation": "Place key summaries at the beginning of aggregated inputs to mitigate position effects.",

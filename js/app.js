@@ -273,8 +273,10 @@ function domainCard(d) {
   const m = domainMastery(d.id);
   return `<div class="card domain-card"><span class="card-accent" style="background:${d.color}"></span>
     <div class="domain-head">
-      <span class="domain-dot" style="background:${d.color}"></span>
-      <h3>${esc(d.name)}</h3>
+      <div class="domain-head-title">
+        <span class="domain-dot" style="background:${d.color}"></span>
+        <h3>${esc(d.name)}</h3>
+      </div>
       <span class="domain-weight">${d.weight}%</span>
     </div>
     <p>${esc(d.blurb)}</p>

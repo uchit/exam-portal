@@ -8,10 +8,10 @@ export const CURATED_QUESTIONS = [
     scenario: "A support agent confidently answers a billing dispute that actually requires access to a payment system it cannot reach.",
     question: "What is the core architectural failure?",
     options: [
-      "The model is too small",
+      "The agent should be given direct write access to the payment system",
       "There is no escalation/handoff path defined for tasks outside the agent's tool boundary",
-      "The temperature is set too high",
-      "The system prompt is too long"
+      "The agent needs more few-shot examples of billing disputes",
+      "The agent should reason longer before answering instead of escalating"
     ],
     correct: 1,
     explanation: "Agents must know when to escalate to a human or another system. Define explicit boundaries and a handoff path for tasks the agent cannot complete with its available tools."
@@ -21,10 +21,10 @@ export const CURATED_QUESTIONS = [
     scenario: "Your multi-agent system runs five subagents sequentially, but three of them only read independent documents and never depend on each other's output.",
     question: "What is the best optimization?",
     options: [
-      "Merge all five into one giant prompt",
+      "Run all five subagents in parallel, including the two that depend on each other's output",
       "Run the three independent subagents in parallel and keep the dependent ones sequential",
-      "Add a sixth subagent",
-      "Increase max_tokens on each subagent"
+      "Merge all five into one giant prompt to avoid orchestration overhead",
+      "Cache each subagent's prompt so the sequential steps run faster"
     ],
     correct: 1,
     explanation: "Parallelize genuinely independent subtasks to cut latency; keep dependent steps sequential. Fan-out trades token cost for speed and only helps when work is independent."
@@ -36,7 +36,7 @@ export const CURATED_QUESTIONS = [
     options: [
       "Pass the complete structured findings (with sources) the writer needs, not a lossy summary",
       "Lower the writer's temperature to 0",
-      "Tell the writer to be more creative",
+      "Have the writer infer the missing specifics from its general knowledge of the topic",
       "Use a larger model for the writer only"
     ],
     correct: 0,
@@ -47,10 +47,10 @@ export const CURATED_QUESTIONS = [
     scenario: "A hub-and-spoke coordinator always invokes all subagents, even for a trivial query like 'what time is it'.",
     question: "What is the right design?",
     options: [
-      "Remove the coordinator entirely",
+      "Have the coordinator run every subagent in parallel instead of sequentially",
       "Have the coordinator assess query complexity and route only to the subagents that are needed",
-      "Make every subagent run twice for reliability",
-      "Hard-code the answer for every query type"
+      "Route every query to a single general-purpose subagent instead of specialized ones",
+      "Cache the full pipeline's output so repeated queries skip the subagents"
     ],
     correct: 1,
     explanation: "A coordinator should dynamically route based on the request, invoking only relevant spokes. Always running the full pipeline wastes tokens and latency."
@@ -60,10 +60,10 @@ export const CURATED_QUESTIONS = [
     scenario: "An agent loop decides it is done when the response text contains the word 'finished'.",
     question: "What is the reliable signal to use instead?",
     options: [
-      "Count the number of sentences",
+      "Check whether the response text ends with a period",
       "Check the stop_reason field (end_turn vs tool_use)",
-      "Look for an emoji",
-      "Measure response length in tokens"
+      "Look for keywords like 'done' or 'finished' anywhere in the text",
+      "Count the number of tool calls made so far"
     ],
     correct: 1,
     explanation: "Drive loop control off the structured stop_reason field, never by string-matching natural language, which is brittle and easily fooled."
@@ -78,7 +78,7 @@ export const CURATED_QUESTIONS = [
       "Add more tools to cover edge cases",
       "Consolidate overlapping tools and write clear, distinct descriptions and input_schemas",
       "Set tool_choice to 'any'",
-      "Increase max_tokens"
+      "Write more usage examples in each tool's description without reducing the tool count"
     ],
     correct: 1,
     explanation: "Tool overload causes selection errors. Fewer, well-bounded tools with precise descriptions and schemas reduce reasoning overload and improve correct selection."
@@ -102,9 +102,9 @@ export const CURATED_QUESTIONS = [
     question: "Which transport is appropriate?",
     options: [
       "stdio (run it as a local subprocess)",
-      "FTP",
-      "WebRTC",
-      "Raw TCP sockets with a custom protocol"
+      "Streamable HTTP, since it works for both local and remote servers",
+      "SSE, since it's simpler to set up than stdio",
+      "WebSockets, since they support bidirectional streaming"
     ],
     correct: 0,
     explanation: "Local MCP servers typically use the stdio transport, exchanging JSON-RPC over stdin/stdout. Remote/hosted servers use streamable HTTP."
@@ -124,8 +124,8 @@ export const CURATED_QUESTIONS = [
     options: [
       "Mark required fields as required in the JSON Schema and describe them clearly",
       "Add a retry loop only",
-      "Tell users to be more specific",
-      "Remove the schema"
+      "Add a detailed explanation of the required field in the system prompt instead of the schema",
+      "Set a default value for the field so it is never actually missing"
     ],
     correct: 0,
     explanation: "A precise input_schema with correct required fields and good descriptions is how you make tool calls reliable — the schema is part of the prompt."
@@ -147,7 +147,7 @@ export const CURATED_QUESTIONS = [
     options: [
       "Permission rules in settings.json (allow/deny)",
       "A long instruction in CLAUDE.md hoping the model complies",
-      "Running Claude as root",
+      "A PreToolUse hook that logs risky commands but does not block them",
       "A PostToolUse hook"
     ],
     correct: 0,
@@ -157,7 +157,7 @@ export const CURATED_QUESTIONS = [
     domain: 3, difficulty: 3, cat: "curated",
     scenario: "Your team wants Claude Code to run a security secret-scan and reject the change if a secret is detected, before any file is written.",
     question: "Which feature enforces this?",
-    options: ["A PreToolUse hook that can block the tool call", "A custom slash command", "Output styles", "Plan mode"],
+    options: ["A PreToolUse hook that can block the tool call", "A custom slash command", "A PostToolUse hook that reverts the write if a secret is found", "Plan mode"],
     correct: 0,
     explanation: "PreToolUse hooks run before a tool executes and can block or modify it — the right place for deterministic pre-write gates like secret scanning."
   },
@@ -165,7 +165,7 @@ export const CURATED_QUESTIONS = [
     domain: 3, difficulty: 2, cat: "curated",
     scenario: "Before letting Claude touch a fragile legacy module, you want it to lay out exactly what it will change and make no edits until you approve.",
     question: "What should you use?",
-    options: ["Plan mode", "Headless mode", "/clear", "A subagent"],
+    options: ["Plan mode", "Headless mode", "Permission deny rules for the Edit and Write tools", "A subagent"],
     correct: 0,
     explanation: "Plan mode is read-only: Claude proposes a plan and makes no edits until you approve — ideal for high-risk changes."
   },
@@ -185,8 +185,8 @@ export const CURATED_QUESTIONS = [
     question: "What is the most reliable fix?",
     options: [
       "Prefill the assistant turn with '{' and specify 'output only valid JSON'",
-      "Lower temperature to 0 and hope",
-      "Add 'please' to the prompt",
+      "Lower temperature to 0 to reduce randomness in the output",
+      "Add a strongly worded instruction such as 'You must only output JSON'",
       "Retry up to 50 times"
     ],
     correct: 0,
@@ -198,9 +198,9 @@ export const CURATED_QUESTIONS = [
     question: "Which technique most improves format consistency?",
     options: [
       "Few-shot examples showing the exact label format",
-      "Raising max_tokens",
-      "Adding more adjectives",
-      "Switching to streaming"
+      "Writing a longer, more detailed instruction describing the desired format",
+      "Asking the model to double-check its own formatting before responding",
+      "Increasing the temperature to encourage varied phrasing"
     ],
     correct: 0,
     explanation: "Few-shot examples demonstrate the precise output pattern, dramatically improving format consistency over an instruction alone."
@@ -211,9 +211,9 @@ export const CURATED_QUESTIONS = [
     question: "What structuring technique helps most?",
     options: [
       "Wrap the contract in <document> tags and the ask in <question> tags",
-      "Make the prompt one long paragraph",
-      "Use ALL CAPS",
-      "Remove all formatting"
+      "Put the contract and the question in plain text with a blank line between them",
+      "Repeat the question again at the very end of the contract text",
+      "Summarize the contract before including it"
     ],
     correct: 0,
     explanation: "XML tags delimit distinct sections so the model reliably separates source material from instructions."
@@ -224,9 +224,9 @@ export const CURATED_QUESTIONS = [
     question: "What is the robust production pattern?",
     options: [
       "Validate against the schema and, on failure, retry with the validation error fed back to the model",
-      "Trust the output and ship it",
+      "Wrap the field in a try/catch and substitute a default value on failure",
       "Manually fix outputs after the fact",
-      "Increase temperature for variety"
+      "Ask the model to double-check its own JSON before finalizing, without external validation"
     ],
     correct: 0,
     explanation: "A validation + retry loop (schema-validate, then re-prompt with the specific error) is the reliable way to enforce structured output at scale."
@@ -238,7 +238,7 @@ export const CURATED_QUESTIONS = [
     options: [
       "Ask it to reason step by step before the final answer (chain-of-thought)",
       "Forbid any explanation",
-      "Lower max_tokens",
+      "Provide five few-shot examples of correctly-worked problems, but without showing their reasoning steps",
       "Ask the same question twice"
     ],
     correct: 0,
@@ -253,8 +253,8 @@ export const CURATED_QUESTIONS = [
     options: [
       "Compact/summarize older turns while preserving key state",
       "Always start over with /clear and lose all state",
-      "Switch to a smaller model",
-      "Ignore it"
+      "Truncate the oldest turns and discard them entirely",
+      "Keep sending the full history and rely on prompt caching to offset the cost"
     ],
     correct: 0,
     explanation: "Compaction summarizes earlier context while preserving essential state, keeping the agent within the window without losing the thread."
@@ -265,9 +265,9 @@ export const CURATED_QUESTIONS = [
     question: "Which feature cuts cost and latency the most?",
     options: [
       "Prompt caching the stable prefix",
-      "Lowering temperature",
-      "Sending the document as an image",
-      "Using more stop_sequences"
+      "Shortening the document to reduce input tokens on every request",
+      "Splitting the document across multiple requests to parallelize",
+      "Switching to a smaller, faster model for these requests"
     ],
     correct: 0,
     explanation: "Prompt caching a large, stable prefix reused across many calls cuts both cost (reads at a fraction of base) and latency substantially."
@@ -278,7 +278,7 @@ export const CURATED_QUESTIONS = [
     question: "What prevents the duplicate side effect?",
     options: [
       "An idempotency key on the mutation so retries are deduplicated",
-      "Retrying faster",
+      "Retrying only once instead of multiple times",
       "Never retrying",
       "Logging the error only"
     ],
@@ -292,8 +292,8 @@ export const CURATED_QUESTIONS = [
     options: [
       "Confidence calibration with an escalation threshold to a human",
       "Always act to seem helpful",
-      "Raise temperature",
-      "Disable tools"
+      "Add more few-shot examples of confident responses",
+      "Require the agent to double-check its answer once before acting"
     ],
     correct: 0,
     explanation: "Calibrate confidence and define a threshold below which the agent escalates to a human, rather than acting on low-confidence decisions."
@@ -305,7 +305,7 @@ export const CURATED_QUESTIONS = [
     options: [
       "The usage field on the API response",
       "The stop_reason field",
-      "The system prompt",
+      "The X-RateLimit-* response headers",
       "You must estimate it manually"
     ],
     correct: 0,
@@ -319,7 +319,7 @@ export const CURATED_QUESTIONS = [
     question: "What guardrail was missing?",
     options: [
       "A deterministic policy check (tool/code) that enforces the refund limit regardless of how the request is phrased",
-      "A larger model",
+      "A confirmation step where the agent restates the policy before acting",
       "A longer system prompt",
       "More few-shot examples of refunds"
     ],
@@ -334,7 +334,7 @@ export const CURATED_QUESTIONS = [
       "Checkpoint completed steps and resume from the last good state",
       "Never retry",
       "Always restart — it is simpler",
-      "Increase max_tokens"
+      "Retry the failed step alone but re-validate every prior step's output too"
     ],
     correct: 0,
     explanation: "Durable agents checkpoint progress so a retry resumes from the last successful step rather than redoing completed, costly work."
@@ -345,9 +345,9 @@ export const CURATED_QUESTIONS = [
     question: "What is the core issue?",
     options: [
       "Shared mutable state without clear ownership — give each subagent its own output and let the coordinator merge",
-      "The subagents are too slow",
-      "The model is too small",
-      "There are too few subagents"
+      "The subagents should take turns writing with a fixed delay between them",
+      "The subagents need a shared lock file to coordinate write order",
+      "The scratchpad file needs to be larger to fit both outputs"
     ],
     correct: 0,
     explanation: "Concurrent agents need clear data ownership. Have each produce its own structured output and let the coordinator merge, rather than racing on shared mutable state."
@@ -358,8 +358,8 @@ export const CURATED_QUESTIONS = [
     question: "What should you add?",
     options: [
       "A loop/iteration budget and a check for progress so the agent stops or changes strategy",
-      "More tools",
-      "A bigger context window",
+      "A more detailed prompt telling it to try harder",
+      "Automatic retries of the exact same query with no changes",
       "Higher temperature"
     ],
     correct: 0,
@@ -372,8 +372,8 @@ export const CURATED_QUESTIONS = [
     options: [
       "Use a single agent — multi-agent orchestration adds cost and failure modes without benefit here",
       "Add a fifth agent for redundancy",
-      "Keep it; more agents are always better",
-      "Run the four agents twice"
+      "Keep it, since multi-agent systems are inherently more accurate than single agents",
+      "Keep the four agents but reduce their max_tokens to cut cost"
     ],
     correct: 0,
     explanation: "Match architecture to task complexity. Multi-agent systems add latency, cost and coordination failure modes; a single agent is best when the task is simple."
@@ -386,9 +386,9 @@ export const CURATED_QUESTIONS = [
     question: "What tool-design principle is violated?",
     options: [
       "Tools must return clear, truthful success/error results so the model can react correctly",
-      "Tools should never return errors",
-      "The model should guess whether it worked",
-      "Email tools should not validate input"
+      "Tools should only report errors for critical failures, not validation issues",
+      "The model should assume success unless explicitly told otherwise",
+      "Validation should happen only on the client side before the tool is called"
     ],
     correct: 0,
     explanation: "Tool results must accurately report outcomes, including errors. Silent false-success makes the agent act on a wrong world model."
@@ -399,9 +399,9 @@ export const CURATED_QUESTIONS = [
     question: "Why is this a poor design?",
     options: [
       "It overloads one tool's reasoning; split it into focused tools with precise schemas",
-      "It uses too few parameters",
-      "Free-text params are always best",
-      "Tools should never have parameters"
+      "The tool's JSON Schema exceeds MCP's maximum parameter count",
+      "Free-text action strings are inherently invalid JSON",
+      "MCP servers are limited to a single tool definition each"
     ],
     correct: 0,
     explanation: "Overloaded catch-all tools make selection and argument-filling unreliable. Prefer several focused tools with clear, typed input_schemas."
@@ -421,7 +421,7 @@ export const CURATED_QUESTIONS = [
     options: [
       "Accept an idempotency key so repeated calls with the same key act once",
       "Make the tool faster",
-      "Remove the timeout",
+      "Add a longer timeout so retries happen less often",
       "Charge only on the second attempt"
     ],
     correct: 0,
@@ -449,7 +449,7 @@ export const CURATED_QUESTIONS = [
     options: [
       "Headless mode with deny permission rules blocking write/destructive tools",
       "Interactive mode with all permissions allowed",
-      "Run it as an admin with no rules",
+      "Headless mode with only a CLAUDE.md instruction not to push or delete",
       "Disable Claude Code in CI"
     ],
     correct: 0,
@@ -463,7 +463,7 @@ export const CURATED_QUESTIONS = [
       "A PostToolUse hook that runs the formatter after edits",
       "A custom slash command run manually",
       "CLAUDE.md asking the model to format",
-      "Plan mode"
+      "A PreToolUse hook that runs the formatter before the edit is made"
     ],
     correct: 0,
     explanation: "PostToolUse hooks run automatically after a tool completes — the deterministic place to auto-format edited files."
@@ -478,7 +478,7 @@ export const CURATED_QUESTIONS = [
       "Add a grounding guardrail: 'Only use facts from the <document>; if absent, say so' and cite the source",
       "Raise temperature",
       "Ask for a longer summary",
-      "Remove the document"
+      "Ask the model to cross-reference its general knowledge for additional context"
     ],
     correct: 0,
     explanation: "Explicit grounding guardrails that forbid using outside facts and require citing the source materially reduce hallucinated detail."
@@ -490,8 +490,8 @@ export const CURATED_QUESTIONS = [
     options: [
       "Enumerate the allowed labels, instruct it to choose only from them, and validate the output against the set",
       "Hope it complies",
-      "Increase max_tokens",
-      "Add more adjectives to the prompt"
+      "Give one example each of the five allowed labels in the prompt",
+      "Ask the model to pick the best label without listing the options explicitly"
     ],
     correct: 0,
     explanation: "Constrain the output space explicitly (enumerated allowed values) and validate against it; reject/retry on out-of-set answers."
@@ -502,8 +502,8 @@ export const CURATED_QUESTIONS = [
     question: "What is the fix?",
     options: [
       "Break the instruction into a numbered list of explicit, ordered steps",
-      "Make the paragraph longer",
-      "Use ALL CAPS for the whole prompt",
+      "Move the last requirement to the very beginning of the paragraph",
+      "Repeat the entire paragraph twice in the prompt",
       "Lower temperature"
     ],
     correct: 0,
@@ -519,7 +519,7 @@ export const CURATED_QUESTIONS = [
       "Write a compact structured summary of decisions/state and seed the new session with it",
       "Replay every raw message verbatim",
       "Start over with no context",
-      "Increase the context window indefinitely"
+      "Keep the same session open indefinitely across days"
     ],
     correct: 0,
     explanation: "Handoffs use a compact structured summary of key decisions and state — preserving what matters without replaying the entire transcript."
@@ -532,7 +532,7 @@ export const CURATED_QUESTIONS = [
       "Exponential backoff with jitter, honoring Retry-After",
       "Retry every 100ms until it works",
       "Never retry",
-      "Switch to a bigger model"
+      "Retry immediately but only from a single client to avoid a thundering herd"
     ],
     correct: 0,
     explanation: "Use exponential backoff with jitter and honor Retry-After to avoid synchronized retry storms that worsen rate limiting."
@@ -543,8 +543,8 @@ export const CURATED_QUESTIONS = [
     question: "What is the better approach?",
     options: [
       "Retrieve fewer, higher-relevance chunks — more context is not always better",
-      "Always include more chunks",
-      "Remove retrieval entirely",
+      "Increase the chunk size so fewer, larger chunks are retrieved",
+      "Rerank all 50 chunks but still include all of them in order",
       "Raise temperature"
     ],
     correct: 0,

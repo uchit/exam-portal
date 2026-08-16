@@ -118,19 +118,32 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
   border-bottom:1px solid var(--border);
 }
 .topbar-inner { max-width:var(--maxw); margin:0 auto; height:100%; padding:0 22px; display:flex; align-items:center; gap:20px; }
-.brand { display:flex; align-items:center; gap:11px; }
+.brand { display:flex; align-items:center; gap:11px; flex:none; }
 .brand-mark {
   width:34px; height:34px; border-radius:9px; display:grid; place-items:center;
   font-weight:800; color:#fff; font-size:17px;
   background:var(--primary);
 }
 .brand-text { display:flex; flex-direction:column; line-height:1.15; }
-.brand-text strong { font-size:15px; font-weight:800; letter-spacing:-.01em; }
+.brand-text strong { font-size:15px; font-weight:800; letter-spacing:-.01em; white-space:nowrap; }
 .brand-sub { font-size:11px; color:var(--text-3); font-weight:600; letter-spacing:.04em; text-transform:uppercase; }
-.topnav { display:flex; gap:4px; margin-left:8px; }
+.topnav { display:flex; gap:4px; margin-left:8px; flex:none; }
 .topnav a {
   padding:8px 13px; border-radius:10px; font-size:14px; font-weight:600; color:var(--text-2);
-  transition:.18s var(--ease);
+  white-space:nowrap; transition:.18s var(--ease);
+}
+@media (max-width:1140px) {
+  .topbar-inner { gap:8px; padding:0 14px; }
+  .brand-sub { display:none; }
+  .topnav { gap:0; }
+  .topnav a { padding:8px 8px; font-size:13.5px; }
+}
+@media (max-width:960px) and (min-width:761px) {
+  .bank-chip { display:none; }
+}
+@media (max-width:840px) and (min-width:761px) {
+  .brand-text strong { font-size:14px; }
+  .topnav a { padding:7px 6px; font-size:13px; }
 }
 .topnav a:hover { color:var(--text); background:var(--surface-2); }
 .topnav a.active { color:var(--primary); background:color-mix(in srgb, var(--primary) 12%, transparent); }
@@ -241,10 +254,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 
 /* domain cards */
 .domain-card { display:flex; flex-direction:column; gap:12px; }
-.domain-head { display:flex; align-items:center; gap:12px; }
-.domain-dot { width:12px; height:12px; border-radius:50%; flex:none; }
-.domain-card h3 { font-size:16px; font-weight:800; letter-spacing:-.01em; }
-.domain-weight { margin-left:auto; font-size:12px; font-weight:800; color:var(--text-3); background:var(--surface-2); padding:4px 9px; border-radius:8px; }
+.domain-head { display:flex; align-items:flex-start; gap:10px; }
+.domain-head-title { display:flex; align-items:flex-start; gap:10px; flex:1; min-width:0; }
+.domain-dot { width:12px; height:12px; border-radius:50%; flex:none; margin-top:5px; }
+.domain-card h3 { font-size:16px; font-weight:800; letter-spacing:-.01em; text-wrap:balance; }
+.domain-weight { flex:none; font-size:12px; font-weight:800; color:var(--text-3); background:var(--surface-2); padding:4px 9px; border-radius:8px; }
 .domain-card p { color:var(--text-2); font-size:13.5px; line-height:1.5; }
 .progress-track { height:8px; border-radius:99px; background:var(--surface-2); overflow:hidden; border:1px solid var(--border); }
 .progress-fill { height:100%; border-radius:99px; transition:width .6s var(--ease); }

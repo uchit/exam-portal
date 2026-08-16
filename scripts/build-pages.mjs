@@ -661,7 +661,14 @@ write("resources.html", staticPage({
       <h1>Resources</h1>
       <p class="prose-dek">Official material, used sparingly, as reference — practice questions are still where most CCA-F prep should happen.</p>
     </div>
-    <p class="section-title">Official documentation</p>
+    <p class="section-title">Use it inside Claude Code</p>
+    <div class="card">
+      <p style="color:var(--text-2);font-size:14.5px;margin-bottom:10px">The glossary and quick reference are also available as a Claude Code plugin — ask it to explain a concept or quiz you, without leaving your terminal.</p>
+      <pre style="background:var(--code-bg);border-radius:10px;padding:12px 14px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.6"><code>/plugin marketplace add uchit/exam-portal
+/plugin install claude-cert-prep@claude-cert-prep-marketplace</code></pre>
+      <p style="color:var(--text-3);font-size:12.5px;margin-top:10px">Source: <a href="https://github.com/uchit/exam-portal" target="_blank" rel="noopener noreferrer">github.com/uchit/exam-portal</a></p>
+    </div>
+    <p class="section-title" style="margin-top:26px">Official documentation</p>
     <div class="card">
       <ul class="prep-list">
         <li><a href="https://docs.claude.com" target="_blank" rel="noopener noreferrer">Claude API documentation ↗</a> — full API reference, guides, and tutorials</li>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>settings.json and Permissions — Claude Cert Prep</title>
+  <meta name="description" content="How settings.json configures permissions, hooks, and environment variables, and how to design a correct allow/deny/ask permission set." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Uchit Vyas" />
+  <meta name="theme-color" content="#121214" />
+  <link rel="canonical" href="https://thatclaude.com/learn/3/3-2-settings-permissions" />
+  <meta property="og:site_name" content="Claude Cert Prep" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="settings.json and Permissions — Claude Cert Prep" />
+  <meta property="og:description" content="How settings.json configures permissions, hooks, and environment variables, and how to design a correct allow/deny/ask permission set." />
+  <meta property="og:url" content="https://thatclaude.com/learn/3/3-2-settings-permissions" />
+  <meta property="og:image" content="https://thatclaude.com/og-image.svg" />
+  <meta property="og:locale" content="en_US" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="settings.json and Permissions — Claude Cert Prep" />
+  <meta name="twitter:description" content="How settings.json configures permissions, hooks, and environment variables, and how to design a correct allow/deny/ask permission set." />
+  <meta name="twitter:image" content="https://thatclaude.com/og-image.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235B4FE0'/%3E%3Ctext x='50' y='69' font-size='56' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'%3EC%3C/text%3E%3C/svg%3E" />
+  <link rel="alternate" type="application/rss+xml" title="Claude Cert Prep Blog" href="/blog/feed.xml" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://thatclaude.com"},{"@type":"ListItem","position":2,"name":"Curriculum","item":"https://thatclaude.com/learn"},{"@type":"ListItem","position":3,"name":"Claude Code","item":"https://thatclaude.com/learn/3"},{"@type":"ListItem","position":4,"name":"settings.json and Permissions","item":"https://thatclaude.com/learn/3/3-2-settings-permissions"}]},{"@type":"LearningResource","name":"settings.json and Permissions","description":"How settings.json configures permissions, hooks, and environment variables, and how to design a correct allow/deny/ask permission set.","learningResourceType":"Lesson","educationalLevel":"Intermediate","timeRequired":"PT7M","isAccessibleForFree":true,"inLanguage":"en","author":{"@type":"Person","name":"Uchit Vyas","url":"https://hellouchit.com"},"isPartOf":{"@type":"Course","name":"Claude Certified Architect (CCA-F) Curriculum","url":"https://thatclaude.com/learn"}}]}</script>
+</head>
+<body>
+  <a class="skip-link" href="#app">Skip to content</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark">C</span>
+        <span class="brand-text">
+          <strong>Claude Cert Prep</strong>
+          <span class="brand-sub">CCA-F · Architect</span>
+        </span>
+      </a>
+      <nav class="topnav" aria-label="Primary">
+        <a href="/" data-nav="home">Home</a>
+        <a href="/practice" data-nav="practice">Practice</a>
+        <a href="/exam" data-nav="exam">Mock Exam</a>
+        <a href="/browse" data-nav="browse">Bank</a>
+        <a href="/prep" data-nav="prep">How to Pass</a>
+        <a href="/progress" data-nav="progress">Progress</a>
+      </nav>
+      <div class="topbar-actions">
+        <span class="bank-chip" id="bankChip" title="Total questions in the bank">…</span>
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark">
+          <span class="theme-icon"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <main id="app" class="app" tabindex="-1">
+    <article class="prose page-head">
+      <h1>settings.json and Permissions</h1>
+      <p class="prose-dek">How settings.json configures permissions, hooks, and environment variables, and how to design a correct allow/deny/ask permission set.</p>
+      <div class="prose-meta"><span style="color:#1F9D6B;font-weight:700">Claude Code</span><span>·</span><span>Lesson 2 of 6</span><span>·</span><span>7 min</span></div>
+      
+      <p>settings.json is the configuration file for Claude Code's behavior — it lives at the user level or the project level and covers permissions, hooks, environment variables, and other runtime behavior. Where CLAUDE.md tells Claude what it should know, settings.json tells Claude Code what it is allowed to do.</p>
+      <h2>Permission rules</h2>
+      <p>Permissions are expressed as rules that fall into three categories: <strong>allow</strong>, <strong>deny</strong>, and <strong>ask</strong>. Each rule targets a tool or a specific command pattern — for example, allowing <code>Bash(npm test:*)</code> while denying <code>Bash(rm -rf:*)</code>. When Claude Code is about to use a tool, it checks these rules to decide whether to proceed silently, block outright, or pause and prompt the user for confirmation.</p>
+      <p>The exam frames correct permission design as a specific design principle: the narrowest permission set that still lets the workflow complete. This is not the same as "deny everything by default" and it is not the same as "allow everything for convenience." Both extremes are wrong answers in different ways.</p>
+      <ul>
+        <li><strong>Blanket allow</strong> (e.g., allowing all Bash commands) removes friction but also removes the safety net — a single hallucinated or misinterpreted instruction can run a destructive command with no checkpoint.</li>
+        <li><strong>Blanket ask</strong> (prompting for every single tool call) technically keeps a human in the loop but destroys the productivity benefit of an agentic workflow — you end up rubber-stamping dozens of prompts per session, which trains people to click "yes" reflexively, defeating the purpose of the check.</li>
+        <li><strong>Narrowest workable set</strong> means allowing the specific, low-risk, high-frequency operations a given workflow actually needs (running the test suite, reading files, formatting code), asking for medium-risk or ambiguous operations, and denying operations that should never happen in this project regardless of context (pushing to main, deleting the database, curl-ing to arbitrary external hosts).</li>
+      </ul>
+      <div class="callout"><b>Exam trap</b> A common distractor pattern presents two options: one that allows broad tool categories "to reduce interruptions" and one that denies almost everything "to be safe," and asks you to pick the better practice. Neither is correct — the right answer is almost always the option describing scoped, workflow-specific allow rules combined with deny rules for genuinely dangerous operations, leaving ask as the fallback for the gray area in between. If an option describes permissions as all-or-nothing, it is wrong.</div>
+      <h2>Where settings live</h2>
+      <p>settings.json can exist at the user level (applies across all your projects) and at the project level (checked into the repo, shared with the team, typically the place for permissions that reflect what's actually safe in this specific codebase). Project-level settings.json is how a team standardizes what an agent may do in their repo without relying on every individual engineer remembering to configure it themselves — this is distinct from CLAUDE.md, which shapes what Claude knows, not what it's allowed to execute.</p>
+      <p>settings.json is also where hooks get registered and where environment variables for the Claude Code process get set — permissions are the piece most heavily tested, but don't lose sight of the fact that this one file is the general behavior-configuration surface, not a permissions-only file.</p>
+      <blockquote>Scenario: A team wants Claude Code to autonomously run their test suite and linter, read any file in the repo, and propose git commits, but they never want it to push directly to any remote branch or install new npm packages without asking. What's the correct settings.json design? Allow <code>Bash(npm test:*)</code>, <code>Bash(npm run lint:*)</code>, and file-read tools; set <code>Bash(git push:*)</code> to deny (not ask — "never" means never, and ask still permits a tired reviewer to approve it by habit); set package installation commands to ask, since it's a judgment call that depends on which package. This mixes all three rule types deliberately rather than defaulting to one.</blockquote>
+      <h2>Rule specificity</h2>
+      <p>Permission rules can be scoped narrowly, down to a specific command pattern, rather than only at the level of a whole tool. Allowing all of <code>Bash</code> is very different from allowing only <code>Bash(npm test:*)</code> — the exam expects you to recognize that a rule written at the tool level (all Bash) is almost never the narrowest workable set, because "Bash" covers everything from running a linter to deleting a partition. Well-designed permission sets tend to have many small, specific allow rules rather than one broad one, precisely because that specificity is what lets you allow the 90 percent of commands that are routine while still asking or denying the ones that aren't.</p>
+      <h2>Try it</h2>
+      <p>Open (or create) <code>.claude/settings.json</code> in a real project. Add an allow rule for your test command, a deny rule for a command you never want run automatically (like <code>git push --force</code>), and leave everything else on the default ask behavior. Start a session and try to trigger each rule to confirm the permission system responds the way you configured it.</p>
+    
+      
+    </article>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px">
+      <a class="btn btn-outline" href="/learn/3/3-1-claude-md-hierarchy">← CLAUDE.md and the Memory Hierarchy</a>
+      <a class="btn btn-solid" href="/learn/3/3-3-slash-commands-vs-skills">Slash Commands vs. Skills →</a>
+    </div>
+  </main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>Unofficial study aid · Not affiliated with Anthropic.</span>
+      <nav class="footer-nav" aria-label="More">
+        <a href="/learn">Curriculum</a>
+        <a href="/glossary">Glossary</a>
+        <a href="/reference">Quick Reference</a>
+        <a href="/blog">Blog</a>
+        <a href="/certifications">Certifications</a>
+        <a href="/resources">Resources</a>
+        <a href="/about">About</a>
+        <a href="/changelog">Changelog</a>
+      </nav>
+      <span>Blueprint mirrors the Claude Certified Architect — Foundations (CCA-F).</span>
+      <span>Developed by <a href="https://hellouchit.com" target="_blank" rel="noopener noreferrer">Uchit Vyas</a></span>
+    </div>
+  </footer>
+
+  <nav class="bottomnav" aria-label="Primary mobile">
+    <a href="/" data-nav="home"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg></span><span>Home</span></a>
+    <a href="/practice" data-nav="practice"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3 5 13.5h5.5L11 21l8-10.5h-5.5L13 3Z"/></svg></span><span>Practice</span></a>
+    <a href="/exam" data-nav="exam"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9.5 2.5h5"/><path d="M18.5 5.5 20 4"/></svg></span><span>Exam</span></a>
+    <a href="/browse" data-nav="browse"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21V5.5Z"/><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"/></svg></span><span>Bank</span></a>
+    <a href="/prep" data-nav="prep"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5 12 5l10 4.5-10 4.5-10-4.5Z"/><path d="M6.5 11.7v4.3c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3v-4.3"/><path d="M21 9.5v6"/></svg></span><span>Pass</span></a>
+    <a href="/progress" data-nav="progress"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/></svg></span><span>Stats</span></a>
+  </nav>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

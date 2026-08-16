@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Error Handling and Tool Distribution Choices — Claude Cert Prep</title>
+  <meta name="description" content="How to design structured tool error responses and how to choose between a built-in tool, an MCP server, and a skill." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Uchit Vyas" />
+  <meta name="theme-color" content="#121214" />
+  <link rel="canonical" href="https://thatclaude.com/learn/2/2-6-error-handling-distribution" />
+  <meta property="og:site_name" content="Claude Cert Prep" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="Error Handling and Tool Distribution Choices — Claude Cert Prep" />
+  <meta property="og:description" content="How to design structured tool error responses and how to choose between a built-in tool, an MCP server, and a skill." />
+  <meta property="og:url" content="https://thatclaude.com/learn/2/2-6-error-handling-distribution" />
+  <meta property="og:image" content="https://thatclaude.com/og-image.svg" />
+  <meta property="og:locale" content="en_US" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Error Handling and Tool Distribution Choices — Claude Cert Prep" />
+  <meta name="twitter:description" content="How to design structured tool error responses and how to choose between a built-in tool, an MCP server, and a skill." />
+  <meta name="twitter:image" content="https://thatclaude.com/og-image.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235B4FE0'/%3E%3Ctext x='50' y='69' font-size='56' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'%3EC%3C/text%3E%3C/svg%3E" />
+  <link rel="alternate" type="application/rss+xml" title="Claude Cert Prep Blog" href="/blog/feed.xml" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://thatclaude.com"},{"@type":"ListItem","position":2,"name":"Curriculum","item":"https://thatclaude.com/learn"},{"@type":"ListItem","position":3,"name":"Tools & MCP","item":"https://thatclaude.com/learn/2"},{"@type":"ListItem","position":4,"name":"Error Handling and Tool Distribution Choices","item":"https://thatclaude.com/learn/2/2-6-error-handling-distribution"}]},{"@type":"LearningResource","name":"Error Handling and Tool Distribution Choices","description":"How to design structured tool error responses and how to choose between a built-in tool, an MCP server, and a skill.","learningResourceType":"Lesson","educationalLevel":"Intermediate","timeRequired":"PT8M","isAccessibleForFree":true,"inLanguage":"en","author":{"@type":"Person","name":"Uchit Vyas","url":"https://hellouchit.com"},"isPartOf":{"@type":"Course","name":"Claude Certified Architect (CCA-F) Curriculum","url":"https://thatclaude.com/learn"}}]}</script>
+</head>
+<body>
+  <a class="skip-link" href="#app">Skip to content</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark">C</span>
+        <span class="brand-text">
+          <strong>Claude Cert Prep</strong>
+          <span class="brand-sub">CCA-F · Architect</span>
+        </span>
+      </a>
+      <nav class="topnav" aria-label="Primary">
+        <a href="/" data-nav="home">Home</a>
+        <a href="/practice" data-nav="practice">Practice</a>
+        <a href="/exam" data-nav="exam">Mock Exam</a>
+        <a href="/browse" data-nav="browse">Bank</a>
+        <a href="/prep" data-nav="prep">How to Pass</a>
+        <a href="/progress" data-nav="progress">Progress</a>
+      </nav>
+      <div class="topbar-actions">
+        <span class="bank-chip" id="bankChip" title="Total questions in the bank">…</span>
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark">
+          <span class="theme-icon"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <main id="app" class="app" tabindex="-1">
+    <article class="prose page-head">
+      <h1>Error Handling and Tool Distribution Choices</h1>
+      <p class="prose-dek">How to design structured tool error responses and how to choose between a built-in tool, an MCP server, and a skill.</p>
+      <div class="prose-meta"><span style="color:#1AA6B7;font-weight:700">Tools &amp; MCP</span><span>·</span><span>Lesson 6 of 6</span><span>·</span><span>8 min</span></div>
+      
+      <p>This lesson covers two related decisions that show up together on the exam: how a tool should report failure, and which mechanism — built-in tool, MCP server, or skill/slash command — should carry a given piece of functionality in the first place.</p>
+      <h2>Structured error responses</h2>
+      <p>When a tool call fails for any reason — invalid input that passed schema validation but failed at runtime, a downstream service being unavailable, a permission denial, a not-found condition — the response sent back to the model should always be a <code>tool_result</code> with <code>is_error: true</code> and a message describing what went wrong in plain, actionable language. This is what lets the model self-correct on the next turn: it can see that the call failed, understand roughly why, and either retry with adjusted input, try a different tool, or surface the problem to the user instead of confabulating a fake success.</p>
+      <p>What that error message should never contain is a raw stack trace, a database error code with no explanation, or an internal exception string. Those are meaningless to the model as guidance and often leak implementation details (table names, internal paths, library versions) that shouldn't be exposed. The fix is to catch the underlying error in your tool implementation and translate it into a short, human-readable sentence describing what went wrong and, where possible, what a valid retry would look like — for example, "no customer found with id cus_004, check the id format" rather than "KeyError: 'cus_004' at db/lookup.py:52."</p>
+      <div class="callout"><b>Exam trap</b> A question shows a tool implementation that, on failure, returns the full exception text (including file paths and a stack trace) inside a tool_result with is_error:true correctly set. Test-takers sometimes mark this fully correct because the is_error flag is present. But returning a raw stack trace as the error content is itself the flaw being tested — is_error:true is necessary but not sufficient; the content also has to be a clear, actionable message the model can act on. Both conditions must hold.</div>
+      <h2>Choosing how to expose a capability</h2>
+      <p>Given some piece of functionality you want an agent to have, there are three common ways to expose it, and the exam expects you to pick the right one for a given scenario rather than defaulting to MCP for everything:</p>
+      <ul>
+        <li><strong>Built-in tool</strong>: if a built-in tool already does what's needed — Bash, the text editor tool, web search, web fetch — use it rather than building a custom equivalent. Reimplementing "run a shell command" or "fetch a URL" as a custom MCP tool adds maintenance burden and duplicated surface area for no benefit over the tool Anthropic already ships and maintains.</li>
+        <li><strong>MCP server</strong>: use this for integrations with an external system — a SaaS API, a database, a ticketing system — especially when that integration needs to be reused across multiple projects or multiple host applications. The value of MCP is standardizing that integration once so it's portable; if you'll only ever use it in one project and it involves no external system, MCP is more infrastructure than the problem needs.</li>
+        <li><strong>Skill or slash command</strong>: use this for a project-local workflow that doesn't talk to any external system — packaging up a sequence of steps, a house style, or a repeatable procedure that's specific to one codebase or one team's way of working. There's no external system to integrate with, so standing up a server is unnecessary; a skill or slash command captures the workflow directly where it's used.</li>
+      </ul>
+      <div class="callout"><b>Exam trap</b> A scenario describes wanting to automate a purely local, repo-specific code review checklist with no external system involved, and offers "build an MCP server for it" as an answer choice. This is the over-engineering trap: MCP is for external-system integration, and a purely local, project-specific workflow with nothing external to talk to belongs in a skill or slash command, not a server. Don't reach for MCP just because the exam domain is about MCP — the correct answer is sometimes explicitly not MCP.</div>
+      <blockquote>Scenario: a team wants their agent to (1) run repo-local lint-and-format checks before committing, (2) query their production Postgres database, and (3) fetch arbitrary web pages for research. The right distribution is: (1) a skill or slash command, since it's a local workflow with no external system; (2) an MCP server, since Postgres is an external system that multiple team members and projects will want to query the same way; (3) the built-in web fetch tool, since Claude already ships one and there's no reason to rebuild it.</blockquote>
+      <h2>Try it</h2>
+      <p>Take a tool you've built or are considering building. Write out its failure modes (bad input, downstream timeout, not-found, permission denied) and draft the exact is_error:true message text for each — not a category, the literal sentence the model would receive. Then separately classify the tool itself: should it actually be a custom tool at all, or does it duplicate a built-in, belong in an MCP server, or belong in a skill instead?</p>
+    
+      
+    </article>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px">
+      <a class="btn btn-outline" href="/learn/2/2-5-transport-choice">← Transport Choice: stdio vs. Streamable HTTP</a>
+      <a class="btn btn-solid" href="/learn/3/3-1-claude-md-hierarchy">CLAUDE.md and the Memory Hierarchy →</a>
+    </div>
+  </main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>Unofficial study aid · Not affiliated with Anthropic.</span>
+      <nav class="footer-nav" aria-label="More">
+        <a href="/learn">Curriculum</a>
+        <a href="/glossary">Glossary</a>
+        <a href="/reference">Quick Reference</a>
+        <a href="/blog">Blog</a>
+        <a href="/certifications">Certifications</a>
+        <a href="/resources">Resources</a>
+        <a href="/about">About</a>
+        <a href="/changelog">Changelog</a>
+      </nav>
+      <span>Blueprint mirrors the Claude Certified Architect — Foundations (CCA-F).</span>
+      <span>Developed by <a href="https://hellouchit.com" target="_blank" rel="noopener noreferrer">Uchit Vyas</a></span>
+    </div>
+  </footer>
+
+  <nav class="bottomnav" aria-label="Primary mobile">
+    <a href="/" data-nav="home"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg></span><span>Home</span></a>
+    <a href="/practice" data-nav="practice"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3 5 13.5h5.5L11 21l8-10.5h-5.5L13 3Z"/></svg></span><span>Practice</span></a>
+    <a href="/exam" data-nav="exam"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9.5 2.5h5"/><path d="M18.5 5.5 20 4"/></svg></span><span>Exam</span></a>
+    <a href="/browse" data-nav="browse"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21V5.5Z"/><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"/></svg></span><span>Bank</span></a>
+    <a href="/prep" data-nav="prep"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5 12 5l10 4.5-10 4.5-10-4.5Z"/><path d="M6.5 11.7v4.3c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3v-4.3"/><path d="M21 9.5v6"/></svg></span><span>Pass</span></a>
+    <a href="/progress" data-nav="progress"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/></svg></span><span>Stats</span></a>
+  </nav>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

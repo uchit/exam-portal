@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CLAUDE.md and the Memory Hierarchy — Claude Cert Prep</title>
+  <meta name="description" content="How CLAUDE.md files at different scopes combine into Claude Code's context, and why merging is not overriding." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Uchit Vyas" />
+  <meta name="theme-color" content="#121214" />
+  <link rel="canonical" href="https://thatclaude.com/learn/3/3-1-claude-md-hierarchy" />
+  <meta property="og:site_name" content="Claude Cert Prep" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="CLAUDE.md and the Memory Hierarchy — Claude Cert Prep" />
+  <meta property="og:description" content="How CLAUDE.md files at different scopes combine into Claude Code's context, and why merging is not overriding." />
+  <meta property="og:url" content="https://thatclaude.com/learn/3/3-1-claude-md-hierarchy" />
+  <meta property="og:image" content="https://thatclaude.com/og-image.svg" />
+  <meta property="og:locale" content="en_US" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="CLAUDE.md and the Memory Hierarchy — Claude Cert Prep" />
+  <meta name="twitter:description" content="How CLAUDE.md files at different scopes combine into Claude Code's context, and why merging is not overriding." />
+  <meta name="twitter:image" content="https://thatclaude.com/og-image.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235B4FE0'/%3E%3Ctext x='50' y='69' font-size='56' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'%3EC%3C/text%3E%3C/svg%3E" />
+  <link rel="alternate" type="application/rss+xml" title="Claude Cert Prep Blog" href="/blog/feed.xml" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://thatclaude.com"},{"@type":"ListItem","position":2,"name":"Curriculum","item":"https://thatclaude.com/learn"},{"@type":"ListItem","position":3,"name":"Claude Code","item":"https://thatclaude.com/learn/3"},{"@type":"ListItem","position":4,"name":"CLAUDE.md and the Memory Hierarchy","item":"https://thatclaude.com/learn/3/3-1-claude-md-hierarchy"}]},{"@type":"LearningResource","name":"CLAUDE.md and the Memory Hierarchy","description":"How CLAUDE.md files at different scopes combine into Claude Code's context, and why merging is not overriding.","learningResourceType":"Lesson","educationalLevel":"Intermediate","timeRequired":"PT7M","isAccessibleForFree":true,"inLanguage":"en","author":{"@type":"Person","name":"Uchit Vyas","url":"https://hellouchit.com"},"isPartOf":{"@type":"Course","name":"Claude Certified Architect (CCA-F) Curriculum","url":"https://thatclaude.com/learn"}}]}</script>
+</head>
+<body>
+  <a class="skip-link" href="#app">Skip to content</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark">C</span>
+        <span class="brand-text">
+          <strong>Claude Cert Prep</strong>
+          <span class="brand-sub">CCA-F · Architect</span>
+        </span>
+      </a>
+      <nav class="topnav" aria-label="Primary">
+        <a href="/" data-nav="home">Home</a>
+        <a href="/practice" data-nav="practice">Practice</a>
+        <a href="/exam" data-nav="exam">Mock Exam</a>
+        <a href="/browse" data-nav="browse">Bank</a>
+        <a href="/prep" data-nav="prep">How to Pass</a>
+        <a href="/progress" data-nav="progress">Progress</a>
+      </nav>
+      <div class="topbar-actions">
+        <span class="bank-chip" id="bankChip" title="Total questions in the bank">…</span>
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark">
+          <span class="theme-icon"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <main id="app" class="app" tabindex="-1">
+    <article class="prose page-head">
+      <h1>CLAUDE.md and the Memory Hierarchy</h1>
+      <p class="prose-dek">How CLAUDE.md files at different scopes combine into Claude Code's context, and why merging is not overriding.</p>
+      <div class="prose-meta"><span style="color:#1F9D6B;font-weight:700">Claude Code</span><span>·</span><span>Lesson 1 of 6</span><span>·</span><span>7 min</span></div>
+      
+      <p>CLAUDE.md is a memory file that Claude Code automatically loads into context at the start of a session, without you having to reference it manually. It typically documents project conventions, build and test commands, architectural constraints, and anything else you want Claude to "just know" every time it works in a given codebase. Think of it as persistent, always-on context, distinct from a one-off prompt you type into the session.</p>
+      <p>The exam tests one mechanic here more than any other: the memory hierarchy. Claude Code looks for CLAUDE.md files at multiple scopes, and it loads all of them into context simultaneously.</p>
+      <h2>The four scopes</h2>
+      <ul>
+        <li><strong>Enterprise</strong>: organization-wide policy, managed centrally, applies to every user and every project.</li>
+        <li><strong>User</strong>: personal preferences that follow you across all projects on your machine (for example, "always write commit messages in imperative mood").</li>
+        <li><strong>Project</strong>: checked into the repository, shared with every teammate who clones it (build commands, coding conventions, directory layout notes).</li>
+        <li><strong>Local</strong>: project-specific but not committed, for your own private notes or machine-specific paths.</li>
+      </ul>
+      <p>The critical fact: these four scopes are <strong>merged</strong>, not layered as overrides. A more specific file (say, project-level) does not replace or override what an enterprise-level or user-level CLAUDE.md says. It <strong>adds</strong> to it. All applicable CLAUDE.md content ends up concatenated into Claude's context. There is no precedence resolution where the closest file "wins" and discards the others.</p>
+      <p>This matters practically. If your enterprise CLAUDE.md says "never commit directly to main," and your project CLAUDE.md doesn't mention branching at all, that enterprise rule is still active in every session inside that project. You cannot silently override an inherited instruction just by staying quiet about it at a lower scope. If you want to change behavior at a lower scope, you have to say so explicitly, and even then both instructions are present in context — good CLAUDE.md authoring means avoiding direct contradictions between scopes, because Claude has to reconcile conflicting text, not automatically prefer the more specific file.</p>
+      <div class="callout"><b>Exam trap</b> Watch for answer choices that describe the hierarchy in override language: "the project CLAUDE.md overrides the user CLAUDE.md," or "local settings take precedence over and replace project settings." This is the single most common wrong-answer pattern in this domain. The correct mental model is additive merging across scopes, not a cascade where specificity wins. If an option uses the word "overrides" or "replaces" to describe CLAUDE.md scope interaction, it is almost certainly the distractor.</div>
+      <h2>What belongs in CLAUDE.md</h2>
+      <p>Good candidates: the exact commands to run tests and linters, naming conventions, directory structure explanations, known gotchas ("this repo uses a custom bundler, do not add webpack config"), and pointers to other docs. Bad candidates: anything that changes frequently, secrets, or content so long it crowds out useful context on every single session — CLAUDE.md content is loaded every time, so it has a real token cost.</p>
+      <blockquote>Scenario: A team has an enterprise CLAUDE.md requiring "all database migrations must be reviewed by a DBA before merging." An engineer, annoyed by this on a low-stakes internal tool, adds a line to the project-level CLAUDE.md saying "DBA review is not required for this repo." What happens? Both instructions are merged into context — Claude sees the conflicting statements together, and behavior becomes unreliable/ambiguous rather than cleanly resolved in favor of the project file. The reasoning: since scopes merge rather than override, the engineer's fix does not work as intended; the enterprise rule was never designed to be locally revoked this way, and if the org wants an exception mechanism, it needs to be built into the enterprise policy itself, not fought at the project level.</blockquote>
+      <h2>Ordering within the merge</h2>
+      <p>Because content from every applicable scope lands in context together, the practical question shifts from "which one wins" to "in what order does Claude read them, and does that create emphasis." Claude Code has a defined load order across scopes, but that order affects how instructions are sequenced in context, not which ones are honored. Do not confuse load order with precedence — the exam is testing whether you understand that later-loaded content does not overwrite earlier-loaded content; it accumulates alongside it. If two CLAUDE.md files genuinely disagree, you have an authoring problem, not a resolved conflict, and the fix is to edit the conflicting file, not to rely on scope order to silently pick a winner.</p>
+      <h2>Try it</h2>
+      <p>In an existing project, run <code>claude</code> and check whether a CLAUDE.md exists at the project root. If not, create one with your test command and one architectural note. Then check your home directory for a user-level CLAUDE.md (or create one with a personal preference like your preferred commit message format). Start a new session in that project and ask Claude to state what it knows about the project's conventions — confirm both the project and user content show up together.</p>
+    
+      
+    </article>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px">
+      <a class="btn btn-outline" href="/learn/2/2-6-error-handling-distribution">← Error Handling and Tool Distribution Choices</a>
+      <a class="btn btn-solid" href="/learn/3/3-2-settings-permissions">settings.json and Permissions →</a>
+    </div>
+  </main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>Unofficial study aid · Not affiliated with Anthropic.</span>
+      <nav class="footer-nav" aria-label="More">
+        <a href="/learn">Curriculum</a>
+        <a href="/glossary">Glossary</a>
+        <a href="/reference">Quick Reference</a>
+        <a href="/blog">Blog</a>
+        <a href="/certifications">Certifications</a>
+        <a href="/resources">Resources</a>
+        <a href="/about">About</a>
+        <a href="/changelog">Changelog</a>
+      </nav>
+      <span>Blueprint mirrors the Claude Certified Architect — Foundations (CCA-F).</span>
+      <span>Developed by <a href="https://hellouchit.com" target="_blank" rel="noopener noreferrer">Uchit Vyas</a></span>
+    </div>
+  </footer>
+
+  <nav class="bottomnav" aria-label="Primary mobile">
+    <a href="/" data-nav="home"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg></span><span>Home</span></a>
+    <a href="/practice" data-nav="practice"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3 5 13.5h5.5L11 21l8-10.5h-5.5L13 3Z"/></svg></span><span>Practice</span></a>
+    <a href="/exam" data-nav="exam"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9.5 2.5h5"/><path d="M18.5 5.5 20 4"/></svg></span><span>Exam</span></a>
+    <a href="/browse" data-nav="browse"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21V5.5Z"/><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"/></svg></span><span>Bank</span></a>
+    <a href="/prep" data-nav="prep"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5 12 5l10 4.5-10 4.5-10-4.5Z"/><path d="M6.5 11.7v4.3c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3v-4.3"/><path d="M21 9.5v6"/></svg></span><span>Pass</span></a>
+    <a href="/progress" data-nav="progress"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/></svg></span><span>Stats</span></a>
+  </nav>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

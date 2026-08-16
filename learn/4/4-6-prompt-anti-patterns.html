@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Common Prompt Anti-Patterns — Claude Cert Prep</title>
+  <meta name="description" content="Recognizable prompt design mistakes the exam tests: negative-only instructions, task overload, and self-review in one call." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Uchit Vyas" />
+  <meta name="theme-color" content="#121214" />
+  <link rel="canonical" href="https://thatclaude.com/learn/4/4-6-prompt-anti-patterns" />
+  <meta property="og:site_name" content="Claude Cert Prep" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="Common Prompt Anti-Patterns — Claude Cert Prep" />
+  <meta property="og:description" content="Recognizable prompt design mistakes the exam tests: negative-only instructions, task overload, and self-review in one call." />
+  <meta property="og:url" content="https://thatclaude.com/learn/4/4-6-prompt-anti-patterns" />
+  <meta property="og:image" content="https://thatclaude.com/og-image.svg" />
+  <meta property="og:locale" content="en_US" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Common Prompt Anti-Patterns — Claude Cert Prep" />
+  <meta name="twitter:description" content="Recognizable prompt design mistakes the exam tests: negative-only instructions, task overload, and self-review in one call." />
+  <meta name="twitter:image" content="https://thatclaude.com/og-image.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235B4FE0'/%3E%3Ctext x='50' y='69' font-size='56' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'%3EC%3C/text%3E%3C/svg%3E" />
+  <link rel="alternate" type="application/rss+xml" title="Claude Cert Prep Blog" href="/blog/feed.xml" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://thatclaude.com"},{"@type":"ListItem","position":2,"name":"Curriculum","item":"https://thatclaude.com/learn"},{"@type":"ListItem","position":3,"name":"Prompt Engineering","item":"https://thatclaude.com/learn/4"},{"@type":"ListItem","position":4,"name":"Common Prompt Anti-Patterns","item":"https://thatclaude.com/learn/4/4-6-prompt-anti-patterns"}]},{"@type":"LearningResource","name":"Common Prompt Anti-Patterns","description":"Recognizable prompt design mistakes the exam tests: negative-only instructions, task overload, and self-review in one call.","learningResourceType":"Lesson","educationalLevel":"Intermediate","timeRequired":"PT7M","isAccessibleForFree":true,"inLanguage":"en","author":{"@type":"Person","name":"Uchit Vyas","url":"https://hellouchit.com"},"isPartOf":{"@type":"Course","name":"Claude Certified Architect (CCA-F) Curriculum","url":"https://thatclaude.com/learn"}}]}</script>
+</head>
+<body>
+  <a class="skip-link" href="#app">Skip to content</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark">C</span>
+        <span class="brand-text">
+          <strong>Claude Cert Prep</strong>
+          <span class="brand-sub">CCA-F · Architect</span>
+        </span>
+      </a>
+      <nav class="topnav" aria-label="Primary">
+        <a href="/" data-nav="home">Home</a>
+        <a href="/practice" data-nav="practice">Practice</a>
+        <a href="/exam" data-nav="exam">Mock Exam</a>
+        <a href="/browse" data-nav="browse">Bank</a>
+        <a href="/prep" data-nav="prep">How to Pass</a>
+        <a href="/progress" data-nav="progress">Progress</a>
+      </nav>
+      <div class="topbar-actions">
+        <span class="bank-chip" id="bankChip" title="Total questions in the bank">…</span>
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark">
+          <span class="theme-icon"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <main id="app" class="app" tabindex="-1">
+    <article class="prose page-head">
+      <h1>Common Prompt Anti-Patterns</h1>
+      <p class="prose-dek">Recognizable prompt design mistakes the exam tests: negative-only instructions, task overload, and self-review in one call.</p>
+      <div class="prose-meta"><span style="color:#C6841E;font-weight:700">Prompt Engineering</span><span>·</span><span>Lesson 6 of 6</span><span>·</span><span>7 min</span></div>
+      
+      <p>This lesson collects recurring prompt-design mistakes that show up across exam scenarios. Recognizing the pattern by name is often faster than re-deriving the fix from first principles during the exam.</p>
+      <h2>Negative-only instructions</h2>
+      <p>Telling the model what not to do ("don't include a preamble," "don't use markdown," "don't mention pricing") without stating the positive alternative leaves the model to guess what to do instead, which produces inconsistent results. "Don't use markdown" is weaker than "respond in plain prose sentences, no headers or bullet lists." The fix is always to pair or replace the negative instruction with a concrete positive instruction describing the desired behavior directly.</p>
+      <h2>Overloaded prompts</h2>
+      <p>A single prompt asking the model to do several unrelated things at once — summarize a document, translate it, extract structured data from it, and critique its tone — tends to produce weaker results on each sub-task than separate, focused prompts would. This is different from a genuinely multi-step task where the steps depend on each other (which chain-of-thought or a structured multi-part prompt can handle well); the anti-pattern specifically refers to bundling unrelated tasks that don't need to share context, purely to save API calls. The fix is to split unrelated tasks into separate calls, each with a focused, single-purpose prompt.</p>
+      <h2>Self-review in one call</h2>
+      <p>Asking a single call to generate an answer and then check its own work in the same turn tends to rubber-stamp the generation, because the same reasoning that produced the (possibly flawed) answer is what's being asked to evaluate it — there's no independent perspective. The fix is a multi-pass review: a separate call, ideally with a differently framed prompt (and sometimes a different persona or explicit adversarial framing, "find problems with this output"), reviewing the first call's output. Separating generation and review into different calls produces meaningfully more critical review than asking one call to do both.</p>
+      <h2>Other patterns worth knowing</h2>
+      <p>Vague success criteria (asking for "a good summary" instead of specifying length, audience, and what to include/exclude) forces the model to guess at implicit requirements. Burying the actual task deep inside a long block of unstructured context, with no XML tags separating instructions from reference material, makes it easy for the model to lose track of what's actually being asked. Both are instances of the same underlying problem: leaving too much for the model to infer when it could be stated directly.</p>
+      <div class="callout"><b>Exam trap</b> A scenario shows a single prompt asking Claude to draft a customer email, then evaluate whether the email is polite enough, then revise it if not, all in one response. The setup looks like it's already doing "review," so a tempting wrong answer is "this is fine, it already includes a review step." The correct critique is that self-review inside one generation call is unreliable — the fix is a second, separate call whose only job is to critique the first call's draft against explicit criteria.</div>
+      <blockquote>A content pipeline prompt reads: "Write a product description. Don't make it sound salesy. Don't use exclamation points. Don't be too long." The output is inconsistent in tone across runs. The fix is to replace each negative constraint with a positive one: state the target tone directly ("write in a neutral, factual tone"), state a concrete length ("2-3 sentences"), and state what punctuation to use instead of only what to avoid. Positive, concrete instructions give the model a target to hit rather than an open-ended space of things to avoid.</blockquote>
+      <h2>Anti-patterns as a checklist</h2>
+      <p>On the exam, scenario questions about a failing or unreliable prompt are frequently solvable by pattern-matching against this list rather than reasoning from scratch: check whether the prompt states positive requirements or only prohibitions, whether it bundles unrelated tasks that could be split, whether it asks one call to both generate and critique itself, whether success criteria are vague, and whether distinct content types are separated with structure. Most "why is this prompt unreliable" questions map cleanly onto one of these five patterns, and the fix is almost always to state something explicitly that was previously left implicit.</p>
+      <h2>Anti-patterns compound</h2>
+      <p>These issues are not mutually exclusive, and a single weak prompt often exhibits several at once: a prompt with vague success criteria, no positive framing, and several unrelated tasks bundled together is common in practice, and fixing only one of the three issues may not measurably improve reliability. When a scenario's prompt is described as "unreliable" without further detail, it's worth checking it against the full list rather than assuming only one issue is present.</p>
+      <h2>Try it</h2>
+      <p>Take a prompt you have that contains at least one "don't do X" instruction with no stated alternative. Rewrite it as a positive instruction describing the desired behavior directly, run both versions against 5 inputs, and check whether the rewritten version produces more consistent output on the dimension the instruction was targeting. While you're at it, check the same prompt against the other four anti-patterns in this lesson and note which, if any, also apply.</p>
+    
+      
+    </article>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px">
+      <a class="btn btn-outline" href="/learn/4/4-5-validation-retry">← Validation and Retry Loops</a>
+      <a class="btn btn-solid" href="/learn/5/5-1-context-windows-budgeting">Context Windows and Token Budgeting →</a>
+    </div>
+  </main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>Unofficial study aid · Not affiliated with Anthropic.</span>
+      <nav class="footer-nav" aria-label="More">
+        <a href="/learn">Curriculum</a>
+        <a href="/glossary">Glossary</a>
+        <a href="/reference">Quick Reference</a>
+        <a href="/blog">Blog</a>
+        <a href="/certifications">Certifications</a>
+        <a href="/resources">Resources</a>
+        <a href="/about">About</a>
+        <a href="/changelog">Changelog</a>
+      </nav>
+      <span>Blueprint mirrors the Claude Certified Architect — Foundations (CCA-F).</span>
+      <span>Developed by <a href="https://hellouchit.com" target="_blank" rel="noopener noreferrer">Uchit Vyas</a></span>
+    </div>
+  </footer>
+
+  <nav class="bottomnav" aria-label="Primary mobile">
+    <a href="/" data-nav="home"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg></span><span>Home</span></a>
+    <a href="/practice" data-nav="practice"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3 5 13.5h5.5L11 21l8-10.5h-5.5L13 3Z"/></svg></span><span>Practice</span></a>
+    <a href="/exam" data-nav="exam"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9.5 2.5h5"/><path d="M18.5 5.5 20 4"/></svg></span><span>Exam</span></a>
+    <a href="/browse" data-nav="browse"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21V5.5Z"/><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"/></svg></span><span>Bank</span></a>
+    <a href="/prep" data-nav="prep"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5 12 5l10 4.5-10 4.5-10-4.5Z"/><path d="M6.5 11.7v4.3c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3v-4.3"/><path d="M21 9.5v6"/></svg></span><span>Pass</span></a>
+    <a href="/progress" data-nav="progress"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/></svg></span><span>Stats</span></a>
+  </nav>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

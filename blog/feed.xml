@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+  <title>Claude Cert Prep Blog</title>
+  <link>https://thatclaude.com/blog</link>
+  <description>Study strategy and domain deep dives for the Claude Certified Architect (CCA-F) exam.</description>
+  <language>en-us</language>
+  <lastBuildDate>Sun, 16 Aug 2026 12:33:37 GMT</lastBuildDate>
+  <item>
+    <title>How to Pass the Claude Certified Architect (CCA-F) Exam</title>
+    <link>https://thatclaude.com/blog/how-to-pass-claude-certified-architect-exam</link>
+    <guid>https://thatclaude.com/blog/how-to-pass-claude-certified-architect-exam</guid>
+    <description>A field-tested game plan: where the exam actually tests you, where to spend limited study time, and the habit that moves your score more than anything else.</description>
+    <pubDate>Sun, 16 Aug 2026 00:00:00 GMT</pubDate>
+  </item>
+  <item>
+    <title>Agentic Loops and stop_reason: What CCA-F Actually Tests</title>
+    <link>https://thatclaude.com/blog/agentic-loops-stop-reason-explained</link>
+    <guid>https://thatclaude.com/blog/agentic-loops-stop-reason-explained</guid>
+    <description>The single most-weighted concept on the exam, and the three anti-patterns that show up disguised as reasonable-sounding wrong answers.</description>
+    <pubDate>Sun, 16 Aug 2026 00:00:00 GMT</pubDate>
+  </item>
+  <item>
+    <title>MCP Server, Built-in Tool, or Skill? A Decision Framework for the Exam</title>
+    <link>https://thatclaude.com/blog/mcp-vs-built-in-tools-when-to-use-which</link>
+    <guid>https://thatclaude.com/blog/mcp-vs-built-in-tools-when-to-use-which</guid>
+    <description>Tool Design &amp; MCP Integration is 18% of the CCA-F, and most of it comes down to one recurring decision: which distribution mechanism fits a given capability.</description>
+    <pubDate>Sun, 16 Aug 2026 00:00:00 GMT</pubDate>
+  </item>
+</channel></rss>

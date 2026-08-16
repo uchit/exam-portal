@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compaction and the Summarization Trap — Claude Cert Prep</title>
+  <meta name="description" content="Compaction frees context space by condensing history, but over-compacting drops details the model still needs." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Uchit Vyas" />
+  <meta name="theme-color" content="#121214" />
+  <link rel="canonical" href="https://thatclaude.com/learn/5/5-3-compaction-summarization-trap" />
+  <meta property="og:site_name" content="Claude Cert Prep" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="Compaction and the Summarization Trap — Claude Cert Prep" />
+  <meta property="og:description" content="Compaction frees context space by condensing history, but over-compacting drops details the model still needs." />
+  <meta property="og:url" content="https://thatclaude.com/learn/5/5-3-compaction-summarization-trap" />
+  <meta property="og:image" content="https://thatclaude.com/og-image.svg" />
+  <meta property="og:locale" content="en_US" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Compaction and the Summarization Trap — Claude Cert Prep" />
+  <meta name="twitter:description" content="Compaction frees context space by condensing history, but over-compacting drops details the model still needs." />
+  <meta name="twitter:image" content="https://thatclaude.com/og-image.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235B4FE0'/%3E%3Ctext x='50' y='69' font-size='56' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'%3EC%3C/text%3E%3C/svg%3E" />
+  <link rel="alternate" type="application/rss+xml" title="Claude Cert Prep Blog" href="/blog/feed.xml" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://thatclaude.com"},{"@type":"ListItem","position":2,"name":"Curriculum","item":"https://thatclaude.com/learn"},{"@type":"ListItem","position":3,"name":"Context & Reliability","item":"https://thatclaude.com/learn/5"},{"@type":"ListItem","position":4,"name":"Compaction and the Summarization Trap","item":"https://thatclaude.com/learn/5/5-3-compaction-summarization-trap"}]},{"@type":"LearningResource","name":"Compaction and the Summarization Trap","description":"Compaction frees context space by condensing history, but over-compacting drops details the model still needs.","learningResourceType":"Lesson","educationalLevel":"Intermediate","timeRequired":"PT8M","isAccessibleForFree":true,"inLanguage":"en","author":{"@type":"Person","name":"Uchit Vyas","url":"https://hellouchit.com"},"isPartOf":{"@type":"Course","name":"Claude Certified Architect (CCA-F) Curriculum","url":"https://thatclaude.com/learn"}}]}</script>
+</head>
+<body>
+  <a class="skip-link" href="#app">Skip to content</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark">C</span>
+        <span class="brand-text">
+          <strong>Claude Cert Prep</strong>
+          <span class="brand-sub">CCA-F · Architect</span>
+        </span>
+      </a>
+      <nav class="topnav" aria-label="Primary">
+        <a href="/" data-nav="home">Home</a>
+        <a href="/practice" data-nav="practice">Practice</a>
+        <a href="/exam" data-nav="exam">Mock Exam</a>
+        <a href="/browse" data-nav="browse">Bank</a>
+        <a href="/prep" data-nav="prep">How to Pass</a>
+        <a href="/progress" data-nav="progress">Progress</a>
+      </nav>
+      <div class="topbar-actions">
+        <span class="bank-chip" id="bankChip" title="Total questions in the bank">…</span>
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark">
+          <span class="theme-icon"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <main id="app" class="app" tabindex="-1">
+    <article class="prose page-head">
+      <h1>Compaction and the Summarization Trap</h1>
+      <p class="prose-dek">Compaction frees context space by condensing history, but over-compacting drops details the model still needs.</p>
+      <div class="prose-meta"><span style="color:#C4453B;font-weight:700">Context &amp; Reliability</span><span>·</span><span>Lesson 3 of 6</span><span>·</span><span>8 min</span></div>
+      
+      <p>As a conversation or agent session runs long, the context window fills up with history: prior user turns, tool calls, tool results, and model reasoning. Compaction is the practice of condensing that older history, typically by summarizing it, to free up room for the conversation to continue without hitting the context limit. It's a necessary technique for any long-running agent, but it is also one of the most common sources of silent, hard-to-diagnose failures in production agentic systems.</p>
+      <h2>What compaction is for</h2>
+      <p>Without compaction, a long-running agent session simply stops once the context window fills, forcing a hard restart that loses all prior context. Compaction avoids that cliff by periodically replacing a block of older turns with a shorter summary that preserves the gist while shedding the token cost of the full transcript. Done well, this lets an agent run for hours or across many tool calls while staying within budget.</p>
+      <h2>The summarization trap</h2>
+      <p>The failure mode, often called the summarization trap, is over-compacting: condensing history so aggressively that details the model still actually needs get dropped. This doesn't fail loudly. The agent doesn't crash or throw an error. It keeps producing responses, but those responses become progressively vaguer, more generic, or subtly wrong, because the specific facts that used to ground them (a particular file path, a specific error message, an exact numeric threshold a user specified earlier) were summarized away in favor of a high-level gist. This is worse than a hard failure in some ways, because it's easy to miss in a review and easy to attribute to "the model getting worse" rather than to a context management decision.</p>
+      <p>A concrete pattern: an agent debugging a production issue is told the exact stack trace and the exact line number where an exception originated in turn 3. By turn 40, aggressive compaction has folded that into a summary like "investigated an error in the payment module." The agent now reasons about "the payment module" in the abstract instead of the specific function, and its later suggestions become generic advice rather than the targeted fix the original detail would have supported.</p>
+      <h3>What to preserve when compacting</h3>
+      <p>Good compaction strategy is selective rather than uniform. Details with high reuse value — file paths, exact error text, IDs, numeric parameters, explicit user decisions or constraints — should be preserved verbatim or extracted into a structured note rather than folded into prose summary. Purely conversational scaffolding — pleasantries, exploratory back-and-forth that led nowhere, redundant restatements — is safe to compress hard. The judgment call the exam tests is whether you can distinguish "this history is safe to compress" from "this history contains facts the agent will need to reference precisely later."</p>
+      <div class="callout"><b>Exam trap</b> A question describes an agent session where compaction is applied uniformly to all history older than N turns, and later the agent gives an unhelpful, vague answer to a question that depends on a specific detail from an early turn. The trap answer blames the model's reasoning ability or suggests using a bigger/better model. The correct diagnosis is a compaction failure: the summarization step dropped a load-bearing detail. The fix is changing what gets preserved during compaction (or how aggressively/uniformly it compresses), not swapping models.</div>
+      <blockquote>Scenario: A coding agent has been working on a refactor for 90 minutes across many tool calls. Early on, the user specified "do not touch anything under the /legacy directory, it's frozen for a migration." At turn 60, a compaction pass summarizes turns 1-40 into a few sentences about "general refactor goals," and the constraint about /legacy is lost. At turn 75, the agent proposes a change that touches a file under /legacy. What went wrong, and how should compaction have been designed? The constraint was a hard user directive with binding force for the rest of the session, not a detail safe to fold into gist-level summary. Compaction should extract explicit constraints like this into a persistent, separately-maintained "active constraints" note that survives every compaction pass untouched, rather than letting them get swept into the same lossy summarization applied to routine exploratory history.</blockquote>
+      <h2>Try it</h2>
+      <p>Take a long transcript from an agent session you have access to (or simulate one). Manually write a compacted summary of the first half as you'd expect an automated system to produce it, then list every fact in the original transcript that your summary dropped. For each dropped fact, decide whether a later turn in the transcript actually depended on it — that exercise is exactly the audit a good compaction system needs to pass.</p>
+    
+      
+    </article>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px">
+      <a class="btn btn-outline" href="/learn/5/5-2-prompt-caching">← Prompt Caching Mechanics</a>
+      <a class="btn btn-solid" href="/learn/5/5-4-idempotency-error-propagation">Idempotency and Error Propagation →</a>
+    </div>
+  </main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>Unofficial study aid · Not affiliated with Anthropic.</span>
+      <nav class="footer-nav" aria-label="More">
+        <a href="/learn">Curriculum</a>
+        <a href="/glossary">Glossary</a>
+        <a href="/reference">Quick Reference</a>
+        <a href="/blog">Blog</a>
+        <a href="/certifications">Certifications</a>
+        <a href="/resources">Resources</a>
+        <a href="/about">About</a>
+        <a href="/changelog">Changelog</a>
+      </nav>
+      <span>Blueprint mirrors the Claude Certified Architect — Foundations (CCA-F).</span>
+      <span>Developed by <a href="https://hellouchit.com" target="_blank" rel="noopener noreferrer">Uchit Vyas</a></span>
+    </div>
+  </footer>
+
+  <nav class="bottomnav" aria-label="Primary mobile">
+    <a href="/" data-nav="home"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg></span><span>Home</span></a>
+    <a href="/practice" data-nav="practice"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3 5 13.5h5.5L11 21l8-10.5h-5.5L13 3Z"/></svg></span><span>Practice</span></a>
+    <a href="/exam" data-nav="exam"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9.5 2.5h5"/><path d="M18.5 5.5 20 4"/></svg></span><span>Exam</span></a>
+    <a href="/browse" data-nav="browse"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21V5.5Z"/><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"/></svg></span><span>Bank</span></a>
+    <a href="/prep" data-nav="prep"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5 12 5l10 4.5-10 4.5-10-4.5Z"/><path d="M6.5 11.7v4.3c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3v-4.3"/><path d="M21 9.5v6"/></svg></span><span>Pass</span></a>
+    <a href="/progress" data-nav="progress"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/></svg></span><span>Stats</span></a>
+  </nav>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

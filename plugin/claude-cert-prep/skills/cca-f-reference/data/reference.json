@@ -1,0 +1,156 @@
+[
+  {
+    "domain": "Agentic Architecture",
+    "domainId": 1,
+    "rules": [
+      {
+        "title": "Loop control signal",
+        "body": "Branch only on stop_reason (tool_use vs end_turn). Never parse assistant text for intent, and never use an iteration counter as the primary termination mechanism — it's a safety cap, not the control flow."
+      },
+      {
+        "title": "Choosing an orchestration pattern",
+        "body": "Ordered, predictable subtasks → prompt chaining. Distinct input categories → routing. Independent subtasks or need for consensus → parallelization. Unpredictable decomposition → orchestrator-workers. Clear quality bar, generation alone unreliable → evaluator-optimizer."
+      },
+      {
+        "title": "Subagent communication",
+        "body": "Hub-and-spoke only. Subagents talk to the orchestrator, never to each other. A subagent returns a final result, not its full transcript."
+      },
+      {
+        "title": "Context to give a subagent",
+        "body": "The minimum needed for its scoped task — not the orchestrator's full history. Isolation protects focus and token cost."
+      },
+      {
+        "title": "Default failure mode to avoid",
+        "body": "Treating premature termination (stopping before tool_use resolves) and infinite fallback loops (never respecting a real end_turn) as equally likely exam traps — both come from not trusting stop_reason alone."
+      }
+    ]
+  },
+  {
+    "domain": "Tools & MCP",
+    "domainId": 2,
+    "rules": [
+      {
+        "title": "What makes a good tool",
+        "body": "A precise, example-rich description matters more than a clever name. The model chooses tools based on the description text."
+      },
+      {
+        "title": "tool_use vs tool_result",
+        "body": "tool_use is emitted by the model (request to call). tool_result is sent by the client (the outcome), matched by id."
+      },
+      {
+        "title": "MCP vocabulary",
+        "body": "Server = exposes capabilities. Client = 1:1 connection to a server. Host = the application (e.g. Claude Code) managing multiple clients. Primitives = Tools (model-invoked), Resources (contextual data), Prompts (templates)."
+      },
+      {
+        "title": "Transport choice",
+        "body": "Local/trusted process → stdio. Remote or shared → Streamable HTTP."
+      },
+      {
+        "title": "Error handling",
+        "body": "Always return structured, actionable errors (is_error:true + clear message) — never a raw stack trace — so the model can self-correct on retry."
+      },
+      {
+        "title": "Built-in tool vs MCP vs skill",
+        "body": "One-off local capability → built-in tool if one exists. Shared/external system integration → MCP server. Team workflow, no external system → skill or slash command."
+      }
+    ]
+  },
+  {
+    "domain": "Claude Code",
+    "domainId": 3,
+    "rules": [
+      {
+        "title": "CLAUDE.md hierarchy",
+        "body": "Enterprise → user → project → local. All applicable levels are merged into context — a more specific file adds to the others, it does not replace them."
+      },
+      {
+        "title": "Slash command vs skill",
+        "body": "Slash command: user types it explicitly. Skill: Claude decides on its own to invoke it based on relevance. If the scenario needs autonomous judgment, it's a skill."
+      },
+      {
+        "title": "Hooks vs prompted instructions",
+        "body": "Use a hook when behavior must be deterministic and non-negotiable (e.g. always run linter before commit). A prompted instruction alone is not reliable enough for hard requirements."
+      },
+      {
+        "title": "Plan mode",
+        "body": "Use when changes are risky, hard to reverse, or need human sign-off before execution. It is read-only until explicitly approved."
+      },
+      {
+        "title": "Permissions design",
+        "body": "Grant the narrowest permission set that still lets the workflow complete — not blanket allow, not blanket ask."
+      },
+      {
+        "title": "Headless / CI use",
+        "body": "Non-interactive runs need permissions configured up front; there's no interactive prompt to fall back on mid-run."
+      }
+    ]
+  },
+  {
+    "domain": "Prompt Engineering",
+    "domainId": 4,
+    "rules": [
+      {
+        "title": "Where instructions live",
+        "body": "System prompt: role, constraints, behavior for the whole conversation. User message: per-turn task/content. Don't put per-turn specifics in the system prompt."
+      },
+      {
+        "title": "When to use few-shot",
+        "body": "Desired output format is precise but hard to describe in words — show, don't just tell."
+      },
+      {
+        "title": "When to use chain-of-thought",
+        "body": "Genuinely multi-step reasoning tasks. Skip it for simple lookups or classification — it adds latency/cost without benefit."
+      },
+      {
+        "title": "Guaranteeing format",
+        "body": "Prefill the start of the response (e.g. with {) to force structure at the source, then validate the full output against a schema."
+      },
+      {
+        "title": "Handling invalid structured output",
+        "body": "Re-prompt with the specific validation error, not a generic 'try again.' A bare retry tends to repeat the same mistake."
+      },
+      {
+        "title": "Batch vs real-time",
+        "body": "Large non-interactive workload, latency not critical → Batches API. Anything a user is waiting on → standard synchronous call."
+      },
+      {
+        "title": "Self-review anti-pattern",
+        "body": "A single call asked to generate and then check its own work tends to rubber-stamp itself. Use a separate call/pass for review."
+      }
+    ]
+  },
+  {
+    "domain": "Context & Reliability",
+    "domainId": 5,
+    "rules": [
+      {
+        "title": "What counts against the context budget",
+        "body": "System prompt + tool definitions + retrieved data + conversation history — all of it, not just the visible chat text."
+      },
+      {
+        "title": "Prompt caching mechanics",
+        "body": "Only the stable prefix before the first change is reused. Append new content after the cached prefix to keep hitting cache."
+      },
+      {
+        "title": "Compaction trade-off",
+        "body": "Summarize to free space, but don't over-compact — the 'summarization trap' drops details the model still needs, producing vague later answers."
+      },
+      {
+        "title": "Escalate vs proceed",
+        "body": "Escalate to a human when the decision is high-stakes AND hard to reverse AND confidence is low. Routine, reversible calls don't need escalation."
+      },
+      {
+        "title": "Error propagation choice",
+        "body": "Match the response to criticality: halt on errors that invalidate the task, retry on transient ones, degrade-and-continue on non-critical ones. Never a single blanket policy."
+      },
+      {
+        "title": "Idempotency",
+        "body": "Required for any tool call that might be automatically retried — guard non-idempotent actions (sending a message, charging a card) explicitly."
+      },
+      {
+        "title": "Codebase exploration strategy",
+        "body": "Targeted grep/search before reading whole files. Reflexively reading an entire large repo wastes context budget the exam expects you to protect."
+      }
+    ]
+  }
+]

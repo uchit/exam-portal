@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>System Prompts vs. User Messages — Claude Cert Prep</title>
+  <meta name="description" content="Where the role, constraints, and per-turn task belong, and why mixing them up causes drift in multi-turn conversations." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Uchit Vyas" />
+  <meta name="theme-color" content="#121214" />
+  <link rel="canonical" href="https://thatclaude.com/learn/4/4-1-system-prompts" />
+  <meta property="og:site_name" content="Claude Cert Prep" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="System Prompts vs. User Messages — Claude Cert Prep" />
+  <meta property="og:description" content="Where the role, constraints, and per-turn task belong, and why mixing them up causes drift in multi-turn conversations." />
+  <meta property="og:url" content="https://thatclaude.com/learn/4/4-1-system-prompts" />
+  <meta property="og:image" content="https://thatclaude.com/og-image.svg" />
+  <meta property="og:locale" content="en_US" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="System Prompts vs. User Messages — Claude Cert Prep" />
+  <meta name="twitter:description" content="Where the role, constraints, and per-turn task belong, and why mixing them up causes drift in multi-turn conversations." />
+  <meta name="twitter:image" content="https://thatclaude.com/og-image.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235B4FE0'/%3E%3Ctext x='50' y='69' font-size='56' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'%3EC%3C/text%3E%3C/svg%3E" />
+  <link rel="alternate" type="application/rss+xml" title="Claude Cert Prep Blog" href="/blog/feed.xml" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://thatclaude.com"},{"@type":"ListItem","position":2,"name":"Curriculum","item":"https://thatclaude.com/learn"},{"@type":"ListItem","position":3,"name":"Prompt Engineering","item":"https://thatclaude.com/learn/4"},{"@type":"ListItem","position":4,"name":"System Prompts vs. User Messages","item":"https://thatclaude.com/learn/4/4-1-system-prompts"}]},{"@type":"LearningResource","name":"System Prompts vs. User Messages","description":"Where the role, constraints, and per-turn task belong, and why mixing them up causes drift in multi-turn conversations.","learningResourceType":"Lesson","educationalLevel":"Intermediate","timeRequired":"PT7M","isAccessibleForFree":true,"inLanguage":"en","author":{"@type":"Person","name":"Uchit Vyas","url":"https://hellouchit.com"},"isPartOf":{"@type":"Course","name":"Claude Certified Architect (CCA-F) Curriculum","url":"https://thatclaude.com/learn"}}]}</script>
+</head>
+<body>
+  <a class="skip-link" href="#app">Skip to content</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark">C</span>
+        <span class="brand-text">
+          <strong>Claude Cert Prep</strong>
+          <span class="brand-sub">CCA-F · Architect</span>
+        </span>
+      </a>
+      <nav class="topnav" aria-label="Primary">
+        <a href="/" data-nav="home">Home</a>
+        <a href="/practice" data-nav="practice">Practice</a>
+        <a href="/exam" data-nav="exam">Mock Exam</a>
+        <a href="/browse" data-nav="browse">Bank</a>
+        <a href="/prep" data-nav="prep">How to Pass</a>
+        <a href="/progress" data-nav="progress">Progress</a>
+      </nav>
+      <div class="topbar-actions">
+        <span class="bank-chip" id="bankChip" title="Total questions in the bank">…</span>
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark">
+          <span class="theme-icon"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <main id="app" class="app" tabindex="-1">
+    <article class="prose page-head">
+      <h1>System Prompts vs. User Messages</h1>
+      <p class="prose-dek">Where the role, constraints, and per-turn task belong, and why mixing them up causes drift in multi-turn conversations.</p>
+      <div class="prose-meta"><span style="color:#C6841E;font-weight:700">Prompt Engineering</span><span>·</span><span>Lesson 1 of 6</span><span>·</span><span>7 min</span></div>
+      
+      <p>The Claude API separates a request into two channels: a top-level <code>system</code> parameter and the <code>messages</code> array. They are not interchangeable, and the exam tests whether you know which content belongs in which.</p>
+      <h2>What each channel is for</h2>
+      <p>The system prompt sets identity and standing instructions that apply for the entire conversation: the assistant's role, tone, output format defaults, safety constraints, tool-use policy, and anything that should hold true across every turn. It is set once per request and effectively persists as long as the conversation keeps sending it back.</p>
+      <p>A user message carries the per-turn task: the specific question, the document to summarize, the code to review right now. It changes every turn. Content that is true for turn 3 but not turn 7 does not belong in the system prompt.</p>
+      <h2>Why the distinction matters in practice</h2>
+      <p>If you put per-turn specifics into the system prompt, you end up rebuilding the entire system prompt on every request just to swap one detail, which is wasteful and error-prone, and it also means that detail applies to the whole conversation history even though it was only relevant to one exchange. Conversely, if you put role and constraint information into a user message, later turns may drift away from it, because the model treats it as one data point in the conversation rather than a standing rule.</p>
+      <p>A useful test: if the instruction would still be true on turn 50 of the same conversation, it belongs in the system prompt. If it is only true for this one exchange, it belongs in the user message.</p>
+      <div class="callout"><b>Exam trap</b> A question describes a chatbot where the system prompt is rebuilt on every single turn to include that turn's user-specific data (e.g., "the user's account ID is 4471, answer their question about billing"). The correct fix is to move the account ID and the question into the user message and keep the system prompt static across turns. Expect a distractor answer that says "add more instructions to the system prompt" — that does not address the actual problem, which is channel misuse, not insufficient instruction.</div>
+      <blockquote>A support tool sends a fresh system prompt on every API call containing: the assistant's role ("You are a support agent for Acme Cloud"), tone rules, escalation policy, and also the current ticket's subject line and the customer's last message. Each turn, the ticket subject and customer message change, so the system prompt is regenerated in full every time, and the message history grows without ever reusing a stable system prompt. The fix: keep the system prompt fixed to role, tone, and policy only; move ticket subject and customer message into the user message for that turn. This also allows prompt caching to work correctly, since the system prompt no longer changes between calls.</blockquote>
+      <h2>System prompts and prompt caching</h2>
+      <p>Because the system prompt is meant to stay stable across a conversation, it is also the natural place to put large, reusable content you want cached: long role descriptions, static reference material, extensive formatting rules. If you instead scatter that content across user messages, or regenerate it slightly differently every turn, you lose the ability to reuse a cached prefix, and you pay to reprocess the same tokens repeatedly. Keeping the system prompt byte-for-byte identical across calls (aside from occasional updates) is both a design-clarity practice and a cost optimization.</p>
+      <h2>Multiple system-style instructions in one conversation</h2>
+      <p>A related mistake is trying to change the assistant's standing behavior mid-conversation by injecting a new "system-like" instruction into a user message ("from now on, only answer in Spanish"). This can work, but it is fragile — the instruction now competes with the original system prompt and with the rest of the conversation history, and its effect can fade over many subsequent turns. If a behavior change is meant to be durable, the more reliable approach is to update the actual system prompt on the next request, not to bury a new standing rule inside a user turn.</p>
+      <h2>Try it</h2>
+      <p>Take a prompt you currently send with a single long user message that mixes "you are an expert X" framing with the actual task. Split it: move the role/format/constraint sentences into <code>system</code>, leave only the task-specific content in the user message. Send both versions for three different task inputs and compare whether the split version keeps the format constraint (e.g., "always answer in three bullet points") more consistently across all three. Then run the split version twice with an identical system prompt and check whether your client library reports a cache hit on the second call.</p>
+    
+      
+    </article>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px">
+      <a class="btn btn-outline" href="/learn/3/3-6-cicd-headless">← CI/CD and Headless Claude Code</a>
+      <a class="btn btn-solid" href="/learn/4/4-2-xml-few-shot">XML Structuring and Few-Shot Prompting →</a>
+    </div>
+  </main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>Unofficial study aid · Not affiliated with Anthropic.</span>
+      <nav class="footer-nav" aria-label="More">
+        <a href="/learn">Curriculum</a>
+        <a href="/glossary">Glossary</a>
+        <a href="/reference">Quick Reference</a>
+        <a href="/blog">Blog</a>
+        <a href="/certifications">Certifications</a>
+        <a href="/resources">Resources</a>
+        <a href="/about">About</a>
+        <a href="/changelog">Changelog</a>
+      </nav>
+      <span>Blueprint mirrors the Claude Certified Architect — Foundations (CCA-F).</span>
+      <span>Developed by <a href="https://hellouchit.com" target="_blank" rel="noopener noreferrer">Uchit Vyas</a></span>
+    </div>
+  </footer>
+
+  <nav class="bottomnav" aria-label="Primary mobile">
+    <a href="/" data-nav="home"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg></span><span>Home</span></a>
+    <a href="/practice" data-nav="practice"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3 5 13.5h5.5L11 21l8-10.5h-5.5L13 3Z"/></svg></span><span>Practice</span></a>
+    <a href="/exam" data-nav="exam"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9.5 2.5h5"/><path d="M18.5 5.5 20 4"/></svg></span><span>Exam</span></a>
+    <a href="/browse" data-nav="browse"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21V5.5Z"/><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"/></svg></span><span>Bank</span></a>
+    <a href="/prep" data-nav="prep"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5 12 5l10 4.5-10 4.5-10-4.5Z"/><path d="M6.5 11.7v4.3c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3v-4.3"/><path d="M21 9.5v6"/></svg></span><span>Pass</span></a>
+    <a href="/progress" data-nav="progress"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/></svg></span><span>Stats</span></a>
+  </nav>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

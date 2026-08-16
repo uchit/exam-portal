@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XML Structuring and Few-Shot Prompting — Claude Cert Prep</title>
+  <meta name="description" content="Using XML-like tags to separate prompt components and using worked examples to pin down exact output format." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Uchit Vyas" />
+  <meta name="theme-color" content="#121214" />
+  <link rel="canonical" href="https://thatclaude.com/learn/4/4-2-xml-few-shot" />
+  <meta property="og:site_name" content="Claude Cert Prep" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="XML Structuring and Few-Shot Prompting — Claude Cert Prep" />
+  <meta property="og:description" content="Using XML-like tags to separate prompt components and using worked examples to pin down exact output format." />
+  <meta property="og:url" content="https://thatclaude.com/learn/4/4-2-xml-few-shot" />
+  <meta property="og:image" content="https://thatclaude.com/og-image.svg" />
+  <meta property="og:locale" content="en_US" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="XML Structuring and Few-Shot Prompting — Claude Cert Prep" />
+  <meta name="twitter:description" content="Using XML-like tags to separate prompt components and using worked examples to pin down exact output format." />
+  <meta name="twitter:image" content="https://thatclaude.com/og-image.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235B4FE0'/%3E%3Ctext x='50' y='69' font-size='56' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'%3EC%3C/text%3E%3C/svg%3E" />
+  <link rel="alternate" type="application/rss+xml" title="Claude Cert Prep Blog" href="/blog/feed.xml" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://thatclaude.com"},{"@type":"ListItem","position":2,"name":"Curriculum","item":"https://thatclaude.com/learn"},{"@type":"ListItem","position":3,"name":"Prompt Engineering","item":"https://thatclaude.com/learn/4"},{"@type":"ListItem","position":4,"name":"XML Structuring and Few-Shot Prompting","item":"https://thatclaude.com/learn/4/4-2-xml-few-shot"}]},{"@type":"LearningResource","name":"XML Structuring and Few-Shot Prompting","description":"Using XML-like tags to separate prompt components and using worked examples to pin down exact output format.","learningResourceType":"Lesson","educationalLevel":"Intermediate","timeRequired":"PT8M","isAccessibleForFree":true,"inLanguage":"en","author":{"@type":"Person","name":"Uchit Vyas","url":"https://hellouchit.com"},"isPartOf":{"@type":"Course","name":"Claude Certified Architect (CCA-F) Curriculum","url":"https://thatclaude.com/learn"}}]}</script>
+</head>
+<body>
+  <a class="skip-link" href="#app">Skip to content</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark">C</span>
+        <span class="brand-text">
+          <strong>Claude Cert Prep</strong>
+          <span class="brand-sub">CCA-F · Architect</span>
+        </span>
+      </a>
+      <nav class="topnav" aria-label="Primary">
+        <a href="/" data-nav="home">Home</a>
+        <a href="/practice" data-nav="practice">Practice</a>
+        <a href="/exam" data-nav="exam">Mock Exam</a>
+        <a href="/browse" data-nav="browse">Bank</a>
+        <a href="/prep" data-nav="prep">How to Pass</a>
+        <a href="/progress" data-nav="progress">Progress</a>
+      </nav>
+      <div class="topbar-actions">
+        <span class="bank-chip" id="bankChip" title="Total questions in the bank">…</span>
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark">
+          <span class="theme-icon"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <main id="app" class="app" tabindex="-1">
+    <article class="prose page-head">
+      <h1>XML Structuring and Few-Shot Prompting</h1>
+      <p class="prose-dek">Using XML-like tags to separate prompt components and using worked examples to pin down exact output format.</p>
+      <div class="prose-meta"><span style="color:#C6841E;font-weight:700">Prompt Engineering</span><span>·</span><span>Lesson 2 of 6</span><span>·</span><span>8 min</span></div>
+      
+      <p>Two closely related but distinct techniques show up constantly on the exam: wrapping prompt components in XML-like tags, and giving the model worked examples (few-shot prompting). They solve different problems and are often used together.</p>
+      <h2>XML structuring</h2>
+      <p>When a prompt mixes several kinds of content — instructions, background context, reference documents, examples, the actual question — the model has to infer where one section ends and another begins. Wrapping each component in tags such as <code>&lt;instructions&gt;</code>, <code>&lt;context&gt;</code>, <code>&lt;document&gt;</code>, or <code>&lt;examples&gt;</code> removes that ambiguity. The tags do not need to follow a formal schema; they just need to be consistent and used with a closing tag that matches the opening tag.</p>
+      <p>This matters most for long prompts, not short ones. A two-sentence prompt with one instruction does not benefit from tagging. A prompt that includes a 2,000-word reference document, a set of formatting rules, and three examples benefits a lot, because without tags the model may conflate the example text with the actual task input, or treat part of the reference document as an instruction.</p>
+      <h2>Few-shot prompting</h2>
+      <p>Few-shot prompting means including 2-5 worked input/output pairs that demonstrate the exact pattern you want, rather than describing that pattern in prose. It is the right tool when the desired output has a precise shape that is hard to specify in words: a particular JSON key ordering, a specific tone and length, a formatting convention like how to cite sources or how to abbreviate units. Instructions alone tend to under-specify these details; examples remove the ambiguity directly.</p>
+      <p>Few-shot and XML structuring combine naturally: wrap each example pair in its own <code>&lt;example&gt;</code> tags, with nested <code>&lt;input&gt;</code> and <code>&lt;output&gt;</code> tags, so the model can clearly tell where one example ends and the next begins, and can distinguish the examples block from the real task at the end of the prompt.</p>
+      <div class="callout"><b>Exam trap</b> A question presents a failing extraction prompt that already has clear, well-written prose instructions describing the desired JSON format, but the model keeps producing slightly wrong field names or ordering. The tempting wrong answer is "add more detailed instructions explaining the format." The correct answer is to add 2-3 few-shot examples instead — the problem is that the desired pattern is precise and hard to fully specify in prose, which is exactly the case few-shot solves better than more instructions.</div>
+      <blockquote>A prompt asks Claude to convert freeform customer complaints into a structured triage note with fields for severity, category, and a one-line summary written in a specific terse style ("Customer unable to log in after password reset; sev 2"). Prose instructions describing "terse, sev-N style" produce inconsistent phrasing across calls. Adding three examples of complaint-to-triage-note pairs, each wrapped in <code>&lt;example&gt;</code> tags, fixes the inconsistency because the exact phrasing convention is something the model can copy from examples far more reliably than it can infer from a description of "terse style."</blockquote>
+      <h2>Choosing tag names and nesting</h2>
+      <p>There is no reserved or required tag vocabulary — <code>&lt;context&gt;</code>, <code>&lt;background&gt;</code>, and <code>&lt;reference_material&gt;</code> are all equally valid choices, as long as you are consistent within a prompt and the opening and closing tags match. What matters is that each distinct kind of content gets its own tag, and that the actual task or question is clearly set apart from the supporting material, typically placed last and wrapped in something like <code>&lt;task&gt;</code> so the model knows where instructions end and the live request begins. Nesting is fine and often useful: a <code>&lt;examples&gt;</code> block containing several <code>&lt;example&gt;</code> children, each with its own <code>&lt;input&gt;</code> and <code>&lt;output&gt;</code>, is a common and reliable structure.</p>
+      <h2>How many examples, and how to choose them</h2>
+      <p>Two to five examples is the typical range. Fewer than two does not really establish a pattern; beyond five, returns diminish quickly and you are mostly spending tokens. Example selection matters more than example count: examples should cover the edge cases you actually care about, not just the easy, typical case repeated with different wording. If the real task includes some inputs that are ambiguous or unusual, include at least one example that shows the desired behavior on that kind of input, since the model will generalize from whatever pattern the examples actually demonstrate — including edge-case handling if you show it, or ignoring edge cases if you don't.</p>
+      <h2>When XML tagging is unnecessary overhead</h2>
+      <p>For a short, single-purpose prompt with one instruction and one piece of input text, adding tags is not wrong but adds no measurable benefit, and the exam sometimes uses this to test whether you over-apply techniques. The signal to reach for tagging is prompt complexity — multiple distinct content types coexisting in one prompt — not prompt length alone.</p>
+      <h2>Try it</h2>
+      <p>Pick a task where you currently only describe the output format in prose (for example, extracting structured fields from freeform text). Send it once with prose instructions only, then again with the same instructions plus 3 few-shot examples wrapped in <code>&lt;example&gt;</code> tags, including at least one edge-case example. Run each version against 5 different inputs, including one deliberately tricky one, and count how often the output format deviates in each case.</p>
+    
+      
+    </article>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px">
+      <a class="btn btn-outline" href="/learn/4/4-1-system-prompts">← System Prompts vs. User Messages</a>
+      <a class="btn btn-solid" href="/learn/4/4-3-chain-of-thought">Chain-of-Thought: When It Helps →</a>
+    </div>
+  </main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>Unofficial study aid · Not affiliated with Anthropic.</span>
+      <nav class="footer-nav" aria-label="More">
+        <a href="/learn">Curriculum</a>
+        <a href="/glossary">Glossary</a>
+        <a href="/reference">Quick Reference</a>
+        <a href="/blog">Blog</a>
+        <a href="/certifications">Certifications</a>
+        <a href="/resources">Resources</a>
+        <a href="/about">About</a>
+        <a href="/changelog">Changelog</a>
+      </nav>
+      <span>Blueprint mirrors the Claude Certified Architect — Foundations (CCA-F).</span>
+      <span>Developed by <a href="https://hellouchit.com" target="_blank" rel="noopener noreferrer">Uchit Vyas</a></span>
+    </div>
+  </footer>
+
+  <nav class="bottomnav" aria-label="Primary mobile">
+    <a href="/" data-nav="home"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg></span><span>Home</span></a>
+    <a href="/practice" data-nav="practice"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3 5 13.5h5.5L11 21l8-10.5h-5.5L13 3Z"/></svg></span><span>Practice</span></a>
+    <a href="/exam" data-nav="exam"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9.5 2.5h5"/><path d="M18.5 5.5 20 4"/></svg></span><span>Exam</span></a>
+    <a href="/browse" data-nav="browse"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21V5.5Z"/><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"/></svg></span><span>Bank</span></a>
+    <a href="/prep" data-nav="prep"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5 12 5l10 4.5-10 4.5-10-4.5Z"/><path d="M6.5 11.7v4.3c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3v-4.3"/><path d="M21 9.5v6"/></svg></span><span>Pass</span></a>
+    <a href="/progress" data-nav="progress"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/></svg></span><span>Stats</span></a>
+  </nav>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Escalation on Ambiguity — Claude Cert Prep</title>
+  <meta name="description" content="Escalate to a human only when a decision is high-stakes, hard to reverse, and confidence is genuinely low." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Uchit Vyas" />
+  <meta name="theme-color" content="#121214" />
+  <link rel="canonical" href="https://thatclaude.com/learn/5/5-5-escalation-ambiguity" />
+  <meta property="og:site_name" content="Claude Cert Prep" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="Escalation on Ambiguity — Claude Cert Prep" />
+  <meta property="og:description" content="Escalate to a human only when a decision is high-stakes, hard to reverse, and confidence is genuinely low." />
+  <meta property="og:url" content="https://thatclaude.com/learn/5/5-5-escalation-ambiguity" />
+  <meta property="og:image" content="https://thatclaude.com/og-image.svg" />
+  <meta property="og:locale" content="en_US" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Escalation on Ambiguity — Claude Cert Prep" />
+  <meta name="twitter:description" content="Escalate to a human only when a decision is high-stakes, hard to reverse, and confidence is genuinely low." />
+  <meta name="twitter:image" content="https://thatclaude.com/og-image.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235B4FE0'/%3E%3Ctext x='50' y='69' font-size='56' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'%3EC%3C/text%3E%3C/svg%3E" />
+  <link rel="alternate" type="application/rss+xml" title="Claude Cert Prep Blog" href="/blog/feed.xml" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://thatclaude.com"},{"@type":"ListItem","position":2,"name":"Curriculum","item":"https://thatclaude.com/learn"},{"@type":"ListItem","position":3,"name":"Context & Reliability","item":"https://thatclaude.com/learn/5"},{"@type":"ListItem","position":4,"name":"Escalation on Ambiguity","item":"https://thatclaude.com/learn/5/5-5-escalation-ambiguity"}]},{"@type":"LearningResource","name":"Escalation on Ambiguity","description":"Escalate to a human only when a decision is high-stakes, hard to reverse, and confidence is genuinely low.","learningResourceType":"Lesson","educationalLevel":"Intermediate","timeRequired":"PT7M","isAccessibleForFree":true,"inLanguage":"en","author":{"@type":"Person","name":"Uchit Vyas","url":"https://hellouchit.com"},"isPartOf":{"@type":"Course","name":"Claude Certified Architect (CCA-F) Curriculum","url":"https://thatclaude.com/learn"}}]}</script>
+</head>
+<body>
+  <a class="skip-link" href="#app">Skip to content</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark">C</span>
+        <span class="brand-text">
+          <strong>Claude Cert Prep</strong>
+          <span class="brand-sub">CCA-F · Architect</span>
+        </span>
+      </a>
+      <nav class="topnav" aria-label="Primary">
+        <a href="/" data-nav="home">Home</a>
+        <a href="/practice" data-nav="practice">Practice</a>
+        <a href="/exam" data-nav="exam">Mock Exam</a>
+        <a href="/browse" data-nav="browse">Bank</a>
+        <a href="/prep" data-nav="prep">How to Pass</a>
+        <a href="/progress" data-nav="progress">Progress</a>
+      </nav>
+      <div class="topbar-actions">
+        <span class="bank-chip" id="bankChip" title="Total questions in the bank">…</span>
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark">
+          <span class="theme-icon"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <main id="app" class="app" tabindex="-1">
+    <article class="prose page-head">
+      <h1>Escalation on Ambiguity</h1>
+      <p class="prose-dek">Escalate to a human only when a decision is high-stakes, hard to reverse, and confidence is genuinely low.</p>
+      <div class="prose-meta"><span style="color:#C4453B;font-weight:700">Context &amp; Reliability</span><span>·</span><span>Lesson 5 of 6</span><span>·</span><span>7 min</span></div>
+      
+      <p>An agent operating autonomously will regularly encounter situations where it isn't fully certain what the right action is. The question this domain tests is not whether agents should ever ask for help, but under what specific conditions escalating to a human is the correct call versus simply making the best available judgment and proceeding.</p>
+      <h2>The three-part test</h2>
+      <p>Escalation is warranted when three conditions hold together: the decision is <strong>high-stakes</strong>, the action is <strong>hard to reverse</strong>, and the agent's <strong>confidence is low</strong>. All three matter, and the exam specifically tests whether you'll escalate on just one or two of these being true. A decision can be high-stakes and irreversible but still not warrant escalation if the agent is highly confident in the right action based on clear instructions or unambiguous data. A decision can involve real uncertainty but not warrant escalation if the stakes are low or the action is trivially reversible — in that case, the right move is usually to make a reasonable choice, proceed, and let a subsequent step or a human correct course later if needed.</p>
+      <p>This is a deliberate design constraint against the two easy failure modes. An agent that escalates on every uncertain judgment call becomes useless — it turns into a chain of human-approval requests that defeats the purpose of automation and produces "escalation fatigue," where humans stop reading the requests carefully because there are too many of them, including trivial ones. An agent that never escalates, on the other hand, will eventually take an irreversible, high-stakes action on a low-confidence guess, which is the exact scenario escalation exists to prevent.</p>
+      <h3>Routine judgment calls are not escalation triggers</h3>
+      <p>Most ambiguity an agent encounters is routine: which of two reasonably similar phrasings to use, which of several valid file locations to put a new module in, how to interpret a slightly underspecified but low-consequence instruction. These should be resolved by the agent making its best call, ideally stating its assumption explicitly in its output so a human reviewing the result later can catch and correct it if needed. Reserving escalation for the narrow, genuinely high-stakes-and-irreversible-and-uncertain intersection is what keeps the mechanism useful.</p>
+      <div class="callout"><b>Exam trap</b> A question describes an agent that pauses and asks for human confirmation before renaming a local variable in a private helper function, because "it wasn't 100% sure the new name was better." This is framed as admirably cautious. It is not — a variable rename in a private function is low-stakes and trivially reversible (a code review or a follow-up commit fixes it instantly), so this is escalation fatigue in miniature, not good judgment. Contrast with a question where an agent proceeds to delete a production database table without confirmation because it was "reasonably confident" the table was unused — that's the opposite failure, proceeding on insufficient confidence when the action is high-stakes and irreversible.</div>
+      <blockquote>Scenario: An agent managing infrastructure-as-code is asked to "clean up unused resources" and finds a storage bucket with no read/write activity in the logs for 90 days, but the bucket's name suggests it might be a disaster-recovery backup target that legitimately sees no routine traffic. Should it escalate? Deleting a storage bucket is hard to reverse (data loss, assuming no separate backup), the stakes are high if it turns out to be load-bearing, and the agent's confidence about its actual purpose is genuinely low given the ambiguous signal from the name. All three conditions hold, so this should escalate with a clear summary: what the agent found, why the name suggests uncertainty, and what evidence would resolve it, rather than either deleting the bucket or silently skipping it without flagging the ambiguity to anyone.</blockquote>
+      <h2>Try it</h2>
+      <p>List five decisions a coding agent working in your codebase might face in a normal week (examples: renaming a function, deleting a seemingly-unused file, changing a default config value, modifying a database migration, updating a dependency version). For each, score it on the three axes — stakes, reversibility, and your confidence in the right call — and decide which ones genuinely clear the bar for escalation versus which are routine judgment calls the agent should just make and note.</p>
+    
+      
+    </article>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px">
+      <a class="btn btn-outline" href="/learn/5/5-4-idempotency-error-propagation">← Idempotency and Error Propagation</a>
+      <a class="btn btn-solid" href="/learn/5/5-6-evals-provenance">Evals and Information Provenance →</a>
+    </div>
+  </main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>Unofficial study aid · Not affiliated with Anthropic.</span>
+      <nav class="footer-nav" aria-label="More">
+        <a href="/learn">Curriculum</a>
+        <a href="/glossary">Glossary</a>
+        <a href="/reference">Quick Reference</a>
+        <a href="/blog">Blog</a>
+        <a href="/certifications">Certifications</a>
+        <a href="/resources">Resources</a>
+        <a href="/about">About</a>
+        <a href="/changelog">Changelog</a>
+      </nav>
+      <span>Blueprint mirrors the Claude Certified Architect — Foundations (CCA-F).</span>
+      <span>Developed by <a href="https://hellouchit.com" target="_blank" rel="noopener noreferrer">Uchit Vyas</a></span>
+    </div>
+  </footer>
+
+  <nav class="bottomnav" aria-label="Primary mobile">
+    <a href="/" data-nav="home"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg></span><span>Home</span></a>
+    <a href="/practice" data-nav="practice"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3 5 13.5h5.5L11 21l8-10.5h-5.5L13 3Z"/></svg></span><span>Practice</span></a>
+    <a href="/exam" data-nav="exam"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9.5 2.5h5"/><path d="M18.5 5.5 20 4"/></svg></span><span>Exam</span></a>
+    <a href="/browse" data-nav="browse"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21V5.5Z"/><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"/></svg></span><span>Bank</span></a>
+    <a href="/prep" data-nav="prep"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5 12 5l10 4.5-10 4.5-10-4.5Z"/><path d="M6.5 11.7v4.3c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3v-4.3"/><path d="M21 9.5v6"/></svg></span><span>Pass</span></a>
+    <a href="/progress" data-nav="progress"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/></svg></span><span>Stats</span></a>
+  </nav>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Context &amp; Reliability Glossary — Claude Cert Prep</title>
+  <meta name="description" content="Context Management &amp; Reliability: exam-focused glossary terms with definitions and exam-context notes for the Claude Certified Architect (CCA-F) exam." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Uchit Vyas" />
+  <meta name="theme-color" content="#121214" />
+  <link rel="canonical" href="https://thatclaude.com/glossary/5" />
+  <meta property="og:site_name" content="Claude Cert Prep" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Context &amp; Reliability Glossary — Claude Cert Prep" />
+  <meta property="og:description" content="Context Management &amp; Reliability: exam-focused glossary terms with definitions and exam-context notes for the Claude Certified Architect (CCA-F) exam." />
+  <meta property="og:url" content="https://thatclaude.com/glossary/5" />
+  <meta property="og:image" content="https://thatclaude.com/og-image.svg" />
+  <meta property="og:locale" content="en_US" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Context &amp; Reliability Glossary — Claude Cert Prep" />
+  <meta name="twitter:description" content="Context Management &amp; Reliability: exam-focused glossary terms with definitions and exam-context notes for the Claude Certified Architect (CCA-F) exam." />
+  <meta name="twitter:image" content="https://thatclaude.com/og-image.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235B4FE0'/%3E%3Ctext x='50' y='69' font-size='56' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'%3EC%3C/text%3E%3C/svg%3E" />
+  <link rel="alternate" type="application/rss+xml" title="Claude Cert Prep Blog" href="/blog/feed.xml" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://thatclaude.com"},{"@type":"ListItem","position":2,"name":"Glossary","item":"https://thatclaude.com/glossary"},{"@type":"ListItem","position":3,"name":"Context & Reliability","item":"https://thatclaude.com/glossary/5"}]},{"@type":"DefinedTermSet","name":"Context & Reliability Glossary","description":"Exam-focused glossary terms for Context Management & Reliability (Claude Certified Architect — Foundations).","url":"https://thatclaude.com/glossary/5","hasDefinedTerm":[{"@type":"DefinedTerm","name":"Context window","description":"The finite token budget available for a request — input history and output share this same budget."},{"@type":"DefinedTerm","name":"Prompt caching","description":"Marking a stable prefix of a prompt as cacheable so repeated requests reuse it server-side, cutting latency and cost."},{"@type":"DefinedTerm","name":"Token budgeting","description":"Deliberately allocating context space between system prompt, tool definitions, retrieved data, and history so nothing critical is crowded out."},{"@type":"DefinedTerm","name":"Compaction / summarization","description":"Condensing older conversation history into a summary to free context space."},{"@type":"DefinedTerm","name":"Escalation on ambiguity","description":"Surfacing uncertainty to a human rather than silently guessing when a decision is high-stakes or underspecified."},{"@type":"DefinedTerm","name":"Error propagation","description":"Deciding whether a subagent's error should halt the parent process, trigger a retry, or surface as a degraded-but-continuing result."},{"@type":"DefinedTerm","name":"Idempotency","description":"Designing a tool call so running it twice has the same effect as running it once."},{"@type":"DefinedTerm","name":"Codebase exploration","description":"An agent's strategy for building situational context — grep/search first vs. reading whole files — before making changes."},{"@type":"DefinedTerm","name":"Evals","description":"A structured test suite scoring agent or prompt outputs against expected behavior, used to catch regressions before shipping."},{"@type":"DefinedTerm","name":"Information provenance","description":"Tracking where a piece of context came from — which tool call, file, or turn — so it can be trusted appropriately."}]}]}</script>
+</head>
+<body>
+  <a class="skip-link" href="#app">Skip to content</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark">C</span>
+        <span class="brand-text">
+          <strong>Claude Cert Prep</strong>
+          <span class="brand-sub">CCA-F · Architect</span>
+        </span>
+      </a>
+      <nav class="topnav" aria-label="Primary">
+        <a href="/" data-nav="home">Home</a>
+        <a href="/practice" data-nav="practice">Practice</a>
+        <a href="/exam" data-nav="exam">Mock Exam</a>
+        <a href="/browse" data-nav="browse">Bank</a>
+        <a href="/prep" data-nav="prep">How to Pass</a>
+        <a href="/progress" data-nav="progress">Progress</a>
+      </nav>
+      <div class="topbar-actions">
+        <span class="bank-chip" id="bankChip" title="Total questions in the bank">…</span>
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark">
+          <span class="theme-icon"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <main id="app" class="app" tabindex="-1">
+    <div class="page-head prose"><h1>Context &amp; Reliability — Glossary</h1><p class="prose-dek">Context Management &amp; Reliability · 15% of the exam. 10 terms.</p></div>
+    <div class="domain-pills"><a href="/glossary/1">Agentic Architecture</a><a href="/glossary/2">Tools &amp; MCP</a><a href="/glossary/3">Claude Code</a><a href="/glossary/4">Prompt Engineering</a><a href="/glossary/5" class="on">Context &amp; Reliability</a></div>
+    <div style="margin-top:18px"><div class="term-card"><h3>Context window</h3><p>The finite token budget available for a request — input history and output share this same budget.</p><p class="exam-note">Exam context: Budgeting questions expect you to account for tool definitions and retrieved data, not just the conversation text.</p></div><div class="term-card"><h3>Prompt caching</h3><p>Marking a stable prefix of a prompt as cacheable so repeated requests reuse it server-side, cutting latency and cost.</p><p class="exam-note">Exam context: Only the portion before the first change is reusable — appending new content after a cached prefix keeps the cache hit.</p></div><div class="term-card"><h3>Token budgeting</h3><p>Deliberately allocating context space between system prompt, tool definitions, retrieved data, and history so nothing critical is crowded out.</p><p class="exam-note">Exam context: The exam rewards proactively trimming low-value context over reactively hitting the limit and truncating blindly.</p></div><div class="term-card"><h3>Compaction / summarization</h3><p>Condensing older conversation history into a summary to free context space.</p><p class="exam-note">Exam context: The 'summarization trap': over-compacting drops details the model still needs, producing vague, ungrounded later responses.</p></div><div class="term-card"><h3>Escalation on ambiguity</h3><p>Surfacing uncertainty to a human rather than silently guessing when a decision is high-stakes or underspecified.</p><p class="exam-note">Exam context: Correct answers favor escalation exactly when reversibility is low and confidence is uncertain — not for every judgment call.</p></div><div class="term-card"><h3>Error propagation</h3><p>Deciding whether a subagent's error should halt the parent process, trigger a retry, or surface as a degraded-but-continuing result.</p><p class="exam-note">Exam context: Silently swallowing every subagent error is as wrong as halting on every one — the right call depends on the task's criticality.</p></div><div class="term-card"><h3>Idempotency</h3><p>Designing a tool call so running it twice has the same effect as running it once.</p><p class="exam-note">Exam context: Essential for anything that might get automatically retried — non-idempotent actions (like sending an email) need a guard.</p></div><div class="term-card"><h3>Codebase exploration</h3><p>An agent's strategy for building situational context — grep/search first vs. reading whole files — before making changes.</p><p class="exam-note">Exam context: Exam scenarios reward targeted exploration over reflexively reading every file in a large repo.</p></div><div class="term-card"><h3>Evals</h3><p>A structured test suite scoring agent or prompt outputs against expected behavior, used to catch regressions before shipping.</p><p class="exam-note">Exam context: Treat evals as the mechanism that turns 'it seemed to work when I tried it' into something you can actually trust.</p></div><div class="term-card"><h3>Information provenance</h3><p>Tracking where a piece of context came from — which tool call, file, or turn — so it can be trusted appropriately.</p><p class="exam-note">Exam context: Matters most when a model must reconcile conflicting information from two different sources in the same context.</p></div></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:22px">
+      <a class="btn btn-solid" href="/reference/5">Quick reference for this domain →</a>
+      <a class="btn btn-outline" href="/practice?d=5">Practice this domain</a>
+    </div>
+  </main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>Unofficial study aid · Not affiliated with Anthropic.</span>
+      <nav class="footer-nav" aria-label="More">
+        <a href="/learn">Curriculum</a>
+        <a href="/glossary">Glossary</a>
+        <a href="/reference">Quick Reference</a>
+        <a href="/blog">Blog</a>
+        <a href="/certifications">Certifications</a>
+        <a href="/resources">Resources</a>
+        <a href="/about">About</a>
+        <a href="/changelog">Changelog</a>
+      </nav>
+      <span>Blueprint mirrors the Claude Certified Architect — Foundations (CCA-F).</span>
+      <span>Developed by <a href="https://hellouchit.com" target="_blank" rel="noopener noreferrer">Uchit Vyas</a></span>
+    </div>
+  </footer>
+
+  <nav class="bottomnav" aria-label="Primary mobile">
+    <a href="/" data-nav="home"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg></span><span>Home</span></a>
+    <a href="/practice" data-nav="practice"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3 5 13.5h5.5L11 21l8-10.5h-5.5L13 3Z"/></svg></span><span>Practice</span></a>
+    <a href="/exam" data-nav="exam"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9.5 2.5h5"/><path d="M18.5 5.5 20 4"/></svg></span><span>Exam</span></a>
+    <a href="/browse" data-nav="browse"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21V5.5Z"/><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"/></svg></span><span>Bank</span></a>
+    <a href="/prep" data-nav="prep"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5 12 5l10 4.5-10 4.5-10-4.5Z"/><path d="M6.5 11.7v4.3c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3v-4.3"/><path d="M21 9.5v6"/></svg></span><span>Pass</span></a>
+    <a href="/progress" data-nav="progress"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/></svg></span><span>Stats</span></a>
+  </nav>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

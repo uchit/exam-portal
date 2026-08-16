@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chain-of-Thought: When It Helps — Claude Cert Prep</title>
+  <meta name="description" content="When asking Claude to reason step by step improves accuracy, and when it just adds latency and cost for no benefit." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Uchit Vyas" />
+  <meta name="theme-color" content="#121214" />
+  <link rel="canonical" href="https://thatclaude.com/learn/4/4-3-chain-of-thought" />
+  <meta property="og:site_name" content="Claude Cert Prep" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="Chain-of-Thought: When It Helps — Claude Cert Prep" />
+  <meta property="og:description" content="When asking Claude to reason step by step improves accuracy, and when it just adds latency and cost for no benefit." />
+  <meta property="og:url" content="https://thatclaude.com/learn/4/4-3-chain-of-thought" />
+  <meta property="og:image" content="https://thatclaude.com/og-image.svg" />
+  <meta property="og:locale" content="en_US" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Chain-of-Thought: When It Helps — Claude Cert Prep" />
+  <meta name="twitter:description" content="When asking Claude to reason step by step improves accuracy, and when it just adds latency and cost for no benefit." />
+  <meta name="twitter:image" content="https://thatclaude.com/og-image.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235B4FE0'/%3E%3Ctext x='50' y='69' font-size='56' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'%3EC%3C/text%3E%3C/svg%3E" />
+  <link rel="alternate" type="application/rss+xml" title="Claude Cert Prep Blog" href="/blog/feed.xml" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://thatclaude.com"},{"@type":"ListItem","position":2,"name":"Curriculum","item":"https://thatclaude.com/learn"},{"@type":"ListItem","position":3,"name":"Prompt Engineering","item":"https://thatclaude.com/learn/4"},{"@type":"ListItem","position":4,"name":"Chain-of-Thought: When It Helps","item":"https://thatclaude.com/learn/4/4-3-chain-of-thought"}]},{"@type":"LearningResource","name":"Chain-of-Thought: When It Helps","description":"When asking Claude to reason step by step improves accuracy, and when it just adds latency and cost for no benefit.","learningResourceType":"Lesson","educationalLevel":"Intermediate","timeRequired":"PT7M","isAccessibleForFree":true,"inLanguage":"en","author":{"@type":"Person","name":"Uchit Vyas","url":"https://hellouchit.com"},"isPartOf":{"@type":"Course","name":"Claude Certified Architect (CCA-F) Curriculum","url":"https://thatclaude.com/learn"}}]}</script>
+</head>
+<body>
+  <a class="skip-link" href="#app">Skip to content</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark">C</span>
+        <span class="brand-text">
+          <strong>Claude Cert Prep</strong>
+          <span class="brand-sub">CCA-F · Architect</span>
+        </span>
+      </a>
+      <nav class="topnav" aria-label="Primary">
+        <a href="/" data-nav="home">Home</a>
+        <a href="/practice" data-nav="practice">Practice</a>
+        <a href="/exam" data-nav="exam">Mock Exam</a>
+        <a href="/browse" data-nav="browse">Bank</a>
+        <a href="/prep" data-nav="prep">How to Pass</a>
+        <a href="/progress" data-nav="progress">Progress</a>
+      </nav>
+      <div class="topbar-actions">
+        <span class="bank-chip" id="bankChip" title="Total questions in the bank">…</span>
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark">
+          <span class="theme-icon"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <main id="app" class="app" tabindex="-1">
+    <article class="prose page-head">
+      <h1>Chain-of-Thought: When It Helps</h1>
+      <p class="prose-dek">When asking Claude to reason step by step improves accuracy, and when it just adds latency and cost for no benefit.</p>
+      <div class="prose-meta"><span style="color:#C6841E;font-weight:700">Prompt Engineering</span><span>·</span><span>Lesson 3 of 6</span><span>·</span><span>7 min</span></div>
+      
+      <p>Chain-of-thought (CoT) prompting asks the model to work through its reasoning step by step before producing a final answer, instead of jumping straight to the answer. The exam tests whether you can identify when this is worth the cost, because it is not free.</p>
+      <h2>The tradeoff</h2>
+      <p>CoT reliably improves accuracy on tasks that require multiple dependent reasoning steps: multi-step arithmetic, logic problems with several constraints, tasks that require weighing multiple pieces of evidence before concluding, or debugging where the cause has to be traced through several layers. Working through the steps explicitly reduces the chance the model skips a step or jumps to a plausible-sounding but wrong conclusion.</p>
+      <p>The cost is real: reasoning text adds tokens, which adds latency and adds spend. For a simple lookup, a classification into one of a few clear categories, or a direct extraction task, there is no chain of dependent steps to walk through, so CoT adds cost without adding accuracy. Reserve it for genuinely multi-step problems, not routine tasks that just happen to sound complicated.</p>
+      <h2>How to structure it</h2>
+      <p>The most reliable pattern is to ask for reasoning in a clearly delimited block (for example inside <code>&lt;thinking&gt;</code> tags) followed by a clearly delimited final answer (for example inside <code>&lt;answer&gt;</code> tags), so downstream code can strip the reasoning and use only the final answer. Asking for reasoning "somewhere in the response" without structure makes it harder to parse out the actual answer programmatically.</p>
+      <p>Note also that Claude models with extended thinking are a distinct mechanism from prompted chain-of-thought — extended thinking is a model-level feature you enable via API parameters, while prompted CoT is a prompting technique you can use with any model, including ones without a thinking mode. The exam may ask you to distinguish "ask the model to think step by step in the prompt" from "enable a dedicated reasoning mode" as two different tools for a similar goal.</p>
+      <div class="callout"><b>Exam trap</b> A scenario describes a simple sentiment classification task (positive/negative/neutral) that is running slowly and expensively because every prompt includes "think step by step before answering." The correct fix is to remove the CoT instruction, since single-label classification from clear text is not a multi-step reasoning task and gains nothing from it. A wrong answer choice will suggest keeping CoT but "optimizing" it in some other way — the actual issue is that CoT is the wrong tool for this task at all, not that it's misconfigured.</div>
+      <blockquote>A finance team asks Claude to determine whether a transaction violates a multi-clause compliance policy, where the policy has five interacting conditions (amount thresholds, counterparty type, jurisdiction, prior flags, and an exception clause). A direct answer without reasoning is frequently wrong because the model conflates two of the conditions or misses the exception clause. Asking for step-by-step reasoning through each clause before stating a verdict raises accuracy substantially, because this is exactly the multi-step, multi-constraint reasoning case CoT is built for, and the added latency is acceptable since this runs asynchronously, not in a live user-facing chat.</blockquote>
+      <h2>Batch workloads and latency tolerance</h2>
+      <p>The latency cost of chain-of-thought matters most in interactive, user-facing contexts where someone is waiting on a response. For large, non-interactive workloads — classifying a backlog of 50,000 support tickets, scoring a dataset overnight — latency per request is far less important than throughput and cost, and this is also the scenario where the async Batches API is the right infrastructure choice regardless of whether CoT is used, since it is built for large non-interactive jobs where waiting for results is acceptable. A scenario that combines "large offline batch job" with "task requires multi-step reasoning" can reasonably use CoT precisely because the usual latency objection doesn't apply.</p>
+      <h2>CoT is not a substitute for a better task decomposition</h2>
+      <p>Sometimes a task that appears to need chain-of-thought reasoning inside a single call is actually better solved by splitting it into separate calls — for example, a call that extracts relevant facts, followed by a call that reasons over just those facts. This is different from prompted CoT, which keeps everything in one call and asks the model to narrate its reasoning inline. Both can raise accuracy on genuinely multi-step problems; which one is preferable depends on whether the intermediate steps benefit from being independently inspectable, validated, or cached, in which case splitting into separate calls is usually the stronger design.</p>
+      <h2>Try it</h2>
+      <p>Take a task you currently run with "think step by step" prepended and check whether it is truly multi-step. If it is a single-step classification or lookup, strip the CoT instruction, run 10 identical inputs both ways, and compare both accuracy and response latency/token count between the two versions. Then take a genuinely multi-step task you run without CoT today, add a structured "reason inside &lt;thinking&gt; tags, then answer inside &lt;answer&gt; tags" instruction, and check whether accuracy improves enough to justify the added latency.</p>
+    
+      
+    </article>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px">
+      <a class="btn btn-outline" href="/learn/4/4-2-xml-few-shot">← XML Structuring and Few-Shot Prompting</a>
+      <a class="btn btn-solid" href="/learn/4/4-4-prefill-structured-output">Prefill and Guaranteed Structured Output →</a>
+    </div>
+  </main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>Unofficial study aid · Not affiliated with Anthropic.</span>
+      <nav class="footer-nav" aria-label="More">
+        <a href="/learn">Curriculum</a>
+        <a href="/glossary">Glossary</a>
+        <a href="/reference">Quick Reference</a>
+        <a href="/blog">Blog</a>
+        <a href="/certifications">Certifications</a>
+        <a href="/resources">Resources</a>
+        <a href="/about">About</a>
+        <a href="/changelog">Changelog</a>
+      </nav>
+      <span>Blueprint mirrors the Claude Certified Architect — Foundations (CCA-F).</span>
+      <span>Developed by <a href="https://hellouchit.com" target="_blank" rel="noopener noreferrer">Uchit Vyas</a></span>
+    </div>
+  </footer>
+
+  <nav class="bottomnav" aria-label="Primary mobile">
+    <a href="/" data-nav="home"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg></span><span>Home</span></a>
+    <a href="/practice" data-nav="practice"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3 5 13.5h5.5L11 21l8-10.5h-5.5L13 3Z"/></svg></span><span>Practice</span></a>
+    <a href="/exam" data-nav="exam"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9.5 2.5h5"/><path d="M18.5 5.5 20 4"/></svg></span><span>Exam</span></a>
+    <a href="/browse" data-nav="browse"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21V5.5Z"/><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"/></svg></span><span>Bank</span></a>
+    <a href="/prep" data-nav="prep"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5 12 5l10 4.5-10 4.5-10-4.5Z"/><path d="M6.5 11.7v4.3c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3v-4.3"/><path d="M21 9.5v6"/></svg></span><span>Pass</span></a>
+    <a href="/progress" data-nav="progress"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/></svg></span><span>Stats</span></a>
+  </nav>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

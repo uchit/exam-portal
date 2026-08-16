@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claude Code Glossary — Claude Cert Prep</title>
+  <meta name="description" content="Claude Code Configuration &amp; Workflows: exam-focused glossary terms with definitions and exam-context notes for the Claude Certified Architect (CCA-F) exam." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Uchit Vyas" />
+  <meta name="theme-color" content="#121214" />
+  <link rel="canonical" href="https://thatclaude.com/glossary/3" />
+  <meta property="og:site_name" content="Claude Cert Prep" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Claude Code Glossary — Claude Cert Prep" />
+  <meta property="og:description" content="Claude Code Configuration &amp; Workflows: exam-focused glossary terms with definitions and exam-context notes for the Claude Certified Architect (CCA-F) exam." />
+  <meta property="og:url" content="https://thatclaude.com/glossary/3" />
+  <meta property="og:image" content="https://thatclaude.com/og-image.svg" />
+  <meta property="og:locale" content="en_US" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Claude Code Glossary — Claude Cert Prep" />
+  <meta name="twitter:description" content="Claude Code Configuration &amp; Workflows: exam-focused glossary terms with definitions and exam-context notes for the Claude Certified Architect (CCA-F) exam." />
+  <meta name="twitter:image" content="https://thatclaude.com/og-image.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235B4FE0'/%3E%3Ctext x='50' y='69' font-size='56' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'%3EC%3C/text%3E%3C/svg%3E" />
+  <link rel="alternate" type="application/rss+xml" title="Claude Cert Prep Blog" href="/blog/feed.xml" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://thatclaude.com"},{"@type":"ListItem","position":2,"name":"Glossary","item":"https://thatclaude.com/glossary"},{"@type":"ListItem","position":3,"name":"Claude Code","item":"https://thatclaude.com/glossary/3"}]},{"@type":"DefinedTermSet","name":"Claude Code Glossary","description":"Exam-focused glossary terms for Claude Code Configuration & Workflows (Claude Certified Architect — Foundations).","url":"https://thatclaude.com/glossary/3","hasDefinedTerm":[{"@type":"DefinedTerm","name":"CLAUDE.md","description":"A memory file automatically pulled into context documenting project conventions, commands, and constraints."},{"@type":"DefinedTerm","name":"CLAUDE.md hierarchy","description":"Enterprise, user, project, and local CLAUDE.md files are merged together, with more specific scopes layered on top of general ones."},{"@type":"DefinedTerm","name":"settings.json","description":"Project- or user-level configuration for permissions, hooks, environment variables, and other Claude Code behavior."},{"@type":"DefinedTerm","name":"Permissions","description":"Allow / deny / ask rules controlling which tools and commands Claude Code can run without prompting the user."},{"@type":"DefinedTerm","name":"Slash command","description":"A reusable, user-invoked prompt template stored as a Markdown file and triggered explicitly with /name."},{"@type":"DefinedTerm","name":"Skill","description":"A packaged, discoverable capability — instructions plus optional scripts — that Claude can invoke autonomously when it judges it relevant."},{"@type":"DefinedTerm","name":"Hook","description":"A shell command that fires automatically on a lifecycle event (e.g. PreToolUse, PostToolUse, Stop) to enforce policy deterministically."},{"@type":"DefinedTerm","name":"Plan mode","description":"A read-only mode where Claude researches and proposes an approach before any file is edited, requiring explicit approval to proceed."},{"@type":"DefinedTerm","name":"Subagents (Claude Code)","description":"Separately configured agents with their own system prompt and tool access, delegated a scoped piece of work by the main agent."},{"@type":"DefinedTerm","name":"CI/CD integration","description":"Running Claude Code non-interactively (headless mode) inside a pipeline, e.g. for automated review or fix-and-PR workflows."}]}]}</script>
+</head>
+<body>
+  <a class="skip-link" href="#app">Skip to content</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark">C</span>
+        <span class="brand-text">
+          <strong>Claude Cert Prep</strong>
+          <span class="brand-sub">CCA-F · Architect</span>
+        </span>
+      </a>
+      <nav class="topnav" aria-label="Primary">
+        <a href="/" data-nav="home">Home</a>
+        <a href="/practice" data-nav="practice">Practice</a>
+        <a href="/exam" data-nav="exam">Mock Exam</a>
+        <a href="/browse" data-nav="browse">Bank</a>
+        <a href="/prep" data-nav="prep">How to Pass</a>
+        <a href="/progress" data-nav="progress">Progress</a>
+      </nav>
+      <div class="topbar-actions">
+        <span class="bank-chip" id="bankChip" title="Total questions in the bank">…</span>
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark">
+          <span class="theme-icon"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <main id="app" class="app" tabindex="-1">
+    <div class="page-head prose"><h1>Claude Code — Glossary</h1><p class="prose-dek">Claude Code Configuration &amp; Workflows · 20% of the exam. 10 terms.</p></div>
+    <div class="domain-pills"><a href="/glossary/1">Agentic Architecture</a><a href="/glossary/2">Tools &amp; MCP</a><a href="/glossary/3" class="on">Claude Code</a><a href="/glossary/4">Prompt Engineering</a><a href="/glossary/5">Context &amp; Reliability</a></div>
+    <div style="margin-top:18px"><div class="term-card"><h3>CLAUDE.md</h3><p>A memory file automatically pulled into context documenting project conventions, commands, and constraints.</p><p class="exam-note">Exam context: Multiple CLAUDE.md files can exist at different scopes and are all included — none of them get silently dropped.</p></div><div class="term-card"><h3>CLAUDE.md hierarchy</h3><p>Enterprise, user, project, and local CLAUDE.md files are merged together, with more specific scopes layered on top of general ones.</p><p class="exam-note">Exam context: A common wrong answer assumes the most specific file replaces the others — it's additive, not a full override.</p></div><div class="term-card"><h3>settings.json</h3><p>Project- or user-level configuration for permissions, hooks, environment variables, and other Claude Code behavior.</p><p class="exam-note">Exam context: Know which settings are safe to check into a repo (project-shared) versus which belong in a local, git-ignored file.</p></div><div class="term-card"><h3>Permissions</h3><p>Allow / deny / ask rules controlling which tools and commands Claude Code can run without prompting the user.</p><p class="exam-note">Exam context: Scenario questions test picking the narrowest permission that still lets the workflow function.</p></div><div class="term-card"><h3>Slash command</h3><p>A reusable, user-invoked prompt template stored as a Markdown file and triggered explicitly with <code>/name</code>.</p><p class="exam-note">Exam context: The user has to type it — contrast with a skill, which Claude can invoke on its own judgment.</p></div><div class="term-card"><h3>Skill</h3><p>A packaged, discoverable capability — instructions plus optional scripts — that Claude can invoke autonomously when it judges it relevant.</p><p class="exam-note">Exam context: If a scenario needs Claude to decide when to use it, that rules out a slash command as the right mechanism.</p></div><div class="term-card"><h3>Hook</h3><p>A shell command that fires automatically on a lifecycle event (e.g. PreToolUse, PostToolUse, Stop) to enforce policy deterministically.</p><p class="exam-note">Exam context: Hooks exist specifically because prompted instructions ('please always run tests first') aren't reliably deterministic.</p></div><div class="term-card"><h3>Plan mode</h3><p>A read-only mode where Claude researches and proposes an approach before any file is edited, requiring explicit approval to proceed.</p><p class="exam-note">Exam context: Correct answer for scenarios needing human sign-off before risky or hard-to-reverse changes.</p></div><div class="term-card"><h3>Subagents (Claude Code)</h3><p>Separately configured agents with their own system prompt and tool access, delegated a scoped piece of work by the main agent.</p><p class="exam-note">Exam context: Distinguish product-level Claude Code subagents from the general agentic-architecture subagent pattern in Domain 1 — related, not identical.</p></div><div class="term-card"><h3>CI/CD integration</h3><p>Running Claude Code non-interactively (headless mode) inside a pipeline, e.g. for automated review or fix-and-PR workflows.</p><p class="exam-note">Exam context: Headless runs still need explicit permission configuration — they don't get an interactive prompt to fall back on.</p></div></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:22px">
+      <a class="btn btn-solid" href="/reference/3">Quick reference for this domain →</a>
+      <a class="btn btn-outline" href="/practice?d=3">Practice this domain</a>
+    </div>
+  </main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>Unofficial study aid · Not affiliated with Anthropic.</span>
+      <nav class="footer-nav" aria-label="More">
+        <a href="/learn">Curriculum</a>
+        <a href="/glossary">Glossary</a>
+        <a href="/reference">Quick Reference</a>
+        <a href="/blog">Blog</a>
+        <a href="/certifications">Certifications</a>
+        <a href="/resources">Resources</a>
+        <a href="/about">About</a>
+        <a href="/changelog">Changelog</a>
+      </nav>
+      <span>Blueprint mirrors the Claude Certified Architect — Foundations (CCA-F).</span>
+      <span>Developed by <a href="https://hellouchit.com" target="_blank" rel="noopener noreferrer">Uchit Vyas</a></span>
+    </div>
+  </footer>
+
+  <nav class="bottomnav" aria-label="Primary mobile">
+    <a href="/" data-nav="home"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg></span><span>Home</span></a>
+    <a href="/practice" data-nav="practice"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3 5 13.5h5.5L11 21l8-10.5h-5.5L13 3Z"/></svg></span><span>Practice</span></a>
+    <a href="/exam" data-nav="exam"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9.5 2.5h5"/><path d="M18.5 5.5 20 4"/></svg></span><span>Exam</span></a>
+    <a href="/browse" data-nav="browse"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21V5.5Z"/><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"/></svg></span><span>Bank</span></a>
+    <a href="/prep" data-nav="prep"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5 12 5l10 4.5-10 4.5-10-4.5Z"/><path d="M6.5 11.7v4.3c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3v-4.3"/><path d="M21 9.5v6"/></svg></span><span>Pass</span></a>
+    <a href="/progress" data-nav="progress"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/></svg></span><span>Stats</span></a>
+  </nav>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

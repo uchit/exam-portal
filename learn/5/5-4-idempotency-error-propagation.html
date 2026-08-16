@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Idempotency and Error Propagation — Claude Cert Prep</title>
+  <meta name="description" content="Idempotent tool calls survive retries safely; error handling should match response severity to failure criticality." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Uchit Vyas" />
+  <meta name="theme-color" content="#121214" />
+  <link rel="canonical" href="https://thatclaude.com/learn/5/5-4-idempotency-error-propagation" />
+  <meta property="og:site_name" content="Claude Cert Prep" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="Idempotency and Error Propagation — Claude Cert Prep" />
+  <meta property="og:description" content="Idempotent tool calls survive retries safely; error handling should match response severity to failure criticality." />
+  <meta property="og:url" content="https://thatclaude.com/learn/5/5-4-idempotency-error-propagation" />
+  <meta property="og:image" content="https://thatclaude.com/og-image.svg" />
+  <meta property="og:locale" content="en_US" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Idempotency and Error Propagation — Claude Cert Prep" />
+  <meta name="twitter:description" content="Idempotent tool calls survive retries safely; error handling should match response severity to failure criticality." />
+  <meta name="twitter:image" content="https://thatclaude.com/og-image.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235B4FE0'/%3E%3Ctext x='50' y='69' font-size='56' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'%3EC%3C/text%3E%3C/svg%3E" />
+  <link rel="alternate" type="application/rss+xml" title="Claude Cert Prep Blog" href="/blog/feed.xml" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://thatclaude.com"},{"@type":"ListItem","position":2,"name":"Curriculum","item":"https://thatclaude.com/learn"},{"@type":"ListItem","position":3,"name":"Context & Reliability","item":"https://thatclaude.com/learn/5"},{"@type":"ListItem","position":4,"name":"Idempotency and Error Propagation","item":"https://thatclaude.com/learn/5/5-4-idempotency-error-propagation"}]},{"@type":"LearningResource","name":"Idempotency and Error Propagation","description":"Idempotent tool calls survive retries safely; error handling should match response severity to failure criticality.","learningResourceType":"Lesson","educationalLevel":"Intermediate","timeRequired":"PT8M","isAccessibleForFree":true,"inLanguage":"en","author":{"@type":"Person","name":"Uchit Vyas","url":"https://hellouchit.com"},"isPartOf":{"@type":"Course","name":"Claude Certified Architect (CCA-F) Curriculum","url":"https://thatclaude.com/learn"}}]}</script>
+</head>
+<body>
+  <a class="skip-link" href="#app">Skip to content</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark">C</span>
+        <span class="brand-text">
+          <strong>Claude Cert Prep</strong>
+          <span class="brand-sub">CCA-F · Architect</span>
+        </span>
+      </a>
+      <nav class="topnav" aria-label="Primary">
+        <a href="/" data-nav="home">Home</a>
+        <a href="/practice" data-nav="practice">Practice</a>
+        <a href="/exam" data-nav="exam">Mock Exam</a>
+        <a href="/browse" data-nav="browse">Bank</a>
+        <a href="/prep" data-nav="prep">How to Pass</a>
+        <a href="/progress" data-nav="progress">Progress</a>
+      </nav>
+      <div class="topbar-actions">
+        <span class="bank-chip" id="bankChip" title="Total questions in the bank">…</span>
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark">
+          <span class="theme-icon"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <main id="app" class="app" tabindex="-1">
+    <article class="prose page-head">
+      <h1>Idempotency and Error Propagation</h1>
+      <p class="prose-dek">Idempotent tool calls survive retries safely; error handling should match response severity to failure criticality.</p>
+      <div class="prose-meta"><span style="color:#C4453B;font-weight:700">Context &amp; Reliability</span><span>·</span><span>Lesson 4 of 6</span><span>·</span><span>8 min</span></div>
+      
+      <p>Two related reliability concepts govern how an agentic system behaves when things go wrong or get repeated: idempotency, which governs what happens when an action runs more than once, and error propagation, which governs how a failure in one step should affect the rest of the system.</p>
+      <h2>Idempotency: running twice equals running once</h2>
+      <p>A tool call is idempotent if executing it multiple times produces the same end state as executing it once. This property is required for any action that might be automatically retried, whether by your own orchestration logic after a timeout, by a network layer resending a request, or by an agent itself re-attempting a step it isn't sure succeeded. If a tool call is not idempotent, an automatic retry can cause real, sometimes costly, damage: sending a duplicate notification, charging a customer's card twice, creating two identical support tickets, or double-decrementing inventory.</p>
+      <p>The design fix is not "avoid retries" — retries are essential for reliability against transient failures — but to make actions safe to retry. The standard technique is an idempotency key: a unique identifier attached to a logical operation (not to each individual HTTP attempt) so that the receiving system can recognize "I've already done this exact operation" and return the prior result instead of executing it again. Reads are naturally idempotent. Writes that use "set to value X" semantics are often naturally idempotent. Writes that use "increment by X" or "send a message" semantics are not, and need explicit guarding — an idempotency key, a check-before-act pattern, or a dedup table — before they're safe to expose to a retry-capable agent loop.</p>
+      <h3>Which actions need explicit guards</h3>
+      <p>Not every tool call needs this treatment equally. The judgment call is identifying which actions are non-idempotent and consequential enough to guard explicitly. Sending an email, charging a payment method, posting a public message, or triggering an irreversible external side effect are the clearest cases: these need an idempotency key or equivalent guard before they're wired into any agent that might retry automatically. A read-only lookup or a query against a cache needs no such guard, because repeating it changes nothing.</p>
+      <h2>Error propagation: match response to criticality</h2>
+      <p>When a step in an agent's workflow fails, the correct response depends entirely on what kind of failure it is, and a single blanket policy applied to every error is a design flaw the exam tests directly. There are three broad categories worth distinguishing. First, errors that invalidate the task entirely — a required input turns out to be malformed in a way that makes the rest of the plan meaningless — should halt execution rather than continuing on a broken premise. Second, transient errors — a rate limit, a timeout, a momentary network blip — should trigger a retry, typically with backoff, because the same call is likely to succeed shortly after. Third, non-critical errors — a supplementary lookup fails but the core task can still complete with slightly reduced quality — should trigger degrade-and-continue behavior, where the agent proceeds without that piece of information rather than stopping the whole task over it.</p>
+      <p>Applying one policy uniformly — always retry everything, or halt on any error, or silently swallow every failure — produces systems that either loop forever on unrecoverable errors, stop unnecessarily on minor hiccups, or silently produce degraded output without any signal that something went wrong.</p>
+      <div class="callout"><b>Exam trap</b> A question offers an error-handling policy that "retries every failed tool call up to three times before giving up" as if this were a complete, sound strategy, then describes an agent that ends up sending three duplicate charge requests after retrying a payment call that actually succeeded but timed out on the response. The trap is treating "always retry" as inherently safe. The correct answer identifies two separate missing pieces: the payment call needed an idempotency key (so the retry would have been safe even though it happened), and blanket retry-everything policies don't distinguish transient failures from ones where retrying is actively dangerous.</div>
+      <blockquote>Scenario: An agent's workflow has three steps: (1) look up a customer's account, (2) validate a discount code against a rules engine, (3) apply the discount and email the customer a confirmation. The rules engine call in step 2 times out. What should happen? Because step 2's failure is transient (a timeout, not a data problem) and step 3 depends on its result, the correct response is retry with backoff on step 2, not halt and not skip. If instead step 1 failed because the customer ID doesn't exist, that invalidates the whole task and should halt immediately — retrying it will never succeed. And if step 3's email confirmation fails after the discount was successfully applied, that's non-critical relative to the core task (the discount is applied, which is the business-critical outcome) — log the failure and degrade-and-continue rather than rolling back or halting, though the email step itself should still use an idempotency key so a retry there doesn't send two confirmations.</blockquote>
+      <h2>Try it</h2>
+      <p>Pick a tool you'd expose to an agent that has a real side effect (sending a message, writing a record, charging something). Design an idempotency key for it: decide what identifies "the same logical operation" across retries (not the same HTTP request, the same intended action), where that key would be generated, and how the receiving system would check it before executing.</p>
+    
+      
+    </article>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px">
+      <a class="btn btn-outline" href="/learn/5/5-3-compaction-summarization-trap">← Compaction and the Summarization Trap</a>
+      <a class="btn btn-solid" href="/learn/5/5-5-escalation-ambiguity">Escalation on Ambiguity →</a>
+    </div>
+  </main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>Unofficial study aid · Not affiliated with Anthropic.</span>
+      <nav class="footer-nav" aria-label="More">
+        <a href="/learn">Curriculum</a>
+        <a href="/glossary">Glossary</a>
+        <a href="/reference">Quick Reference</a>
+        <a href="/blog">Blog</a>
+        <a href="/certifications">Certifications</a>
+        <a href="/resources">Resources</a>
+        <a href="/about">About</a>
+        <a href="/changelog">Changelog</a>
+      </nav>
+      <span>Blueprint mirrors the Claude Certified Architect — Foundations (CCA-F).</span>
+      <span>Developed by <a href="https://hellouchit.com" target="_blank" rel="noopener noreferrer">Uchit Vyas</a></span>
+    </div>
+  </footer>
+
+  <nav class="bottomnav" aria-label="Primary mobile">
+    <a href="/" data-nav="home"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg></span><span>Home</span></a>
+    <a href="/practice" data-nav="practice"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3 5 13.5h5.5L11 21l8-10.5h-5.5L13 3Z"/></svg></span><span>Practice</span></a>
+    <a href="/exam" data-nav="exam"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9.5 2.5h5"/><path d="M18.5 5.5 20 4"/></svg></span><span>Exam</span></a>
+    <a href="/browse" data-nav="browse"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21V5.5Z"/><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"/></svg></span><span>Bank</span></a>
+    <a href="/prep" data-nav="prep"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5 12 5l10 4.5-10 4.5-10-4.5Z"/><path d="M6.5 11.7v4.3c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3v-4.3"/><path d="M21 9.5v6"/></svg></span><span>Pass</span></a>
+    <a href="/progress" data-nav="progress"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/></svg></span><span>Stats</span></a>
+  </nav>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "claude-cert-prep",
+  "description": "Exam-accurate Claude Certified Architect (CCA-F) reference and drilling, right inside Claude Code — glossary, quick-reference decision rules, and scenario-style quiz generation across all five exam domains.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Uchit Vyas",
+    "url": "https://hellouchit.com"
+  },
+  "homepage": "https://thatclaude.com",
+  "keywords": ["claude", "certification", "cca-f", "exam-prep", "mcp", "agentic-architecture"]
+}

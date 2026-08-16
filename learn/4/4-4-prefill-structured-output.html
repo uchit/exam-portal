@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prefill and Guaranteed Structured Output — Claude Cert Prep</title>
+  <meta name="description" content="Seeding the start of Claude's response to force format, and the difference between asking for JSON and actually constraining it." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Uchit Vyas" />
+  <meta name="theme-color" content="#121214" />
+  <link rel="canonical" href="https://thatclaude.com/learn/4/4-4-prefill-structured-output" />
+  <meta property="og:site_name" content="Claude Cert Prep" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="Prefill and Guaranteed Structured Output — Claude Cert Prep" />
+  <meta property="og:description" content="Seeding the start of Claude's response to force format, and the difference between asking for JSON and actually constraining it." />
+  <meta property="og:url" content="https://thatclaude.com/learn/4/4-4-prefill-structured-output" />
+  <meta property="og:image" content="https://thatclaude.com/og-image.svg" />
+  <meta property="og:locale" content="en_US" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Prefill and Guaranteed Structured Output — Claude Cert Prep" />
+  <meta name="twitter:description" content="Seeding the start of Claude's response to force format, and the difference between asking for JSON and actually constraining it." />
+  <meta name="twitter:image" content="https://thatclaude.com/og-image.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235B4FE0'/%3E%3Ctext x='50' y='69' font-size='56' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'%3EC%3C/text%3E%3C/svg%3E" />
+  <link rel="alternate" type="application/rss+xml" title="Claude Cert Prep Blog" href="/blog/feed.xml" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://thatclaude.com"},{"@type":"ListItem","position":2,"name":"Curriculum","item":"https://thatclaude.com/learn"},{"@type":"ListItem","position":3,"name":"Prompt Engineering","item":"https://thatclaude.com/learn/4"},{"@type":"ListItem","position":4,"name":"Prefill and Guaranteed Structured Output","item":"https://thatclaude.com/learn/4/4-4-prefill-structured-output"}]},{"@type":"LearningResource","name":"Prefill and Guaranteed Structured Output","description":"Seeding the start of Claude's response to force format, and the difference between asking for JSON and actually constraining it.","learningResourceType":"Lesson","educationalLevel":"Intermediate","timeRequired":"PT8M","isAccessibleForFree":true,"inLanguage":"en","author":{"@type":"Person","name":"Uchit Vyas","url":"https://hellouchit.com"},"isPartOf":{"@type":"Course","name":"Claude Certified Architect (CCA-F) Curriculum","url":"https://thatclaude.com/learn"}}]}</script>
+</head>
+<body>
+  <a class="skip-link" href="#app">Skip to content</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark">C</span>
+        <span class="brand-text">
+          <strong>Claude Cert Prep</strong>
+          <span class="brand-sub">CCA-F · Architect</span>
+        </span>
+      </a>
+      <nav class="topnav" aria-label="Primary">
+        <a href="/" data-nav="home">Home</a>
+        <a href="/practice" data-nav="practice">Practice</a>
+        <a href="/exam" data-nav="exam">Mock Exam</a>
+        <a href="/browse" data-nav="browse">Bank</a>
+        <a href="/prep" data-nav="prep">How to Pass</a>
+        <a href="/progress" data-nav="progress">Progress</a>
+      </nav>
+      <div class="topbar-actions">
+        <span class="bank-chip" id="bankChip" title="Total questions in the bank">…</span>
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark">
+          <span class="theme-icon"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <main id="app" class="app" tabindex="-1">
+    <article class="prose page-head">
+      <h1>Prefill and Guaranteed Structured Output</h1>
+      <p class="prose-dek">Seeding the start of Claude's response to force format, and the difference between asking for JSON and actually constraining it.</p>
+      <div class="prose-meta"><span style="color:#C6841E;font-weight:700">Prompt Engineering</span><span>·</span><span>Lesson 4 of 6</span><span>·</span><span>8 min</span></div>
+      
+      <p>Two mechanisms let you control response format at the API level rather than relying on the model to follow prose instructions: prefill and structured/constrained output. The exam distinguishes them clearly, and conflating them is a common mistake.</p>
+      <h2>Prefill</h2>
+      <p>Prefill means you supply the beginning of the assistant's response yourself, in the <code>messages</code> array, as an assistant-role message with partial content, and the model continues from there. A common use is starting the assistant turn with a literal <code>{</code> so the model has no room to add a conversational preamble like "Sure, here's the JSON you requested:" before the actual object. This is a cheap, low-effort way to eliminate an entire class of formatting failures (preamble text, markdown code fences around JSON, apologetic hedging) without adding any instructions or examples.</p>
+      <p>Prefill nudges the model toward a format; it does not enforce a schema. The model can still prefill-continue into malformed or incomplete JSON, wrong field names, or the wrong data types. It reduces one specific failure mode (extra text around the payload) but is not validation.</p>
+      <h2>Actually constraining output vs. asking nicely</h2>
+      <p>"Ask nicely for JSON" means putting instructions in the prompt like "respond only with valid JSON matching this schema" — this relies entirely on the model's compliance and can fail, especially under edge-case inputs. Actually constraining output means using a mechanism, such as a tool/function-call definition with a strict input schema, or a structured-output feature, where the response is generated to conform to a schema rather than merely asked to. Downstream code parsing model output should be built assuming "asked nicely" can fail; a genuinely constrained schema is far more reliable for code that cannot tolerate a parse error.</p>
+      <p>A common real pattern: define a tool with a JSON schema for the exact fields you want, and force the model to call that tool, even though you have no intention of "executing" anything — the tool-call mechanism itself is being used purely to get schema-conformant output.</p>
+      <div class="callout"><b>Exam trap</b> A question shows a prompt with the instruction "return only valid JSON, no other text" and asks why production code still occasionally throws a JSON parse error. The trap answer is "the instruction should be reworded to be more forceful." The correct diagnosis is that a prose instruction is being relied upon as if it were a guarantee — the fix is to move to an actual schema-constraining mechanism (tool-call schema) and/or add prefill, and code should also validate before trusting the output regardless.</div>
+      <blockquote>A pipeline extracts structured line items from invoices and feeds them directly into an accounting system with no human review. The team is currently prompting "respond with a JSON array of objects with fields item, quantity, price" and parsing the raw text response. Occasional malformed responses break the pipeline. The correct fix is to define a tool with a strict schema for the line-item array and force a tool call, rather than continuing to refine the prose instruction — because this is a non-interactive, unattended path where a parse failure has real downstream cost, so relying on the model to voluntarily comply with a text instruction is the wrong tradeoff.</blockquote>
+      <h2>Prefill beyond JSON</h2>
+      <p>Prefill is not limited to forcing JSON. It also works for forcing a specific opening structure in free text — for example, prefilling "Verdict: " to force the model to lead with a classification before any explanation, or prefilling the first line of a multi-section report to lock in the section header format. The underlying mechanism is the same in every case: whatever text you supply becomes the literal start of the assistant's response, so the model has no opportunity to deviate from it, only to continue from it.</p>
+      <h2>Combining prefill with schema constraints</h2>
+      <p>Prefill and schema-constrained output are not competing choices — they stack. Forcing a tool call gets you a response shaped by a schema; prefill (where applicable to the surrounding response) removes any remaining preamble around it. On the exam, watch for scenarios that ask you to pick "the one best fix" when the real answer is that these techniques address different failure modes and are commonly used together rather than as alternatives to choose between.</p>
+      <h2>Structured output still needs downstream validation</h2>
+      <p>Even a strict schema only constrains shape and type — it typically cannot express business-rule constraints like "end_date must be after start_date" or "discount must not exceed the customer's tier limit." A response can satisfy the schema perfectly and still be wrong in a way that matters to your application. Structured output reduces parsing failures; it does not eliminate the need for application-level validation, which is the subject of the next lesson.</p>
+      <h2>Try it</h2>
+      <p>Take a prompt where you currently ask for JSON in prose. Run 10 varied inputs against it and count parse failures or preamble text. Then run the same 10 inputs with the assistant turn prefilled with a bare <code>{</code>, and separately with a tool-call schema forcing structured output. Compare failure rates across all three approaches, and note which failures each fix does and does not address.</p>
+    
+      
+    </article>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px">
+      <a class="btn btn-outline" href="/learn/4/4-3-chain-of-thought">← Chain-of-Thought: When It Helps</a>
+      <a class="btn btn-solid" href="/learn/4/4-5-validation-retry">Validation and Retry Loops →</a>
+    </div>
+  </main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>Unofficial study aid · Not affiliated with Anthropic.</span>
+      <nav class="footer-nav" aria-label="More">
+        <a href="/learn">Curriculum</a>
+        <a href="/glossary">Glossary</a>
+        <a href="/reference">Quick Reference</a>
+        <a href="/blog">Blog</a>
+        <a href="/certifications">Certifications</a>
+        <a href="/resources">Resources</a>
+        <a href="/about">About</a>
+        <a href="/changelog">Changelog</a>
+      </nav>
+      <span>Blueprint mirrors the Claude Certified Architect — Foundations (CCA-F).</span>
+      <span>Developed by <a href="https://hellouchit.com" target="_blank" rel="noopener noreferrer">Uchit Vyas</a></span>
+    </div>
+  </footer>
+
+  <nav class="bottomnav" aria-label="Primary mobile">
+    <a href="/" data-nav="home"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg></span><span>Home</span></a>
+    <a href="/practice" data-nav="practice"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3 5 13.5h5.5L11 21l8-10.5h-5.5L13 3Z"/></svg></span><span>Practice</span></a>
+    <a href="/exam" data-nav="exam"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9.5 2.5h5"/><path d="M18.5 5.5 20 4"/></svg></span><span>Exam</span></a>
+    <a href="/browse" data-nav="browse"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21V5.5Z"/><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"/></svg></span><span>Bank</span></a>
+    <a href="/prep" data-nav="prep"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5 12 5l10 4.5-10 4.5-10-4.5Z"/><path d="M6.5 11.7v4.3c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3v-4.3"/><path d="M21 9.5v6"/></svg></span><span>Pass</span></a>
+    <a href="/progress" data-nav="progress"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/></svg></span><span>Stats</span></a>
+  </nav>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

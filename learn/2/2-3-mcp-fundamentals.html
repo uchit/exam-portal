@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MCP Fundamentals: Servers, Clients, Hosts — Claude Cert Prep</title>
+  <meta name="description" content="The core MCP vocabulary — server, client, host — and how these three roles connect in a running system." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Uchit Vyas" />
+  <meta name="theme-color" content="#121214" />
+  <link rel="canonical" href="https://thatclaude.com/learn/2/2-3-mcp-fundamentals" />
+  <meta property="og:site_name" content="Claude Cert Prep" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="MCP Fundamentals: Servers, Clients, Hosts — Claude Cert Prep" />
+  <meta property="og:description" content="The core MCP vocabulary — server, client, host — and how these three roles connect in a running system." />
+  <meta property="og:url" content="https://thatclaude.com/learn/2/2-3-mcp-fundamentals" />
+  <meta property="og:image" content="https://thatclaude.com/og-image.svg" />
+  <meta property="og:locale" content="en_US" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="MCP Fundamentals: Servers, Clients, Hosts — Claude Cert Prep" />
+  <meta name="twitter:description" content="The core MCP vocabulary — server, client, host — and how these three roles connect in a running system." />
+  <meta name="twitter:image" content="https://thatclaude.com/og-image.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235B4FE0'/%3E%3Ctext x='50' y='69' font-size='56' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'%3EC%3C/text%3E%3C/svg%3E" />
+  <link rel="alternate" type="application/rss+xml" title="Claude Cert Prep Blog" href="/blog/feed.xml" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://thatclaude.com"},{"@type":"ListItem","position":2,"name":"Curriculum","item":"https://thatclaude.com/learn"},{"@type":"ListItem","position":3,"name":"Tools & MCP","item":"https://thatclaude.com/learn/2"},{"@type":"ListItem","position":4,"name":"MCP Fundamentals: Servers, Clients, Hosts","item":"https://thatclaude.com/learn/2/2-3-mcp-fundamentals"}]},{"@type":"LearningResource","name":"MCP Fundamentals: Servers, Clients, Hosts","description":"The core MCP vocabulary — server, client, host — and how these three roles connect in a running system.","learningResourceType":"Lesson","educationalLevel":"Intermediate","timeRequired":"PT7M","isAccessibleForFree":true,"inLanguage":"en","author":{"@type":"Person","name":"Uchit Vyas","url":"https://hellouchit.com"},"isPartOf":{"@type":"Course","name":"Claude Certified Architect (CCA-F) Curriculum","url":"https://thatclaude.com/learn"}}]}</script>
+</head>
+<body>
+  <a class="skip-link" href="#app">Skip to content</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark">C</span>
+        <span class="brand-text">
+          <strong>Claude Cert Prep</strong>
+          <span class="brand-sub">CCA-F · Architect</span>
+        </span>
+      </a>
+      <nav class="topnav" aria-label="Primary">
+        <a href="/" data-nav="home">Home</a>
+        <a href="/practice" data-nav="practice">Practice</a>
+        <a href="/exam" data-nav="exam">Mock Exam</a>
+        <a href="/browse" data-nav="browse">Bank</a>
+        <a href="/prep" data-nav="prep">How to Pass</a>
+        <a href="/progress" data-nav="progress">Progress</a>
+      </nav>
+      <div class="topbar-actions">
+        <span class="bank-chip" id="bankChip" title="Total questions in the bank">…</span>
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark">
+          <span class="theme-icon"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <main id="app" class="app" tabindex="-1">
+    <article class="prose page-head">
+      <h1>MCP Fundamentals: Servers, Clients, Hosts</h1>
+      <p class="prose-dek">The core MCP vocabulary — server, client, host — and how these three roles connect in a running system.</p>
+      <div class="prose-meta"><span style="color:#1AA6B7;font-weight:700">Tools &amp; MCP</span><span>·</span><span>Lesson 3 of 6</span><span>·</span><span>7 min</span></div>
+      
+      <p>The Model Context Protocol (MCP) is an open protocol that standardizes how AI applications connect to external tools, data sources, and prompt templates. Before MCP, every integration between a model-powered app and, say, a database or a ticketing system was a bespoke, one-off integration. MCP defines a common wire protocol so that an integration written once as an MCP server can be used by any MCP-compatible application without custom glue code.</p>
+      <h2>The three roles</h2>
+      <p>MCP defines three distinct roles, and the exam is precise about which word means which role.</p>
+      <ul>
+        <li><strong>Server</strong>: the thing that exposes capabilities — tools, resources, and/or prompts — over the protocol. A server wraps some external system: a GitHub server exposes GitHub operations, a Postgres server exposes database queries, a filesystem server exposes file operations. The server owns the implementation details of talking to that external system.</li>
+        <li><strong>Client</strong>: maintains a 1:1 connection to exactly one server. A client is not a general-purpose consumer of many servers at once — each client instance is scoped to a single server connection, handling that connection's session, capability negotiation, and message routing.</li>
+        <li><strong>Host</strong>: the application the user actually interacts with — Claude Code, Claude Desktop, or a custom agent application. The host coordinates multiple clients simultaneously, one per connected server, and is what decides which servers to connect to, presents available tools to the model, and enforces permissioning around what the model is allowed to call.</li>
+      </ul>
+      <p>So a single host, like Claude Code, might run three clients concurrently, each one connected 1:1 to a different server (a GitHub server, a Postgres server, and a Slack server). The host aggregates what all three clients expose and presents a unified surface to the model and the user.</p>
+      <h2>Why the 1:1 constraint matters</h2>
+      <p>The client-per-server design keeps each connection's protocol state (capability negotiation, session lifecycle, subscriptions to resource updates) isolated and simple. It also means adding a new server to a host is additive — you spin up one more client — rather than requiring changes to how existing connections are managed.</p>
+      <h2>Capability negotiation and lifecycle</h2>
+      <p>When a client first connects to a server, the two sides perform a handshake in which the server advertises which primitives it supports — does it expose Tools, Resources, Prompts, some combination, or none — along with protocol version information. The host uses this to decide what to surface to the model and the user for that particular connection; a server that only exposes Resources, for instance, will never appear as a callable tool no matter how the model is prompted. This negotiation happens once per connection, at startup, not per-request, which is part of why the client is scoped to a single server: the negotiated state belongs to that one relationship and doesn't generalize across servers with different capabilities.</p>
+      <p>It is also useful to keep the three roles distinct when reasoning about failure. If a server crashes, only the one client connected to it is affected — the host and its other clients keep functioning, and the host is responsible for deciding whether to surface that degraded state to the user (for example, showing that one server's tools are temporarily unavailable) rather than failing the whole session. That resilience story only works because responsibilities are partitioned the way they are: server owns the external system, client owns one connection's state, host owns orchestration across all of them.</p>
+      <div class="callout"><b>Exam trap</b> Questions sometimes swap "client" and "host" in answer choices, betting that test-takers conflate "the application I use" with "the client." Remember: the application the user opens (Claude Code, Claude Desktop) is the host. The client is an internal component of the host, invisible to the end user, that manages one server connection. If an answer choice says "the client coordinates multiple server connections," that is describing the host's job, not the client's — it's wrong.</div>
+      <blockquote>Scenario: a team wants Claude Code to be able to query their internal analytics database and also create Jira tickets. The correct architecture is one MCP server for the analytics database and a separate MCP server for Jira, with Claude Code (the host) running two clients, one per server. It would be architecturally wrong to try to build a single combined "analytics-and-jira" server just to avoid running two clients — servers should be scoped to one external system, and the host is designed to handle multiple clients without added complexity.</blockquote>
+      <h2>Try it</h2>
+      <p>In Claude Code, run the command to list configured MCP servers (check the CLI's MCP-related slash command or config file) and note how many servers are connected. For each one, identify what single external system it wraps. If you have none configured, add one lightweight server (a filesystem or fetch server is a common starting point) and observe how it appears as a distinct connection separate from any others you add later.</p>
+    
+      
+    </article>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px">
+      <a class="btn btn-outline" href="/learn/2/2-2-tool-use-tool-result">← tool_use and tool_result in Practice</a>
+      <a class="btn btn-solid" href="/learn/2/2-4-mcp-primitives">MCP Primitives: Tools, Resources, Prompts →</a>
+    </div>
+  </main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>Unofficial study aid · Not affiliated with Anthropic.</span>
+      <nav class="footer-nav" aria-label="More">
+        <a href="/learn">Curriculum</a>
+        <a href="/glossary">Glossary</a>
+        <a href="/reference">Quick Reference</a>
+        <a href="/blog">Blog</a>
+        <a href="/certifications">Certifications</a>
+        <a href="/resources">Resources</a>
+        <a href="/about">About</a>
+        <a href="/changelog">Changelog</a>
+      </nav>
+      <span>Blueprint mirrors the Claude Certified Architect — Foundations (CCA-F).</span>
+      <span>Developed by <a href="https://hellouchit.com" target="_blank" rel="noopener noreferrer">Uchit Vyas</a></span>
+    </div>
+  </footer>
+
+  <nav class="bottomnav" aria-label="Primary mobile">
+    <a href="/" data-nav="home"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg></span><span>Home</span></a>
+    <a href="/practice" data-nav="practice"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3 5 13.5h5.5L11 21l8-10.5h-5.5L13 3Z"/></svg></span><span>Practice</span></a>
+    <a href="/exam" data-nav="exam"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9.5 2.5h5"/><path d="M18.5 5.5 20 4"/></svg></span><span>Exam</span></a>
+    <a href="/browse" data-nav="browse"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21V5.5Z"/><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"/></svg></span><span>Bank</span></a>
+    <a href="/prep" data-nav="prep"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5 12 5l10 4.5-10 4.5-10-4.5Z"/><path d="M6.5 11.7v4.3c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3v-4.3"/><path d="M21 9.5v6"/></svg></span><span>Pass</span></a>
+    <a href="/progress" data-nav="progress"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/></svg></span><span>Stats</span></a>
+  </nav>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

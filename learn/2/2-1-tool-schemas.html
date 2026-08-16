@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Designing Tool Schemas — Claude Cert Prep</title>
+  <meta name="description" content="How to write tool schemas the model will actually call correctly, and why description quality outranks naming." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="author" content="Uchit Vyas" />
+  <meta name="theme-color" content="#121214" />
+  <link rel="canonical" href="https://thatclaude.com/learn/2/2-1-tool-schemas" />
+  <meta property="og:site_name" content="Claude Cert Prep" />
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="Designing Tool Schemas — Claude Cert Prep" />
+  <meta property="og:description" content="How to write tool schemas the model will actually call correctly, and why description quality outranks naming." />
+  <meta property="og:url" content="https://thatclaude.com/learn/2/2-1-tool-schemas" />
+  <meta property="og:image" content="https://thatclaude.com/og-image.svg" />
+  <meta property="og:locale" content="en_US" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Designing Tool Schemas — Claude Cert Prep" />
+  <meta name="twitter:description" content="How to write tool schemas the model will actually call correctly, and why description quality outranks naming." />
+  <meta name="twitter:image" content="https://thatclaude.com/og-image.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235B4FE0'/%3E%3Ctext x='50' y='69' font-size='56' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'%3EC%3C/text%3E%3C/svg%3E" />
+  <link rel="alternate" type="application/rss+xml" title="Claude Cert Prep Blog" href="/blog/feed.xml" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://thatclaude.com"},{"@type":"ListItem","position":2,"name":"Curriculum","item":"https://thatclaude.com/learn"},{"@type":"ListItem","position":3,"name":"Tools & MCP","item":"https://thatclaude.com/learn/2"},{"@type":"ListItem","position":4,"name":"Designing Tool Schemas","item":"https://thatclaude.com/learn/2/2-1-tool-schemas"}]},{"@type":"LearningResource","name":"Designing Tool Schemas","description":"How to write tool schemas the model will actually call correctly, and why description quality outranks naming.","learningResourceType":"Lesson","educationalLevel":"Intermediate","timeRequired":"PT8M","isAccessibleForFree":true,"inLanguage":"en","author":{"@type":"Person","name":"Uchit Vyas","url":"https://hellouchit.com"},"isPartOf":{"@type":"Course","name":"Claude Certified Architect (CCA-F) Curriculum","url":"https://thatclaude.com/learn"}}]}</script>
+</head>
+<body>
+  <a class="skip-link" href="#app">Skip to content</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark">C</span>
+        <span class="brand-text">
+          <strong>Claude Cert Prep</strong>
+          <span class="brand-sub">CCA-F · Architect</span>
+        </span>
+      </a>
+      <nav class="topnav" aria-label="Primary">
+        <a href="/" data-nav="home">Home</a>
+        <a href="/practice" data-nav="practice">Practice</a>
+        <a href="/exam" data-nav="exam">Mock Exam</a>
+        <a href="/browse" data-nav="browse">Bank</a>
+        <a href="/prep" data-nav="prep">How to Pass</a>
+        <a href="/progress" data-nav="progress">Progress</a>
+      </nav>
+      <div class="topbar-actions">
+        <span class="bank-chip" id="bankChip" title="Total questions in the bank">…</span>
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark">
+          <span class="theme-icon"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <main id="app" class="app" tabindex="-1">
+    <article class="prose page-head">
+      <h1>Designing Tool Schemas</h1>
+      <p class="prose-dek">How to write tool schemas the model will actually call correctly, and why description quality outranks naming.</p>
+      <div class="prose-meta"><span style="color:#1AA6B7;font-weight:700">Tools &amp; MCP</span><span>·</span><span>Lesson 1 of 6</span><span>·</span><span>8 min</span></div>
+      
+      <p>A tool schema is JSON Schema attached to a tool definition: <code>name</code>, <code>description</code>, and <code>input_schema</code> describing the parameters. The model reads this schema at inference time and decides two things from it: whether to call the tool at all, and what arguments to pass. Nothing else is available to the model — no source code, no comments in your codebase, no tribal knowledge. If the schema is ambiguous, the model's behavior will be ambiguous.</p>
+      <h2>Description beats name</h2>
+      <p>Exam-relevant point: the model selects tools primarily from the <code>description</code> field, not the <code>name</code> field. A tool named <code>search</code> with a three-word description will be selected incorrectly far more often than a tool named <code>x1</code> with a precise, example-rich description. Treat the description as the primary interface contract, not the name. Good descriptions state: what the tool does, when to use it (and when not to), what each parameter means, units and formats for ambiguous fields (is a date a Unix timestamp or ISO 8601? is a price in cents or dollars?), and edge-case behavior (what happens on an empty result set, what happens if a required lookup fails).</p>
+      <h2>Parameter design</h2>
+      <p>Keep required parameters minimal and give optional parameters sane defaults described in the schema text itself, since the model cannot read your server-side default logic. Use <code>enum</code> constraints wherever the parameter space is closed — this reduces invalid calls far more effectively than prose alone. Prefer flat, explicit parameter names over deeply nested objects when the tool will be called frequently; nested structures increase the chance of malformed <code>tool_use</code> input, especially with smaller models. Where a parameter's format is easy to get wrong (a phone number, a currency code, a compound identifier), give one or two examples directly in the parameter's own description, not just in the top-level tool description.</p>
+      <h2>Scoping tools</h2>
+      <p>A single tool that does one well-defined thing is easier for the model to select correctly than one tool with a mode flag that switches between five behaviors. If you find yourself writing a description with branching logic ("if action is create, then...; if action is delete, then..."), that is usually a sign you should split it into separate tools with separate names and descriptions. This also makes error handling and permissioning per-action cleaner downstream.</p>
+      <h2>Testing schemas like an interface, not an implementation detail</h2>
+      <p>Because the schema is the only thing standing between a natural-language request and a correctly-formed function call, it deserves the same review rigor as a public API contract. Read the description as if you had never seen the underlying implementation and ask whether it alone would let you fill in every parameter correctly. A useful exercise is to hand the schema, with no other context, to a fresh model conversation along with a handful of realistic user requests and see whether the resulting <code>tool_use</code> input is what you would have written by hand. Mismatches point directly at where the description is underspecified. This kind of review also surfaces overloaded parameters — a single field silently expected to hold either an email or a username, for instance — that are easy to miss when you already know, from having written the backend, which one you meant.</p>
+      <p>It also pays to think about how the description reads next to the descriptions of every other tool available in the same conversation. Two tools with similar-sounding descriptions but different side effects (one that previews a change, one that commits it) are a common source of the model picking the wrong one under time pressure. Make the distinguishing detail — read-only versus mutating, reversible versus not — explicit and early in the description text rather than buried at the end, since that is the detail most likely to disambiguate a close call between two similar tools.</p>
+      <div class="callout"><b>Exam trap</b> A question describes a tool that the model keeps calling with the wrong arguments or fails to call when it should, and offers "rename the tool to something more descriptive" as an answer choice. That is usually the wrong fix. The correct diagnosis is almost always that the <code>description</code> field is vague or missing examples — renaming does far less than rewriting the description. Do not pick the naming answer when the description is the actual problem.</div>
+      <blockquote>Scenario: a support-ticket tool takes a <code>status</code> string parameter with no further constraint. In production, the model sometimes sends "closed", sometimes "Closed", sometimes "resolved" — none of which match the backend's expected value of "CLOSED". The right fix is to add an <code>enum</code> listing the exact valid status strings in the schema, not to add a sentence to the description asking the model to "use the correct status format." Constraints the model can see in the schema are far more reliable than instructions it has to remember and infer correctly.</blockquote>
+      <h2>Try it</h2>
+      <p>Write a tool schema for a "cancel_subscription" action against a fictional billing API. Give it a required <code>subscription_id</code> string and an optional <code>reason</code> enum with three or four values. Deliberately write a bad, one-line description first, call it with a vague natural-language request, and see what arguments the model produces. Then rewrite the description with an explicit statement of when to call it, an example subscription_id format, and a note about what happens if the subscription is already canceled. Compare the two runs.</p>
+    
+      
+    <div class="card" id="schemaLinter" style="margin-top:24px">
+      <h3>Try it: Tool Schema Linter</h3>
+      <p style="color:var(--text-2);font-size:14px;margin-bottom:12px">Edit the schema and check it against the same criteria the exam tests. Nothing leaves your browser.</p>
+      <textarea id="schemaInput" spellcheck="false" style="width:100%;min-height:220px;font-family:'JetBrains Mono',monospace;font-size:13px;padding:14px;border-radius:12px;border:1px solid var(--border);background:var(--code-bg);color:var(--text);resize:vertical"></textarea>
+      <div style="margin-top:12px"><button class="btn btn-solid" id="schemaCheck">Check schema</button></div>
+      <div id="schemaResults" style="margin-top:16px"></div>
+    </div>
+    <script>
+    (function(){
+      var SAMPLE = { name: "doStuff", description: "does stuff", input_schema: { type: "object", properties: { input: { type: "string" } } } };
+      var ta = document.getElementById("schemaInput");
+      ta.value = JSON.stringify(SAMPLE, null, 2);
+      var out = document.getElementById("schemaResults");
+      function check(){
+        var checks = [], schema;
+        try { schema = JSON.parse(ta.value); }
+        catch(e){ out.innerHTML = "<div class=\"hint\"><b>Invalid JSON</b>" + e.message + "</div>"; return; }
+        function push(ok, label){ checks.push({ok:ok, label:label}); }
+        push(!!schema.name && /^[a-zA-Z_][a-zA-Z0-9_]{0,63}$/.test(schema.name), "name is present and matches a valid tool-name pattern");
+        push(!!schema.description && schema.description.trim().length >= 20, "description is at least 20 characters \u2014 vague one-liners are a common exam trap");
+        var inputSchema = schema.input_schema || schema.parameters;
+        push(!!inputSchema && inputSchema.type === "object", "input_schema.type is \"object\"");
+        var props = inputSchema && inputSchema.properties;
+        var propKeys = props ? Object.keys(props) : [];
+        push(propKeys.length > 0, "input_schema.properties has at least one parameter");
+        var allDescribed = propKeys.length > 0 && propKeys.every(function(k){ return props[k] && typeof props[k].description === "string" && props[k].description.length > 0; });
+        push(allDescribed, "every property has its own description");
+        var req = inputSchema && inputSchema.required;
+        push(!req || (Array.isArray(req) && req.every(function(r){ return propKeys.indexOf(r) !== -1; })), "required (if present) only lists real properties");
+        var passed = checks.filter(function(c){return c.ok;}).length;
+        out.innerHTML = "<p style=\"font-weight:700;margin-bottom:8px\">" + passed + " / " + checks.length + " checks passed</p>" + checks.map(function(c){
+          return "<div style=\"display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)\"><span style=\"color:" + (c.ok?"var(--success)":"var(--error)") + ";font-weight:800;flex:none\">" + (c.ok?"\u2713":"\u2715") + "</span><span style=\"font-size:14px;color:var(--text-2)\">" + c.label + "</span></div>";
+        }).join("");
+      }
+      document.getElementById("schemaCheck").addEventListener("click", check);
+      check();
+    })();
+    </script>
+    </article>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:26px">
+      <a class="btn btn-outline" href="/learn/1/1-6-failure-modes">← Failure Modes in Agentic Loops</a>
+      <a class="btn btn-solid" href="/learn/2/2-2-tool-use-tool-result">tool_use and tool_result in Practice →</a>
+    </div>
+  </main>
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>Unofficial study aid · Not affiliated with Anthropic.</span>
+      <nav class="footer-nav" aria-label="More">
+        <a href="/learn">Curriculum</a>
+        <a href="/glossary">Glossary</a>
+        <a href="/reference">Quick Reference</a>
+        <a href="/blog">Blog</a>
+        <a href="/certifications">Certifications</a>
+        <a href="/resources">Resources</a>
+        <a href="/about">About</a>
+        <a href="/changelog">Changelog</a>
+      </nav>
+      <span>Blueprint mirrors the Claude Certified Architect — Foundations (CCA-F).</span>
+      <span>Developed by <a href="https://hellouchit.com" target="_blank" rel="noopener noreferrer">Uchit Vyas</a></span>
+    </div>
+  </footer>
+
+  <nav class="bottomnav" aria-label="Primary mobile">
+    <a href="/" data-nav="home"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9a1 1 0 0 0 1 1H9a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h2.5a1 1 0 0 0 1-1v-9"/></svg></span><span>Home</span></a>
+    <a href="/practice" data-nav="practice"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 3 5 13.5h5.5L11 21l8-10.5h-5.5L13 3Z"/></svg></span><span>Practice</span></a>
+    <a href="/exam" data-nav="exam"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9.5 2.5h5"/><path d="M18.5 5.5 20 4"/></svg></span><span>Exam</span></a>
+    <a href="/browse" data-nav="browse"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5H6.5A2.5 2.5 0 0 0 4 21V5.5Z"/><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"/></svg></span><span>Bank</span></a>
+    <a href="/prep" data-nav="prep"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9.5 12 5l10 4.5-10 4.5-10-4.5Z"/><path d="M6.5 11.7v4.3c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3v-4.3"/><path d="M21 9.5v6"/></svg></span><span>Pass</span></a>
+    <a href="/progress" data-nav="progress"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/></svg></span><span>Stats</span></a>
+  </nav>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

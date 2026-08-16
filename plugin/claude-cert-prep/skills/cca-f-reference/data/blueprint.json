@@ -1,0 +1,41 @@
+{
+  "exam": "Claude Certified Architect — Foundations (CCA-F)",
+  "length": 60,
+  "minutes": 120,
+  "passScore": 720,
+  "scaleMax": 1000,
+  "domains": [
+    {
+      "id": 1,
+      "name": "Agentic Architecture & Orchestration",
+      "short": "Agentic Architecture",
+      "weight": 27
+    },
+    {
+      "id": 2,
+      "name": "Tool Design & MCP Integration",
+      "short": "Tools & MCP",
+      "weight": 18
+    },
+    {
+      "id": 3,
+      "name": "Claude Code Configuration & Workflows",
+      "short": "Claude Code",
+      "weight": 20
+    },
+    {
+      "id": 4,
+      "name": "Prompt Engineering & Structured Output",
+      "short": "Prompt Engineering",
+      "weight": 20
+    },
+    {
+      "id": 5,
+      "name": "Context Management & Reliability",
+      "short": "Context & Reliability",
+      "weight": 15
+    }
+  ],
+  "lastVerified": "2026-08-16",
+  "source": "https://thatclaude.com"
+}

@@ -10,6 +10,11 @@ import { dirname, join } from "node:path";
 import { readFileSync } from "node:fs";
 import { CERTS, UPCOMING_TRACK_MECHANICS } from "../js/certs.js";
 import { ICONS } from "../js/icons.js";
+import { DOMAINS_LIST as DOMAINS } from "../js/blueprint-domains.js";
+import { FAQ_ITEMS } from "../js/faq.js";
+import { GLOSSARY } from "../content/glossary.mjs";
+import { REFERENCE } from "../content/reference.mjs";
+import { POSTS } from "../content/blog-posts.mjs";
 import { LESSONS as LESSONS_1 } from "../content/lessons-1.mjs";
 import { LESSONS as LESSONS_2 } from "../content/lessons-2.mjs";
 import { LESSONS as LESSONS_3 } from "../content/lessons-3.mjs";
@@ -330,143 +335,6 @@ function lessonCompleteWidget(slug) {
     </script>`;
 }
 
-// FAQ — used for /prep's FAQPage structured data. Keep in sync with the
-// matching visible FAQ block rendered by viewPrep() in js/app.js.
-const FAQ_ITEMS = [
-  ["Is Claude Cert Prep free?", "Yes. Every practice mode, the full mock exam, the diagnostic, drill, curriculum, glossary, and quick reference are free with no account or sign-up required."],
-  ["How long does it take to prepare for the CCA-F exam?", "Most people need about two to three weeks at roughly one hour a day, mostly spent on practice questions rather than reading — assuming around six months of hands-on Claude API or Claude Code experience going in."],
-  ["Is this an official Anthropic study resource?", "No. Claude Cert Prep is an independent, unofficial study aid. It is not affiliated with, endorsed by, or sponsored by Anthropic."],
-  ["What's the CCA-F exam format?", "60 scenario-based questions in 120 minutes, scored on a scaled 100-1000 range with a pass mark of 720, weighted across five domains."],
-  ["Do I need an account to track my progress?", "No. Progress, flags, and mock-exam history are saved locally in your browser — nothing is sent to a server, and there's no login."]
-];
-
-// ============================================================================
-// DOMAIN CONTENT — mirrors js/blueprint.js
-// ============================================================================
-const DOMAINS = [
-  { id: 1, slug: "1-agentic-architecture", name: "Agentic Architecture & Orchestration", short: "Agentic Architecture", weight: 27, color: "#6C5CE0" },
-  { id: 2, slug: "2-tool-design-mcp", name: "Tool Design & MCP Integration", short: "Tools & MCP", weight: 18, color: "#1AA6B7" },
-  { id: 3, slug: "3-claude-code-config", name: "Claude Code Configuration & Workflows", short: "Claude Code", weight: 20, color: "#1F9D6B" },
-  { id: 4, slug: "4-prompt-engineering", name: "Prompt Engineering & Structured Output", short: "Prompt Engineering", weight: 20, color: "#C6841E" },
-  { id: 5, slug: "5-context-management", name: "Context Management & Reliability", short: "Context & Reliability", weight: 15, color: "#C4453B" }
-];
-
-const GLOSSARY = {
-  1: [
-    ["Agentic loop", "The model calls a tool, the client executes it and returns the result, and the cycle repeats until the model stops requesting tools.", "The only correct termination signal is <code>stop_reason</code> — not parsing the assistant's text for phrases like \"I'm done.\""],
-    ["stop_reason", "The Messages API field explaining why generation stopped: <code>end_turn</code>, <code>tool_use</code>, <code>max_tokens</code>, or <code>stop_sequence</code>.", "Exam questions test whether you branch loop control on this field or on something fragile like text content."],
-    ["Orchestrator-workers", "A lead agent decomposes a task, dispatches subtasks to worker subagents, then synthesizes their results into one output.", "Pick this pattern when subtasks aren't fully predictable in advance and need dynamic decomposition."],
-    ["Hub-and-spoke topology", "Subagents report only to the orchestrator and never communicate with each other directly.", "A distractor answer that has subagents messaging each other peer-to-peer is always wrong for this exam's model."],
-    ["Prompt chaining", "A fixed sequence of LLM calls where each step's output feeds directly into the next step's input.", "Correct when a task decomposes cleanly into ordered subtasks — not when subtasks are independent (that's parallelization)."],
-    ["Routing", "Classify the input first, then send it down one of several specialized prompt or model paths.", "Use when inputs fall into distinct categories that genuinely need different handling, not just different phrasing."],
-    ["Parallelization", "Run independent subtasks concurrently (sectioning) or run the same task multiple times for consensus (voting).", "Sectioning splits work; voting improves confidence on a single judgment call — know which the scenario calls for."],
-    ["Evaluator-optimizer", "One call generates a response, a second evaluates it against explicit criteria and returns feedback for revision, looped until it passes.", "Exam scenarios use this when quality criteria are clear but generation quality alone isn't reliable enough."],
-    ["Context isolation", "Giving each subagent only the context it needs for its scoped task, not the orchestrator's full history.", "Protects both token cost and focus — a subagent drowning in irrelevant context is a common exam anti-pattern."],
-    ["Subagent invocation", "The parent spins up a subagent with a scoped prompt and toolset; it returns a final result, not a full transcript.", "Watch for options that have the orchestrator forwarding raw subagent transcripts back into its own context — usually wrong."]
-  ],
-  2: [
-    ["Tool schema", "The JSON Schema describing a tool's name, description, and input parameters that the model uses to decide when and how to call it.", "A vague tool description is a bigger source of exam-tested failures than a vague tool name."],
-    ["tool_use block", "The content block the model emits when it wants to call a tool: includes the tool name, a unique id, and structured input.", "Distinguish from <code>tool_result</code>, which is what the client sends back, not what the model sends."],
-    ["tool_result block", "The message the client returns containing a tool's output, matched to a <code>tool_use</code> id, optionally flagged <code>is_error</code>.", "Returning raw stack traces instead of a structured, actionable error is a textbook wrong answer."],
-    ["Model Context Protocol (MCP)", "An open protocol standardizing how AI applications connect to external tools, data sources, and prompt templates.", "Know the vocabulary precisely — MCP is tested on terminology, not just concept recognition."],
-    ["MCP server / client / host", "A server exposes tools, resources, and prompts; a client keeps a 1:1 connection to one server; a host is the application coordinating multiple clients.", "Claude Code is a host; each MCP server it connects to gets its own client connection."],
-    ["MCP primitives", "Tools (model-invoked actions), Resources (contextual data the app can read), and Prompts (reusable templates) exposed by a server.", "The exam distinguishes these by who invokes them: the model invokes tools; the user or app invokes resources and prompts."],
-    ["Transport", "How an MCP client and server communicate — stdio for a local subprocess, or Streamable HTTP for a remote server.", "Local, trusted integrations lean stdio; remote or shared servers need HTTP with its own auth story."],
-    ["Structured error responses", "Returning <code>is_error: true</code> with a clear, actionable message in a tool result so the model can self-correct.", "The exam rewards designs where a failed tool call gives the model enough signal to retry correctly, not just fail."],
-    ["Tool distribution choice", "Deciding whether a capability should be a built-in tool, an MCP server, or a slash command/skill — driven by who needs it and how often it changes.", "A capability only one project needs rarely justifies a standalone MCP server over a project-local skill."],
-    ["Built-in tools", "First-party tools like Bash, the text editor, and web search/fetch, usable without standing up an MCP server.", "Reach for a built-in tool before building custom infrastructure that duplicates one."]
-  ],
-  3: [
-    ["CLAUDE.md", "A memory file automatically pulled into context documenting project conventions, commands, and constraints.", "Multiple CLAUDE.md files can exist at different scopes and are all included — none of them get silently dropped."],
-    ["CLAUDE.md hierarchy", "Enterprise, user, project, and local CLAUDE.md files are merged together, with more specific scopes layered on top of general ones.", "A common wrong answer assumes the most specific file replaces the others — it's additive, not a full override."],
-    ["settings.json", "Project- or user-level configuration for permissions, hooks, environment variables, and other Claude Code behavior.", "Know which settings are safe to check into a repo (project-shared) versus which belong in a local, git-ignored file."],
-    ["Permissions", "Allow / deny / ask rules controlling which tools and commands Claude Code can run without prompting the user.", "Scenario questions test picking the narrowest permission that still lets the workflow function."],
-    ["Slash command", "A reusable, user-invoked prompt template stored as a Markdown file and triggered explicitly with <code>/name</code>.", "The user has to type it — contrast with a skill, which Claude can invoke on its own judgment."],
-    ["Skill", "A packaged, discoverable capability — instructions plus optional scripts — that Claude can invoke autonomously when it judges it relevant.", "If a scenario needs Claude to decide when to use it, that rules out a slash command as the right mechanism."],
-    ["Hook", "A shell command that fires automatically on a lifecycle event (e.g. PreToolUse, PostToolUse, Stop) to enforce policy deterministically.", "Hooks exist specifically because prompted instructions ('please always run tests first') aren't reliably deterministic."],
-    ["Plan mode", "A read-only mode where Claude researches and proposes an approach before any file is edited, requiring explicit approval to proceed.", "Correct answer for scenarios needing human sign-off before risky or hard-to-reverse changes."],
-    ["Subagents (Claude Code)", "Separately configured agents with their own system prompt and tool access, delegated a scoped piece of work by the main agent.", "Distinguish product-level Claude Code subagents from the general agentic-architecture subagent pattern in Domain 1 — related, not identical."],
-    ["CI/CD integration", "Running Claude Code non-interactively (headless mode) inside a pipeline, e.g. for automated review or fix-and-PR workflows.", "Headless runs still need explicit permission configuration — they don't get an interactive prompt to fall back on."]
-  ],
-  4: [
-    ["System prompt", "The top-level instruction set establishing role, constraints, and behavior for the whole conversation.", "Distinct from a per-turn user message — the exam tests knowing which behaviors belong in which layer."],
-    ["XML structuring", "Wrapping distinct prompt components — instructions, context, examples — in XML-like tags so the model reliably tells them apart.", "Especially valuable for long prompts mixing several kinds of content in one request."],
-    ["Few-shot prompting", "Including 2–5 worked examples in the prompt to show the exact input/output pattern wanted.", "More reliable than instructions alone when the desired output format is precise and easy to demonstrate but hard to describe."],
-    ["Chain-of-thought", "Asking the model to reason step by step before answering, improving accuracy on multi-step problems at the cost of latency and tokens.", "Not free — the exam expects you to reserve it for genuinely multi-step reasoning, not simple lookups."],
-    ["Prefill", "Seeding the start of the assistant's response to force a format — e.g. starting with <code>{</code> to guarantee JSON — or skip preamble.", "A fast, cheap way to eliminate an entire class of formatting failures without extra validation logic."],
-    ["Structured output", "Constraining the model's response to a defined schema so downstream code can parse it reliably.", "The exam distinguishes 'ask nicely for JSON' from actually constraining and validating the output."],
-    ["Validation/retry loop", "Programmatically validating a structured response against its schema and re-prompting with the specific error on failure.", "The retry prompt must include what specifically failed — a bare 'try again' rarely fixes the same mistake twice."],
-    ["Batch processing", "Using an asynchronous batch API to process many independent prompts at lower cost when latency isn't critical.", "Correct choice for large, non-interactive workloads; wrong choice whenever a user is waiting on the response."],
-    ["Multi-pass review", "Splitting generation and review into separate calls so the reviewing pass isn't anchored by the generation pass's own reasoning.", "A single call asked to 'write and then check your own work' tends to rubber-stamp itself — the exam flags this."],
-    ["Prompt anti-pattern", "Common mistakes like negative-only instructions ('don't do X') with no positive alternative, or one prompt overloaded with unrelated tasks.", "When an option only tells the model what not to do, look for a sibling option that also states the desired behavior."]
-  ],
-  5: [
-    ["Context window", "The finite token budget available for a request — input history and output share this same budget.", "Budgeting questions expect you to account for tool definitions and retrieved data, not just the conversation text."],
-    ["Prompt caching", "Marking a stable prefix of a prompt as cacheable so repeated requests reuse it server-side, cutting latency and cost.", "Only the portion before the first change is reusable — appending new content after a cached prefix keeps the cache hit."],
-    ["Token budgeting", "Deliberately allocating context space between system prompt, tool definitions, retrieved data, and history so nothing critical is crowded out.", "The exam rewards proactively trimming low-value context over reactively hitting the limit and truncating blindly."],
-    ["Compaction / summarization", "Condensing older conversation history into a summary to free context space.", "The 'summarization trap': over-compacting drops details the model still needs, producing vague, ungrounded later responses."],
-    ["Escalation on ambiguity", "Surfacing uncertainty to a human rather than silently guessing when a decision is high-stakes or underspecified.", "Correct answers favor escalation exactly when reversibility is low and confidence is uncertain — not for every judgment call."],
-    ["Error propagation", "Deciding whether a subagent's error should halt the parent process, trigger a retry, or surface as a degraded-but-continuing result.", "Silently swallowing every subagent error is as wrong as halting on every one — the right call depends on the task's criticality."],
-    ["Idempotency", "Designing a tool call so running it twice has the same effect as running it once.", "Essential for anything that might get automatically retried — non-idempotent actions (like sending an email) need a guard."],
-    ["Codebase exploration", "An agent's strategy for building situational context — grep/search first vs. reading whole files — before making changes.", "Exam scenarios reward targeted exploration over reflexively reading every file in a large repo."],
-    ["Evals", "A structured test suite scoring agent or prompt outputs against expected behavior, used to catch regressions before shipping.", "Treat evals as the mechanism that turns 'it seemed to work when I tried it' into something you can actually trust."],
-    ["Information provenance", "Tracking where a piece of context came from — which tool call, file, or turn — so it can be trusted appropriately.", "Matters most when a model must reconcile conflicting information from two different sources in the same context."]
-  ]
-};
-
-const REFERENCE = {
-  1: {
-    rules: [
-      ["Loop control signal", "Branch only on <code>stop_reason</code> (<code>tool_use</code> vs <code>end_turn</code>). Never parse assistant text for intent, and never use an iteration counter as the primary termination mechanism — it's a safety cap, not the control flow."],
-      ["Choosing an orchestration pattern", "Ordered, predictable subtasks → <b>prompt chaining</b>. Distinct input categories → <b>routing</b>. Independent subtasks or need for consensus → <b>parallelization</b>. Unpredictable decomposition → <b>orchestrator-workers</b>. Clear quality bar, generation alone unreliable → <b>evaluator-optimizer</b>."],
-      ["Subagent communication", "Hub-and-spoke only. Subagents talk to the orchestrator, never to each other. A subagent returns a final result, not its full transcript."],
-      ["Context to give a subagent", "The minimum needed for its scoped task — not the orchestrator's full history. Isolation protects focus and token cost."],
-      ["Default failure mode to avoid", "Treating premature termination (stopping before <code>tool_use</code> resolves) and infinite fallback loops (never respecting a real <code>end_turn</code>) as equally likely exam traps — both come from not trusting <code>stop_reason</code> alone."]
-    ]
-  },
-  2: {
-    rules: [
-      ["What makes a good tool", "A precise, example-rich description matters more than a clever name. The model chooses tools based on the description text."],
-      ["tool_use vs tool_result", "<code>tool_use</code> is emitted by the model (request to call). <code>tool_result</code> is sent by the client (the outcome), matched by id."],
-      ["MCP vocabulary", "Server = exposes capabilities. Client = 1:1 connection to a server. Host = the application (e.g. Claude Code) managing multiple clients. Primitives = Tools (model-invoked), Resources (contextual data), Prompts (templates)."],
-      ["Transport choice", "Local/trusted process → stdio. Remote or shared → Streamable HTTP."],
-      ["Error handling", "Always return structured, actionable errors (<code>is_error:true</code> + clear message) — never a raw stack trace — so the model can self-correct on retry."],
-      ["Built-in tool vs MCP vs skill", "One-off local capability → built-in tool if one exists. Shared/external system integration → MCP server. Team workflow, no external system → skill or slash command."]
-    ]
-  },
-  3: {
-    rules: [
-      ["CLAUDE.md hierarchy", "Enterprise → user → project → local. All applicable levels are merged into context — a more specific file adds to the others, it does not replace them."],
-      ["Slash command vs skill", "Slash command: user types it explicitly. Skill: Claude decides on its own to invoke it based on relevance. If the scenario needs autonomous judgment, it's a skill."],
-      ["Hooks vs prompted instructions", "Use a hook when behavior must be deterministic and non-negotiable (e.g. always run linter before commit). A prompted instruction alone is not reliable enough for hard requirements."],
-      ["Plan mode", "Use when changes are risky, hard to reverse, or need human sign-off before execution. It is read-only until explicitly approved."],
-      ["Permissions design", "Grant the narrowest permission set that still lets the workflow complete — not blanket allow, not blanket ask."],
-      ["Headless / CI use", "Non-interactive runs need permissions configured up front; there's no interactive prompt to fall back on mid-run."]
-    ]
-  },
-  4: {
-    rules: [
-      ["Where instructions live", "System prompt: role, constraints, behavior for the whole conversation. User message: per-turn task/content. Don't put per-turn specifics in the system prompt."],
-      ["When to use few-shot", "Desired output format is precise but hard to describe in words — show, don't just tell."],
-      ["When to use chain-of-thought", "Genuinely multi-step reasoning tasks. Skip it for simple lookups or classification — it adds latency/cost without benefit."],
-      ["Guaranteeing format", "Prefill the start of the response (e.g. with <code>{</code>) to force structure at the source, then validate the full output against a schema."],
-      ["Handling invalid structured output", "Re-prompt with the specific validation error, not a generic 'try again.' A bare retry tends to repeat the same mistake."],
-      ["Batch vs real-time", "Large non-interactive workload, latency not critical → Batches API. Anything a user is waiting on → standard synchronous call."],
-      ["Self-review anti-pattern", "A single call asked to generate and then check its own work tends to rubber-stamp itself. Use a separate call/pass for review."]
-    ]
-  },
-  5: {
-    rules: [
-      ["What counts against the context budget", "System prompt + tool definitions + retrieved data + conversation history — all of it, not just the visible chat text."],
-      ["Prompt caching mechanics", "Only the stable prefix before the first change is reused. Append new content after the cached prefix to keep hitting cache."],
-      ["Compaction trade-off", "Summarize to free space, but don't over-compact — the 'summarization trap' drops details the model still needs, producing vague later answers."],
-      ["Escalate vs proceed", "Escalate to a human when the decision is high-stakes AND hard to reverse AND confidence is low. Routine, reversible calls don't need escalation."],
-      ["Error propagation choice", "Match the response to criticality: halt on errors that invalidate the task, retry on transient ones, degrade-and-continue on non-critical ones. Never a single blanket policy."],
-      ["Idempotency", "Required for any tool call that might be automatically retried — guard non-idempotent actions (sending a message, charging a card) explicitly."],
-      ["Codebase exploration strategy", "Targeted grep/search before reading whole files. Reflexively reading an entire large repo wastes context budget the exam expects you to protect."]
-    ]
-  }
-};
 
 // ============================================================================
 // GENERATE: glossary
@@ -893,80 +761,6 @@ write("changelog.html", staticPage({
 // ============================================================================
 // GENERATE: blog
 // ============================================================================
-const POSTS = [
-  {
-    slug: "how-to-pass-claude-certified-architect-exam",
-    title: "How to Pass the Claude Certified Architect (CCA-F) Exam",
-    dek: "A field-tested game plan: where the exam actually tests you, where to spend limited study time, and the habit that moves your score more than anything else.",
-    date: "2026-08-16",
-    minutes: 9,
-    bodyHtml: `
-      <p>The CCA-F is not a trivia test about API parameters. Every question is a scenario: given a set of production constraints, pick the architectural decision that best protects them. That single fact should change how you study.</p>
-      <h2>The exam at a glance</h2>
-      <ul>
-        <li>60 questions, 120 minutes, Skilljar-proctored</li>
-        <li>Scaled score 100–1,000; pass mark 720</li>
-        <li>~301-level — assumes roughly six months of hands-on work with the Claude API and Claude Code</li>
-        <li>Domain-weighted: Agentic Architecture 27%, Claude Code Config 20%, Prompt Engineering 20%, Tool Design &amp; MCP 18%, Context Management 15%</li>
-      </ul>
-      <h2>Where to spend your time</h2>
-      <p>Domain weighting matters more than breadth. Agentic Architecture alone is worth more than Tool Design &amp; MCP and Context Management combined. If you're time-constrained, over-invest in the top two domains — Agentic Architecture and Claude Code Configuration — and you'll clear the pass mark comfortably even with weaker coverage elsewhere.</p>
-      <h2>The habit that matters most: interrogate every wrong answer</h2>
-      <p>For every question you get wrong, don't just read the explanation and move on. Ask: <em>what production concern did the right answer protect that mine didn't?</em> The answer is almost always one of five things — latency, cost, observability, reliability, or human-in-the-loop safety. Once you can name which concern a scenario is testing, the "best" answer usually becomes obvious even among several defensible options.</p>
-      <h2>Three-week structure</h2>
-      <p>Week one: <a href="/diagnostic">take the diagnostic</a> to find your weakest domain, then work through that domain's <a href="/glossary">glossary</a> and <a href="/reference">quick reference</a> while doing daily practice sets filtered to it. Week two: rotate through the remaining domains in weight order, re-attempting missed questions after 48 hours so the reasoning actually sticks — <a href="/practice">practice mode</a> surfaces these automatically. Week three: full-length timed mock exams under real conditions, reviewing every explanation, even on questions you got right.</p>
-      <h2>Common mistakes that cost points</h2>
-      <ul>
-        <li><strong>Treating stop_reason as optional.</strong> Any loop-control design that parses assistant text instead of branching on <code>stop_reason</code> is wrong, no matter how reasonable it sounds.</li>
-        <li><strong>Ignoring the CLAUDE.md hierarchy.</strong> A specific-scope file adds to more general ones — it doesn't replace them. Options built on "override" logic are traps.</li>
-        <li><strong>Picking the more powerful option over the more appropriate one.</strong> The exam consistently rewards the narrowest tool/permission/pattern that solves the actual scenario, not the most capable one available.</li>
-      </ul>
-      <h2>Exam-day tactic</h2>
-      <p>Read the scenario twice before looking at the options — the correct answer usually pivots on one specific constraint mentioned in passing. When two options both seem defensible, pick the more production-grade one: the one that degrades more gracefully under failure, not just the one that works on the happy path.</p>
-      <p>Realistic timeline: two to three weeks at about an hour a day, almost all of it spent on practice questions rather than reading. <a href="/exam">Start a full mock exam</a> once you've cleared the diagnostic to see exactly where you stand.</p>`
-  },
-  {
-    slug: "agentic-loops-stop-reason-explained",
-    title: "Agentic Loops and stop_reason: What CCA-F Actually Tests",
-    dek: "The single most-weighted concept on the exam, and the three anti-patterns that show up disguised as reasonable-sounding wrong answers.",
-    date: "2026-08-16",
-    minutes: 7,
-    bodyHtml: `
-      <p>Agentic Architecture &amp; Orchestration is 27% of the CCA-F — more than any other domain — and the agentic loop is its foundation. Get this concept solid and a large share of Domain 1's scenario questions become straightforward.</p>
-      <h2>The lifecycle</h2>
-      <p>An agentic loop has four steps: send a request, inspect <code>stop_reason</code> on the response, execute any requested tools if <code>stop_reason</code> is <code>tool_use</code>, and return the tool results as the next message — repeating until <code>stop_reason</code> is <code>end_turn</code>. That's the entire mechanism. Everything else is orchestration built on top of it.</p>
-      <h2>Why stop_reason and nothing else</h2>
-      <p><code>stop_reason</code> is the only reliable, structured signal the API gives you for loop control. It's deterministic, documented, and doesn't depend on how the model happens to phrase its output this time.</p>
-      <h2>Three anti-patterns the exam tests</h2>
-      <ol>
-        <li><strong>Parsing natural-language signals.</strong> Looking for phrases like "I'm finished" or "no further action needed" in assistant text to decide whether to keep looping. This breaks the moment phrasing varies even slightly.</li>
-        <li><strong>Arbitrary iteration caps as the primary mechanism.</strong> A max-iteration count is a legitimate safety net, but it is not loop control — using it as the main way a loop terminates means the agent either stops too early on legitimate multi-step work or spins uselessly until the cap hits.</li>
-        <li><strong>Checking for assistant text content instead of stop_reason.</strong> A response can include commentary text alongside a <code>tool_use</code> block — checking "did it say anything" instead of checking <code>stop_reason</code> produces false terminations.</li>
-      </ol>
-      <h2>A worked exam trap</h2>
-      <p>A scenario describes an agent that stops after its first tool call returns a result, even though the task clearly needs a follow-up action. The "premature termination" bug here is almost always a design that treats "received a tool_result" as equivalent to "the model is satisfied" — instead of sending the result back to the model and letting it decide, via its next <code>stop_reason</code>, whether more work is needed.</p>
-      <p>Once <code>stop_reason</code>-driven control is second nature, move to orchestration patterns: <a href="/glossary/1">the Domain 1 glossary</a> covers prompt chaining, routing, parallelization, orchestrator-workers, and evaluator-optimizer with the exam-context notes that matter for picking between them. Then drill it with <a href="/practice?d=1">Domain 1 practice questions</a>.</p>`
-  },
-  {
-    slug: "mcp-vs-built-in-tools-when-to-use-which",
-    title: "MCP Server, Built-in Tool, or Skill? A Decision Framework for the Exam",
-    dek: "Tool Design & MCP Integration is 18% of the CCA-F, and most of it comes down to one recurring decision: which distribution mechanism fits a given capability.",
-    date: "2026-08-16",
-    minutes: 6,
-    bodyHtml: `
-      <p>A large share of Domain 2 and Domain 3 scenario questions boil down to the same underlying decision, phrased differently each time: given a capability an agent needs, should it be a built-in tool, a custom MCP server, or a Claude Code skill/slash command? The exam rewards picking the narrowest fit, not the most powerful option available.</p>
-      <h2>Start with what already exists</h2>
-      <p>If a first-party built-in tool already covers the need — Bash, the text editor, web search/fetch — that beats building custom infrastructure that duplicates it. This is the most commonly missed "obvious" answer: test-takers reach for MCP servers reflexively when a built-in tool would already work.</p>
-      <h2>MCP server: for external systems, shared across contexts</h2>
-      <p>Reach for an MCP server when the capability integrates with an external system — a database, a SaaS API, an internal service — and multiple hosts or projects need that same integration. MCP standardizes the connection so it isn't rebuilt per project. Remember the vocabulary precisely: a <em>server</em> exposes tools/resources/prompts, a <em>client</em> holds a 1:1 connection to one server, and a <em>host</em> (like Claude Code) coordinates multiple clients.</p>
-      <h2>Skill or slash command: for workflow, not external systems</h2>
-      <p>When the "capability" is really a packaged way of doing something within the project — no external system involved — a skill or slash command fits better than standing up a server. The distinguishing question the exam asks: does invocation need to be autonomous (Claude decides when it's relevant → skill) or explicit (the user types it → slash command)?</p>
-      <h2>A worked scenario</h2>
-      <p>"A team wants Claude Code to automatically follow a specific deployment checklist whenever it's about to run a deploy command, without the user needing to remember to invoke anything." That's autonomous invocation tied to workflow, no external system — a skill, not an MCP server, and not a slash command (the user isn't the one triggering it).</p>
-      <p>Full decision rules, including transport choice (stdio vs. Streamable HTTP) and structured-error-response design, are in the <a href="/reference/2">Domain 2 quick reference</a>. Drill it with <a href="/practice?d=2">Tools &amp; MCP practice questions</a>.</p>`
-  }
-];
-
 write("blog/index.html", staticPage({
   title: "Blog — Claude Cert Prep",
   description: "Study strategy, domain deep dives, and exam-guide updates for the Claude Certified Architect (CCA-F) exam.",

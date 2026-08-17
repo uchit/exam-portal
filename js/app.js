@@ -6,6 +6,7 @@ import { ALL_QUESTIONS, STATS, buildExam, buildPractice, buildDiagnostic, search
 import { ICONS } from "./icons.js";
 import { drawBadge, downloadBadge } from "./badge.js";
 import { CERTS } from "./certs.js";
+import { FAQ_ITEMS } from "./faq.js";
 
 const app = document.getElementById("app");
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
@@ -14,14 +15,6 @@ const el = (html) => { const t = document.createElement("template"); t.innerHTML
 const fmt = (n) => n.toLocaleString("en-US");
 const flagLabel = (flagged) => `${flagged ? ICONS.flagFilled(14) : ICONS.flag(14)}<span>${flagged ? "Flagged" : "Flag"}</span>`;
 const hintLabel = `${ICONS.bulb(14)}<span>Hint</span>`;
-// Keep in sync with FAQ_ITEMS in scripts/build-pages.mjs (drives /prep's FAQPage structured data).
-const FAQ_ITEMS = [
-  ["Is Claude Cert Prep free?", "Yes. Every practice mode, the full mock exam, the diagnostic, drill, curriculum, glossary, and quick reference are free with no account or sign-up required."],
-  ["How long does it take to prepare for the CCA-F exam?", "Most people need about two to three weeks at roughly one hour a day, mostly spent on practice questions rather than reading — assuming around six months of hands-on Claude API or Claude Code experience going in."],
-  ["Is this an official Anthropic study resource?", "No. Claude Cert Prep is an independent, unofficial study aid. It is not affiliated with, endorsed by, or sponsored by Anthropic."],
-  ["What's the CCA-F exam format?", "60 scenario-based questions in 120 minutes, scored on a scaled 100-1000 range with a pass mark of 720, weighted across five domains."],
-  ["Do I need an account to track my progress?", "No. Progress, flags, and mock-exam history are saved locally in your browser — nothing is sent to a server, and there's no login."]
-];
 // Map a percentage to the real exam's 100–1000 scaled range, anchored so the
 // pass point lines up exactly: 0%→100, PASS_PERCENT→720, 100%→1000.
 function scaledScore(pct) {

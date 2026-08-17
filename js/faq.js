@@ -20,5 +20,9 @@ export const FAQ_ITEMS = [
   [
     "Do I need an account to track my progress?",
     "No — progress, flags, and mock-exam history are saved locally in your browser by default, with no account or sign-up required to practice. If you want that history to follow you across devices, you can optionally create a free account after finishing a practice set; only your progress data (no question content) syncs, and it's tied to your account, not shared or sold."
+  ],
+  [
+    "How accurate is this site's practice score at predicting whether I'll pass the real exam?",
+    "We're building toward a real answer instead of guessing: on the Progress page, you can optionally and anonymously report your actual exam result, and we correlate it against your practice accuracy at the time. Enough self-reports lets us show, for example, whether 85%+ practice accuracy across three or more mock exams actually tracks with a real pass. It's opt-in, not tied to any account, and the more people who share a result, the more useful the signal gets for everyone after them."
   ]
 ];

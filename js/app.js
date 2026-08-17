@@ -8,6 +8,7 @@ import { drawBadge, downloadBadge } from "./badge.js";
 import { CERTS } from "./certs.js";
 import { FAQ_ITEMS } from "./faq.js";
 import { onAuthChange, openSignUp, openSignIn, signOut, fetchServerProgress, pushProgressToServer, mergeProgress } from "./auth.js";
+import { sendItemStats, submitOutcome, fetchOutcomeStats } from "./outcomes.js";
 
 const app = document.getElementById("app");
 // True while a runner (exam/practice/diagnostic/drill) owns #app directly,
@@ -63,6 +64,28 @@ function loadExamSession() {
   } catch { return null; }
 }
 function clearExamSession() { try { localStorage.removeItem(EKEY); } catch {} }
+
+// ---------- real-exam outcome self-report (anonymous, opt-in — see api/outcomes.js) ----------
+const OKEY = "claudecert.outcome.v1";
+const OUTCOME_DISMISS_DAYS = 14;
+function loadOutcomeFlag() { try { return JSON.parse(localStorage.getItem(OKEY) || "{}"); } catch { return {}; } }
+function saveOutcomeFlag(f) { try { localStorage.setItem(OKEY, JSON.stringify(f)); } catch {} }
+function shouldOfferOutcomeReport() {
+  if (!progress.exams.length) return false; // only meaningful once they've taken at least one mock exam
+  const f = loadOutcomeFlag();
+  if (f.reported) return false;
+  if (f.dismissedUntil && Date.now() < f.dismissedUntil) return false;
+  return true;
+}
+function currentAppMetrics() {
+  const bestPct = progress.exams.length ? Math.max(...progress.exams.map((e) => e.pct)) : null;
+  return {
+    appAccuracy: progress.attempts ? Math.round((progress.correct / progress.attempts) * 100) : 0,
+    appExamsTaken: progress.exams.length,
+    appBestScore: bestPct === null ? null : scaledScore(bestPct),
+    appAttempts: progress.attempts
+  };
+}
 
 // ---------- account sync (optional — off until the user signs in) ----------
 let syncEnabled = false;
@@ -439,6 +462,15 @@ function runPractice(questions) {
   let correctCount = 0;
   const v = el(`<div class="view"></div>`);
   app.innerHTML = ""; app.appendChild(v);
+  // Practice sessions can run indefinitely (unlike the fixed-length mock
+  // exam), so flush item stats in batches as the user goes rather than only
+  // at the end — otherwise closing the tab mid-session loses that data.
+  let pendingStats = {};
+  function noteItemStat(q, ok) {
+    pendingStats[q.id] = ok ? 1 : 0;
+    if (Object.keys(pendingStats).length >= 20) flushItemStats();
+  }
+  function flushItemStats() { sendItemStats(pendingStats); pendingStats = {}; }
 
   function render() {
     const q = questions[i]; answered = false; selected = null; hinted = false;
@@ -473,6 +505,7 @@ function runPractice(questions) {
       selected = Number(b.dataset.opt); answered = true;
       const ok = selected === q.correct; if (ok) correctCount++;
       recordAnswer(q, ok);
+      noteItemStat(q, ok);
       opts.innerHTML = renderOptions(q, { answered: true, selected, locked: true });
       const coach = ok ? "" : `<div class="coach"><b>Think like the exam</b>What production concern did the right answer protect that yours didn't? — <em>latency · cost · observability · reliability · human-in-the-loop</em>. When two options seem defensible, pick the more production-grade one.</div>`;
       v.querySelector("#extra").innerHTML = `<div class="explanation"><b>${ok ? "Correct ✓" : "Not quite ✕"} · why</b>${esc(q.explanation)}</div>${coach}`;
@@ -499,6 +532,7 @@ function runPractice(questions) {
     v.querySelector("#quit").addEventListener("click", finish);
   }
   function finish() {
+    flushItemStats();
     const acc = i ? Math.round((correctCount / Math.max(1, answered ? i + 1 : i)) * 100) : 0;
     const done = answered ? i + 1 : i;
     v.innerHTML = `
@@ -526,6 +560,12 @@ function runAdaptivePractice({ domains, styles, count }) {
   const served = new Set(progress.recent);
   const v = el(`<div class="view"></div>`);
   app.innerHTML = ""; app.appendChild(v);
+  let pendingStats = {};
+  function noteItemStat(q, ok) {
+    pendingStats[q.id] = ok ? 1 : 0;
+    if (Object.keys(pendingStats).length >= 20) flushItemStats();
+  }
+  function flushItemStats() { sendItemStats(pendingStats); pendingStats = {}; }
 
   function pickNext() {
     for (let band = 0; band <= 2; band++) {
@@ -569,6 +609,7 @@ function runAdaptivePractice({ domains, styles, count }) {
       selected = Number(b.dataset.opt); answered = true;
       const ok = selected === q.correct; if (ok) correctCount++;
       recordAnswer(q, ok);
+      noteItemStat(q, ok);
       opts.innerHTML = renderOptions(q, { answered: true, selected, locked: true });
       v.querySelector("#extra").innerHTML = `<div class="explanation"><b>${ok ? "Correct ✓" : "Not quite ✕"} · why</b>${esc(q.explanation)}</div>`;
       v.querySelector("#nextBtn").disabled = false;
@@ -586,6 +627,7 @@ function runAdaptivePractice({ domains, styles, count }) {
     v.querySelector("#quit").addEventListener("click", finish);
   }
   function finish() {
+    flushItemStats();
     noteServed([...served].map((id) => ({ id })));
     const pct = i ? Math.round((correctCount / i) * 100) : 0;
     v.innerHTML = `
@@ -753,13 +795,14 @@ function runExam(questions, minutes, resume = null) {
   function submit() {
     let correct = 0;
     const perDomain = {};
+    const perQuestion = {};
     Object.keys(DOMAINS).forEach((d) => (perDomain[d] = { total: 0, ok: 0 }));
     questions.forEach((q, idx) => {
       const ok = answers[idx] === q.correct;
       if (ok) correct++;
       perDomain[q.domain].total++; if (ok) perDomain[q.domain].ok++;
       // record into long-term progress too
-      if (answers[idx] !== null) recordAnswer(q, ok);
+      if (answers[idx] !== null) { recordAnswer(q, ok); perQuestion[q.id] = ok ? 1 : 0; }
     });
     const pct = Math.round((correct / questions.length) * 100);
     const pass = pct >= PASS_PERCENT;
@@ -767,6 +810,7 @@ function runExam(questions, minutes, resume = null) {
     saveProgress();
     cleanupSession();
     sendTelemetry({ pass, scaledScore: scaledScore(pct), perDomain });
+    sendItemStats(perQuestion);
     showResults({ questions, answers, correct, pct, pass, perDomain });
   }
   render();
@@ -912,6 +956,9 @@ function viewProgress() {
         <div class="bd-val" style="color:${e.pass ? "var(--success)" : "var(--error)"}">${scaledScore(e.pct)}</div>
       </div>`).join("")}</div>` : `<div class="empty">No mock exams yet. <a href="/exam" style="color:var(--primary);font-weight:700">Take one →</a></div>`}
 
+    <div id="readinessCard"></div>
+    <div id="outcomeCard"></div>
+
     <p class="section-title" style="margin-top:32px">Badges</p>
     <div class="grid grid-2" id="badgeGrid"></div>
 
@@ -927,6 +974,69 @@ function viewProgress() {
     }
   });
   renderBadges(v.querySelector("#badgeGrid"));
+  renderOutcomeCard(v.querySelector("#outcomeCard"));
+  renderReadinessCard(v.querySelector("#readinessCard"));
+}
+
+// Anonymous, opt-in self-report of a real exam result — see api/outcomes.js
+// for why this is the highest-leverage thing this site can collect: it's
+// the one data set that lets us (and eventually, users) know how predictive
+// practice accuracy here actually is of a real pass, and it compounds with
+// usage in a way no competitor can shortcut by writing more content.
+function renderOutcomeCard(el2) {
+  if (!el2 || !shouldOfferOutcomeReport()) return;
+  el2.innerHTML = `
+    <p class="section-title" style="margin-top:32px">Already sat the real exam?</p>
+    <div class="card">
+      <p style="color:var(--text-2);font-size:14px;margin-bottom:12px">Anonymous and optional — tell us how it went and we'll use it to show how predictive practice accuracy on this site actually is of a real pass. No account, no identifying info.</p>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="number" id="outcomeScore" placeholder="Scaled score (optional)" min="100" max="1000" class="search-input" style="flex:0 0 200px" />
+        <button class="btn btn-solid btn-sm" id="outcomePass">I passed</button>
+        <button class="btn btn-outline btn-sm" id="outcomeFail">I didn't pass</button>
+        <button class="linkbtn" id="outcomeDismiss" style="margin-left:auto">Not now</button>
+      </div>
+    </div>`;
+  const submit = async (pass) => {
+    const scoreInput = el2.querySelector("#outcomeScore").value;
+    const scaledScoreVal = scoreInput ? Number(scoreInput) : null;
+    const ok = await submitOutcome({ pass, scaledScore: scaledScoreVal, ...currentAppMetrics() });
+    if (ok) {
+      saveOutcomeFlag({ reported: true });
+      toast("Thanks — that helps calibrate this for everyone");
+      el2.innerHTML = "";
+    } else {
+      toast("Couldn't save that — try again later");
+    }
+  };
+  el2.querySelector("#outcomePass").addEventListener("click", () => submit(true));
+  el2.querySelector("#outcomeFail").addEventListener("click", () => submit(false));
+  el2.querySelector("#outcomeDismiss").addEventListener("click", () => {
+    saveOutcomeFlag({ dismissedUntil: Date.now() + OUTCOME_DISMISS_DAYS * 86400000 });
+    el2.innerHTML = "";
+  });
+}
+
+// Surfaces the aggregate self-reported pass rate for users whose practice
+// performance roughly matches the current user's own — a payoff for the
+// people who contribute a report, and a reason to keep visiting even after
+// the practice/exam content itself is exhausted.
+async function renderReadinessCard(el2) {
+  if (!el2 || !progress.exams.length) return;
+  const stats = await fetchOutcomeStats();
+  if (!stats || !stats.reports) return;
+  const { appAccuracy, appExamsTaken } = currentAppMetrics();
+  const accBucket = appAccuracy < 70 ? "lt70" : appAccuracy < 80 ? "70-79" : appAccuracy < 90 ? "80-89" : "90plus";
+  const examBucket = appExamsTaken <= 0 ? "0" : appExamsTaken <= 2 ? "1-2" : "3plus";
+  const mine = stats.buckets?.[`${accBucket}_${examBucket}`];
+  const shown = mine || (stats.passRate !== null ? { reports: stats.reports, passRate: stats.passRate } : null);
+  if (!shown) return;
+  el2.innerHTML = `
+    <p class="section-title" style="margin-top:32px">Community readiness signal</p>
+    <div class="card">
+      <p style="color:var(--text-2);font-size:14px">${mine
+        ? `Users who practiced to roughly your level (${appAccuracy}% accuracy, ${appExamsTaken} mock exam${appExamsTaken === 1 ? "" : "s"} taken) passed the real exam <b style="color:var(--text)">${shown.passRate}%</b> of the time, based on ${shown.reports} self-reported result${shown.reports === 1 ? "" : "s"}.`
+        : `Of everyone who's self-reported a real-exam result here, <b style="color:var(--text)">${shown.passRate}%</b> passed (${shown.reports} reports). Not enough reports yet at your exact practice level to narrow it down further.`}</p>
+    </div>`;
 }
 
 function renderBadges(grid) {
@@ -1106,8 +1216,15 @@ function runDiagnostic(questions) {
   }
   function finish() {
     const perDomain = {};
+    const perQuestion = {};
     Object.keys(DOMAINS).forEach((d) => (perDomain[d] = { total: 0, ok: 0 }));
-    questions.forEach((q, idx) => { perDomain[q.domain].total++; if (answers[idx] === q.correct) perDomain[q.domain].ok++; });
+    questions.forEach((q, idx) => {
+      perDomain[q.domain].total++;
+      const ok = answers[idx] === q.correct;
+      if (ok) perDomain[q.domain].ok++;
+      if (answers[idx] !== null) perQuestion[q.id] = ok ? 1 : 0;
+    });
+    sendItemStats(perQuestion);
     const order = Object.values(DOMAINS)
       .map((d) => ({ d, pct: perDomain[d.id].total ? Math.round((perDomain[d.id].ok / perDomain[d.id].total) * 100) : 0 }))
       .sort((a, b) => a.pct - b.pct || b.d.weight - a.d.weight);

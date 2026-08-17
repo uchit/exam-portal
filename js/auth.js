@@ -53,14 +53,20 @@ export async function currentUser() {
   return clerk?.user || null;
 }
 
+// Google's flow does a full-tab redirect (not a popup), so on return the SPA
+// reboots from scratch — pointing Clerk back at the exact page (path+query)
+// the user was on, instead of Clerk's default '/', is what makes that reboot
+// land somewhere resumable rather than dumping them on the homepage.
+const here = () => location.pathname + location.search;
+
 export async function openSignUp() {
   const clerk = await waitForClerk();
-  if (clerk) clerk.openSignUp();
+  if (clerk) clerk.openSignUp({ redirectUrl: here() });
 }
 
 export async function openSignIn() {
   const clerk = await waitForClerk();
-  if (clerk) clerk.openSignIn();
+  if (clerk) clerk.openSignIn({ redirectUrl: here() });
 }
 
 export async function signOut() {

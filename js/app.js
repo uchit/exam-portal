@@ -10,6 +10,11 @@ import { FAQ_ITEMS } from "./faq.js";
 import { onAuthChange, openSignUp, openSignIn, signOut, fetchServerProgress, pushProgressToServer, mergeProgress } from "./auth.js";
 
 const app = document.getElementById("app");
+// True while a runner (exam/practice/diagnostic/drill) owns #app directly,
+// outside the router's routes map. Guards against the post-sign-in progress
+// merge (which lands async, sometime after the initial boot) blowing away an
+// active session the user has since resumed into — see onAuthChange below.
+let activeRunner = false;
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const el = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
@@ -37,6 +42,28 @@ function loadProgress() {
 }
 function saveProgress() { try { localStorage.setItem(PKEY, JSON.stringify(progress)); } catch {} schedulePush(); }
 
+// ---------- in-progress mock-exam session (survives reload/redirect) ----------
+// Unlike Practice/Diagnostic/Drill, a Mock Exam only records answers into
+// `progress` at final submit (matching the real exam's no-feedback-until-done
+// shape) — so without this, any full-page reload mid-exam (an OS/browser
+// refresh, or Clerk's Google sign-in, which redirects the whole tab rather
+// than using a popup) would silently wipe up to 120 minutes of answers with
+// no trace. This mirrors that same state to localStorage as the user goes,
+// so a reload can reconstruct exactly where they left off.
+const EKEY = "claudecert.examSession.v1";
+const EXAM_SESSION_TTL_MS = 6 * 60 * 60 * 1000; // generous vs. the 120-min exam itself
+function saveExamSession(s) { try { localStorage.setItem(EKEY, JSON.stringify(s)); } catch {} }
+function loadExamSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem(EKEY) || "null");
+    if (!s || Date.now() - s.updatedAt > EXAM_SESSION_TTL_MS || s.remaining <= 0) return null;
+    const questions = s.ids.map(getById);
+    if (questions.some((q) => !q)) return null; // bank changed under us — don't resume onto stale ids
+    return { ...s, questions };
+  } catch { return null; }
+}
+function clearExamSession() { try { localStorage.removeItem(EKEY); } catch {} }
+
 // ---------- account sync (optional — off until the user signs in) ----------
 let syncEnabled = false;
 let didInitialSync = false;
@@ -55,7 +82,10 @@ onAuthChange(async ({ signedIn }) => {
   if (server) progress = mergeProgress(progress, server);
   syncEnabled = true;
   saveProgress();
-  router();
+  // Skip the refresh if the user has already resumed into a runner by the
+  // time this async merge lands — re-rendering the route here would blow
+  // away their active session (see `activeRunner`'s definition above).
+  if (!activeRunner) router();
 });
 function renderAccountSlot(signedIn) {
   const slot = document.getElementById("accountSlot");
@@ -219,6 +249,7 @@ function router() {
   });
   const fn = routes[path];
   if (!fn) return; // a static content page — its HTML is already in #app
+  activeRunner = false;
   app.innerHTML = "";
   fn(params);
   app.focus({ preventScroll: true });
@@ -403,6 +434,7 @@ function viewPracticeConfig(params) {
 }
 
 function runPractice(questions) {
+  activeRunner = true;
   let i = 0, answered = false, selected = null, hinted = false;
   let correctCount = 0;
   const v = el(`<div class="view"></div>`);
@@ -489,6 +521,7 @@ function runPractice(questions) {
 // wrong drops it — so the session converges on the level you're actually
 // struggling at instead of a range you picked blind before starting.
 function runAdaptivePractice({ domains, styles, count }) {
+  activeRunner = true;
   let level = 3, streak = 0, i = 0, correctCount = 0;
   const served = new Set(progress.recent);
   const v = el(`<div class="view"></div>`);
@@ -578,8 +611,16 @@ function viewExamConfig() {
   const v = el(`<div class="view"></div>`);
   const best = progress.exams.length ? Math.max(...progress.exams.map((e) => e.pct)) : null;
   const bestScaled = best === null ? null : scaledScore(best);
+  const resumable = loadExamSession();
   v.innerHTML = `
     <div class="page-head"><h1>Mock Exam</h1><p class="lead">A full simulation of the ${esc(EXAM_NAME)} (${esc(EXAM_CODE)}): ${EXAM_LENGTH} questions weighted by the official domain percentages, a ${EXAM_MINUTES}-minute timer, and no feedback until you submit. Pass mark ${PASS_PERCENT}%. Tip: read each scenario twice, and between two defensible options pick the more production-grade one. <a href="/prep" style="color:var(--primary);font-weight:700">Full game plan →</a></p></div>
+    ${resumable ? `<div class="callout" style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:20px">
+      <div><b>Unfinished exam</b>You have an in-progress exam with ${resumable.answers.filter((a) => a !== null).length}/${resumable.questions.length} answered and ${Math.ceil(resumable.remaining / 60)} minutes left on the clock.</div>
+      <div style="display:flex;gap:8px;flex:none">
+        <button class="btn btn-solid btn-sm" id="resumeExam">Resume exam →</button>
+        <button class="btn btn-outline btn-sm" id="discardExam">Discard</button>
+      </div>
+    </div>` : ""}
     <div class="grid grid-2">
       <div class="card">
         <h3>Exam rules</h3>
@@ -609,14 +650,25 @@ function viewExamConfig() {
   };
   v.querySelector("#startExam").addEventListener("click", () => startExam(EXAM_LENGTH, EXAM_MINUTES));
   v.querySelector("#quickExam").addEventListener("click", () => startExam(20, Math.round(EXAM_MINUTES * 20 / EXAM_LENGTH)));
+  v.querySelector("#resumeExam")?.addEventListener("click", () => {
+    runExam(resumable.questions, resumable.minutes, { answers: resumable.answers, i: resumable.i, remaining: resumable.remaining });
+    toast("Resumed your in-progress exam");
+  });
+  v.querySelector("#discardExam")?.addEventListener("click", () => { clearExamSession(); router(); });
 }
 
-function runExam(questions, minutes) {
-  const answers = new Array(questions.length).fill(null);
-  let i = 0;
-  let remaining = minutes * 60;
+function runExam(questions, minutes, resume = null) {
+  activeRunner = true;
+  const answers = resume ? resume.answers.slice() : new Array(questions.length).fill(null);
+  let i = resume ? resume.i : 0;
+  let remaining = resume ? resume.remaining : minutes * 60;
   const v = el(`<div class="view"></div>`);
   app.innerHTML = ""; app.appendChild(v);
+
+  const sessionSnapshot = () => ({ ids: questions.map((q) => q.id), answers, i, remaining, minutes, updatedAt: Date.now() });
+  saveExamSession(sessionSnapshot());
+  window.addEventListener("beforeunload", persistSession);
+  function persistSession() { saveExamSession(sessionSnapshot()); }
 
   const timer = setInterval(() => {
     remaining--;
@@ -626,6 +678,7 @@ function runExam(questions, minutes) {
       t.classList.toggle("warn", remaining <= 600 && remaining > 120);
       t.classList.toggle("danger", remaining <= 120);
     }
+    if (remaining % 20 === 0) persistSession(); // periodic, so the clock itself can't drift far from what a reload restores
     if (remaining <= 0) { clearInterval(timer); submit(); }
   }, 1000);
   const mmss = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
@@ -670,19 +723,27 @@ function runExam(questions, minutes) {
       v.querySelectorAll(".options .option").forEach((o, idx) => o.classList.toggle("selected", idx === answers[i]));
       v.querySelector(`[data-go="${i}"]`)?.classList.add("answered");
       v.querySelector(".runner-meta .pill:last-child").textContent = `${answers.filter((a) => a !== null).length}/${questions.length} answered`;
+      persistSession();
     });
-    v.querySelector("#prev").addEventListener("click", () => { if (i > 0) { i--; render(); } });
-    v.querySelector("#next").addEventListener("click", () => { if (i < questions.length - 1) { i++; render(); } else confirmSubmit(); });
+    v.querySelector("#prev").addEventListener("click", () => { if (i > 0) { i--; render(); persistSession(); } });
+    v.querySelector("#next").addEventListener("click", () => { if (i < questions.length - 1) { i++; render(); persistSession(); } else confirmSubmit(); });
     v.querySelector("#flag").addEventListener("click", (e) => {
       const id = q.id; if (progress.flags[id]) delete progress.flags[id]; else progress.flags[id] = true; saveProgress();
       e.currentTarget.classList.toggle("flagged"); e.currentTarget.innerHTML = flagLabel(progress.flags[id]);
       v.querySelector(`[data-go="${i}"]`)?.classList.toggle("flagged", !!progress.flags[id]);
     });
     v.querySelector(".nav-grid").addEventListener("click", (e) => {
-      const b = e.target.closest("[data-go]"); if (!b) return; i = Number(b.dataset.go); render();
+      const b = e.target.closest("[data-go]"); if (!b) return; i = Number(b.dataset.go); render(); persistSession();
     });
     v.querySelector("#submit").addEventListener("click", confirmSubmit);
-    v.querySelector("#abort").addEventListener("click", () => { clearInterval(timer); navigate("/exam"); });
+    v.querySelector("#abort").addEventListener("click", () => {
+      if (!confirm("Abandon this exam? Your in-progress answers will be discarded.")) return;
+      clearInterval(timer); cleanupSession(); navigate("/exam");
+    });
+  }
+  function cleanupSession() {
+    clearExamSession();
+    window.removeEventListener("beforeunload", persistSession);
   }
   function confirmSubmit() {
     const unanswered = answers.filter((a) => a === null).length;
@@ -704,6 +765,7 @@ function runExam(questions, minutes) {
     const pass = pct >= PASS_PERCENT;
     progress.exams.push({ date: Date.now(), pct, correct, total: questions.length, pass });
     saveProgress();
+    cleanupSession();
     sendTelemetry({ pass, scaledScore: scaledScore(pct), perDomain });
     showResults({ questions, answers, correct, pct, pass, perDomain });
   }
@@ -1010,6 +1072,7 @@ function viewDiagnosticConfig() {
   v.querySelector("#startDiag").addEventListener("click", () => runDiagnostic(buildDiagnostic(Date.now())));
 }
 function runDiagnostic(questions) {
+  activeRunner = true;
   let i = 0, answered = false, selected = null;
   const answers = new Array(questions.length).fill(null);
   const v = el(`<div class="view"></div>`);

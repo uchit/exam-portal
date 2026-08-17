@@ -27,6 +27,16 @@ import { HANDBOOK as HANDBOOK_4 } from "../content/handbook-4.mjs";
 import { HANDBOOK as HANDBOOK_5 } from "../content/handbook-5.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+// Clerk's frontend API host is embedded (base64) in the publishable key. This
+// is a *publishable* key — safe to bake into static HTML at build time, same
+// as Stripe's pk_ keys. Run with `npm run pages:build` (loads .env.local) so
+// this resolves; a plain `node scripts/build-pages.mjs` skips account UI.
+const CLERK_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "";
+const CLERK_FAPI = CLERK_PUBLISHABLE_KEY
+  ? Buffer.from(CLERK_PUBLISHABLE_KEY.replace(/^pk_(test|live)_/, ""), "base64").toString("utf8").replace(/\$$/, "")
+  : "";
+
 const SITE = "https://thatclaude.com";
 const BUILD_DATE = new Date().toISOString().slice(0, 10);
 const BUILD_DATE_DISPLAY = new Date(`${BUILD_DATE}T00:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
@@ -121,6 +131,7 @@ function header(active) {
       </nav>
       <div class="topbar-actions">
         <span class="bank-chip" id="bankChip" title="Total questions in the bank">…</span>
+        <div id="accountSlot" class="account-slot"></div>
         <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark">
           <span class="theme-icon"></span>
         </button>
@@ -157,6 +168,8 @@ const FOOTER = `  <footer class="footer">
     <a href="/progress" data-nav="progress"><span class="bn-ico">${ICONS.chart(20)}</span><span>Stats</span></a>
   </nav>
 
+${CLERK_FAPI ? `  <script defer crossorigin="anonymous" src="https://${CLERK_FAPI}/npm/@clerk/ui@1/dist/ui.browser.js"></script>
+  <script defer crossorigin="anonymous" data-clerk-publishable-key="${CLERK_PUBLISHABLE_KEY}" src="https://${CLERK_FAPI}/npm/@clerk/clerk-js@6/dist/clerk.browser.js"></script>` : ""}
   <script type="module" src="/js/app.js"></script>
 </body>
 </html>
@@ -657,7 +670,8 @@ write("about.html", staticPage({
       <p>That last part matters: most of this bank can be regenerated against the current Claude API and exam guide on demand, rather than drifting out of date the way a fixed, hand-written bank does.</p>
       <div class="callout"><b>Freshness</b>Content on this site was last verified against the Claude API and the CCA-F exam guide on ${BUILD_DATE_DISPLAY}. When Anthropic changes the exam guide, we aim to publish a changelog entry within 24-48 hours — see the <a href="/changelog">changelog</a> for the update history.</div>
       <h2>What "free" means here</h2>
-      <p>Every practice mode, the full mock exam, the diagnostic, the glossary, and the quick reference are free with no account or sign-up. Your personal progress, flags, and history are saved in your browser only. When you finish a mock exam, an anonymous, aggregate result (pass/fail, score, per-domain breakdown — no identifiers of any kind) is added to the community stats below; nothing else is ever sent anywhere.</p>
+      <p>Every practice mode, the full mock exam, the diagnostic, the glossary, and the quick reference are free with no account or sign-up required. By default, your personal progress, flags, and history are saved in your browser only. When you finish a mock exam, an anonymous, aggregate result (pass/fail, score, per-domain breakdown — no identifiers of any kind) is added to the community stats below; nothing else is ever sent anywhere.</p>
+      <p>If you'd like your progress to follow you to another device, you can optionally create a free account (email sign-in via Clerk, a third-party auth provider). That only stores your own progress data under your account — never sold, never shared, and you can sign out or ask us to delete it at any time.</p>
       <h2>Community stats</h2>
       <p>Real numbers, not a vanity metric — updated as mock exams are completed. If nobody has finished one yet, this section says so instead of making something up.</p>
       <div class="card" id="communityStats">

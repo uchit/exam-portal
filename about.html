@@ -50,6 +50,7 @@
       </nav>
       <div class="topbar-actions">
         <span class="bank-chip" id="bankChip" title="Total questions in the bank">…</span>
+        <div id="accountSlot" class="account-slot"></div>
         <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark">
           <span class="theme-icon"></span>
         </button>
@@ -68,7 +69,8 @@
       <p>That last part matters: most of this bank can be regenerated against the current Claude API and exam guide on demand, rather than drifting out of date the way a fixed, hand-written bank does.</p>
       <div class="callout"><b>Freshness</b>Content on this site was last verified against the Claude API and the CCA-F exam guide on August 17, 2026. When Anthropic changes the exam guide, we aim to publish a changelog entry within 24-48 hours — see the <a href="/changelog">changelog</a> for the update history.</div>
       <h2>What "free" means here</h2>
-      <p>Every practice mode, the full mock exam, the diagnostic, the glossary, and the quick reference are free with no account or sign-up. Your personal progress, flags, and history are saved in your browser only. When you finish a mock exam, an anonymous, aggregate result (pass/fail, score, per-domain breakdown — no identifiers of any kind) is added to the community stats below; nothing else is ever sent anywhere.</p>
+      <p>Every practice mode, the full mock exam, the diagnostic, the glossary, and the quick reference are free with no account or sign-up required. By default, your personal progress, flags, and history are saved in your browser only. When you finish a mock exam, an anonymous, aggregate result (pass/fail, score, per-domain breakdown — no identifiers of any kind) is added to the community stats below; nothing else is ever sent anywhere.</p>
+      <p>If you'd like your progress to follow you to another device, you can optionally create a free account (email sign-in via Clerk, a third-party auth provider). That only stores your own progress data under your account — never sold, never shared, and you can sign out or ask us to delete it at any time.</p>
       <h2>Community stats</h2>
       <p>Real numbers, not a vanity metric — updated as mock exams are completed. If nobody has finished one yet, this section says so instead of making something up.</p>
       <div class="card" id="communityStats">
@@ -126,6 +128,8 @@
     <a href="/progress" data-nav="progress"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/></svg></span><span>Stats</span></a>
   </nav>
 
+  <script defer crossorigin="anonymous" src="https://teaching-mackerel-4414.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js"></script>
+  <script defer crossorigin="anonymous" data-clerk-publishable-key="pk_test_dGVhY2hpbmctbWFja2VyZWwtNDQxNC5jbGVyay5hY2NvdW50cy5kZXYk" src="https://teaching-mackerel-4414.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js"></script>
   <script type="module" src="/js/app.js"></script>
 </body>
 </html>

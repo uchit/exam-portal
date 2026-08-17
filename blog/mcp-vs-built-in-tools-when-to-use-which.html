@@ -50,6 +50,7 @@
       </nav>
       <div class="topbar-actions">
         <span class="bank-chip" id="bankChip" title="Total questions in the bank">…</span>
+        <div id="accountSlot" class="account-slot"></div>
         <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle light/dark">
           <span class="theme-icon"></span>
         </button>
@@ -106,6 +107,8 @@
     <a href="/progress" data-nav="progress"><span class="bn-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/></svg></span><span>Stats</span></a>
   </nav>
 
+  <script defer crossorigin="anonymous" src="https://teaching-mackerel-4414.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js"></script>
+  <script defer crossorigin="anonymous" data-clerk-publishable-key="pk_test_dGVhY2hpbmctbWFja2VyZWwtNDQxNC5jbGVyay5hY2NvdW50cy5kZXYk" src="https://teaching-mackerel-4414.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js"></script>
   <script type="module" src="/js/app.js"></script>
 </body>
 </html>

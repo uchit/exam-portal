@@ -2,13 +2,14 @@
   "name": "exam-portal",
   "private": true,
   "type": "module",
-  "description": "No build step for the deployed site — this exists so Vercel can install dependencies for /api (telemetry) and for the local content:* scripts that sync editorial content with Redis.",
+  "description": "No build step for the deployed site — this exists so Vercel can install dependencies for /api (telemetry, progress) and for the local content:* scripts that sync editorial content with Redis.",
   "scripts": {
     "content:seed": "node --env-file=.env.local scripts/seed-content.mjs",
     "content:pull": "node --env-file=.env.local scripts/export-content.mjs",
-    "pages:build": "node scripts/build-pages.mjs"
+    "pages:build": "node --env-file=.env.local scripts/build-pages.mjs"
   },
   "dependencies": {
+    "@clerk/backend": "^2.33.6",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.2"
   }

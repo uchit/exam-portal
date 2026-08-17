@@ -7,6 +7,7 @@ import { ICONS } from "./icons.js";
 import { drawBadge, downloadBadge } from "./badge.js";
 import { CERTS } from "./certs.js";
 import { FAQ_ITEMS } from "./faq.js";
+import { onAuthChange, openSignUp, openSignIn, signOut, fetchServerProgress, pushProgressToServer, mergeProgress } from "./auth.js";
 
 const app = document.getElementById("app");
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
@@ -34,7 +35,39 @@ function loadProgress() {
   try { return Object.assign(defaultProgress(), JSON.parse(localStorage.getItem(PKEY) || "{}")); }
   catch { return defaultProgress(); }
 }
-function saveProgress() { try { localStorage.setItem(PKEY, JSON.stringify(progress)); } catch {} }
+function saveProgress() { try { localStorage.setItem(PKEY, JSON.stringify(progress)); } catch {} schedulePush(); }
+
+// ---------- account sync (optional — off until the user signs in) ----------
+let syncEnabled = false;
+let didInitialSync = false;
+let pushTimer;
+function schedulePush() {
+  if (!syncEnabled) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(() => pushProgressToServer(progress), 800);
+}
+onAuthChange(async ({ signedIn }) => {
+  if (!signedIn) { syncEnabled = false; renderAccountSlot(false); return; }
+  renderAccountSlot(true);
+  if (didInitialSync) { syncEnabled = true; return; }
+  didInitialSync = true;
+  const server = await fetchServerProgress();
+  if (server) progress = mergeProgress(progress, server);
+  syncEnabled = true;
+  saveProgress();
+  router();
+});
+function renderAccountSlot(signedIn) {
+  const slot = document.getElementById("accountSlot");
+  if (!slot) return;
+  if (signedIn) {
+    slot.innerHTML = `<button class="btn btn-outline btn-sm" id="signOutBtn" title="Progress syncs across your devices">Sign out</button>`;
+    slot.querySelector("#signOutBtn").addEventListener("click", () => signOut());
+  } else {
+    slot.innerHTML = `<button class="btn btn-outline btn-sm" id="signInBtn">Sign in</button>`;
+    slot.querySelector("#signInBtn").addEventListener("click", () => openSignIn());
+  }
+}
 // Spaced-repetition scheduling (SM-2-lite): a correct answer advances the
 // item to the next interval step; a miss resets it to step 0 (due tomorrow).
 // Every recorded answer — practice, exam, diagnostic — feeds this, so Drill
@@ -703,7 +736,23 @@ function showResults({ questions, answers, correct, pct, pass, perDomain }) {
       <button class="btn btn-outline" id="reviewToggle">Review all answers</button>
       <a class="btn btn-outline" href="/">Home</a>
     </div>
+    <div id="signupNudge"></div>
     <div id="review"></div>`;
+  onAuthChange(({ signedIn }) => {
+    if (signedIn) return;
+    const nudge = v.querySelector("#signupNudge");
+    if (!nudge || nudge.dataset.shown) return;
+    nudge.dataset.shown = "1";
+    nudge.innerHTML = `<div class="callout" style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">
+      <div><b>Save this result</b>Create a free account to sync your progress, flags, and exam history across devices.</div>
+      <div style="display:flex;gap:8px;flex:none">
+        <button class="btn btn-solid btn-sm" id="nudgeSignUp">Create free account</button>
+        <button class="btn btn-outline btn-sm" id="nudgeDismiss">Not now</button>
+      </div>
+    </div>`;
+    nudge.querySelector("#nudgeSignUp").addEventListener("click", () => openSignUp());
+    nudge.querySelector("#nudgeDismiss").addEventListener("click", () => { nudge.innerHTML = ""; });
+  });
   v.querySelector("#reviewToggle").addEventListener("click", () => {
     const r = v.querySelector("#review");
     if (r.innerHTML) { r.innerHTML = ""; return; }

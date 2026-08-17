@@ -19,6 +19,6 @@ export const FAQ_ITEMS = [
   ],
   [
     "Do I need an account to track my progress?",
-    "No. Progress, flags, and mock-exam history are saved locally in your browser — nothing is sent to a server, and there's no login."
+    "No — progress, flags, and mock-exam history are saved locally in your browser by default, with no account or sign-up required to practice. If you want that history to follow you across devices, you can optionally create a free account after finishing a practice set; only your progress data (no question content) syncs, and it's tied to your account, not shared or sold."
   ]
 ];

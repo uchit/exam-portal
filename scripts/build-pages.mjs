@@ -582,7 +582,7 @@ write("certifications.html", staticPage({
   ],
   bodyHtml: `    <div class="prose page-head">
       <h1>Claude Certifications</h1>
-      <p class="prose-dek">Anthropic's certification program has four tracks. This site started with one — CCA-F is fully built out, with a 10,000+ question bank, full curriculum, diagnostic, and spaced-repetition drill. The other three are on the roadmap; we build one track at a time, fully, rather than shipping thin placeholders across all four.</p>
+      <p class="prose-dek">Anthropic's certification program has four tracks. CCA-F is fully built out, with a 10,000+ question bank, full curriculum, diagnostic, and spaced-repetition drill. CCAR-P's practice and mock exams are live too. The remaining two are on the roadmap; we build one track at a time rather than shipping thin placeholders across all four.</p>
     </div>
     ${CERTS.map((c) => `<div class="card" style="margin-top:14px">
       <span class="card-accent" style="background:${c.status === "live" ? "var(--success)" : "var(--warning)"}"></span>
@@ -593,7 +593,7 @@ write("certifications.html", staticPage({
       <p style="color:var(--text-2);font-size:14.5px;margin-bottom:8px">${escAttr(c.audience)}</p>
       <p style="color:var(--text-3);font-size:13px;margin-bottom:12px">${c.examLength} items · ${c.examMinutes} minutes · ${c.domainCount} domains</p>
       <p style="color:var(--text-2);font-size:14px;margin-bottom:14px">${escAttr(c.blurb)}</p>
-      ${c.status === "live" ? `<a class="btn btn-outline btn-sm" href="/exam">Start CCA-F mock exam →</a><div style="color:var(--text-3);font-size:12px;margin-top:10px">Last verified against the Claude API and exam guide: ${BUILD_DATE_DISPLAY}</div>` : `<a class="btn btn-outline btn-sm" href="/certifications/${c.slug}">View domain blueprint →</a><div style="color:var(--text-3);font-size:12px;margin-top:10px">Question bank and curriculum not yet published on this site.</div>`}
+      ${c.status === "live" ? `<a class="btn btn-outline btn-sm" href="${c.examRoute}">Start ${c.code} mock exam →</a>${c.practiceRoute ? ` <a class="btn btn-outline btn-sm" href="${c.practiceRoute}">Practice →</a>` : ""}<div style="color:var(--text-3);font-size:12px;margin-top:10px">Last verified against the Claude API and exam guide: ${BUILD_DATE_DISPLAY}</div>` : `<a class="btn btn-outline btn-sm" href="/certifications/${c.slug}">View domain blueprint →</a><div style="color:var(--text-3);font-size:12px;margin-top:10px">Question bank and curriculum not yet published on this site.</div>`}
     </div>`).join("")}
     <p style="color:var(--text-3);font-size:12.5px;margin-top:20px">Track names, item counts, and domain counts mirror publicly described Anthropic certification program information. This is an unofficial resource — not affiliated with, endorsed by, or sponsored by Anthropic.</p>`
 }));
@@ -842,6 +842,22 @@ write("exam.html", appPage({
   intro: "Mock Exam: 60 domain-weighted questions, a 120-minute timer, and a scaled 100–1000 score — the same shape as the real CCA-F.",
   jsonLd: [breadcrumbLd([{ name: "Mock Exam", path: "/exam" }])]
 }));
+write("ccar-p/practice.html", appPage({
+  h1: "CCAR-P Practice",
+  title: "CCAR-P Practice — Claude Cert Prep",
+  description: "Practice Claude Certified Architect — Professional (CCAR-P) exam scenarios by domain and difficulty, with hints and a full explanation on every question.",
+  path: "/ccar-p/practice", active: "certifications",
+  intro: "CCAR-P Practice: pick your domains and difficulty, get instant feedback with hints and full explanations on every question.",
+  jsonLd: [breadcrumbLd([{ name: "Certifications", path: "/certifications" }, { name: "CCAR-P Practice", path: "/ccar-p/practice" }])]
+}));
+write("ccar-p/exam.html", appPage({
+  h1: "CCAR-P Mock Exam",
+  title: "CCAR-P Mock Exam — Claude Cert Prep",
+  description: "A full timed simulation of the Claude Certified Architect — Professional (CCAR-P) exam: 63 domain-weighted questions, 120-minute timer, scored 100–1000.",
+  path: "/ccar-p/exam", active: "certifications",
+  intro: "CCAR-P Mock Exam: 63 domain-weighted questions across 7 professional-tier domains, a 120-minute timer, and a scaled 100–1000 score.",
+  jsonLd: [breadcrumbLd([{ name: "Certifications", path: "/certifications" }, { name: "CCAR-P Mock Exam", path: "/ccar-p/exam" }])]
+}));
 write("diagnostic.html", appPage({
   h1: "Diagnostic",
   title: "Diagnostic — Claude Cert Prep",
@@ -891,7 +907,8 @@ write("progress.html", appPage({
 // ============================================================================
 const staticRoutes = [
   "/", "/practice", "/exam", "/diagnostic", "/drill", "/browse", "/prep", "/progress",
-  "/about", "/resources", "/changelog", "/glossary", "/reference", "/blog", "/learn", "/certifications", "/handbook"
+  "/about", "/resources", "/changelog", "/glossary", "/reference", "/blog", "/learn", "/certifications", "/handbook",
+  "/ccar-p/practice", "/ccar-p/exam"
 ];
 const domainRoutes = DOMAINS.flatMap((d) => [`/glossary/${d.id}`, `/reference/${d.id}`, `/learn/${d.id}`]);
 const blogRoutes = POSTS.map((p) => `/blog/${p.slug}`);

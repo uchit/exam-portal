@@ -9,6 +9,8 @@ import { CERTS } from "./certs.js";
 import { FAQ_ITEMS } from "./faq.js";
 import { onAuthChange, openSignUp, openSignIn, signOut, fetchServerProgress, pushProgressToServer, mergeProgress } from "./auth.js";
 import { sendItemStats, submitOutcome, fetchOutcomeStats } from "./outcomes.js";
+import { DOMAINS_CCAR_P, EXAM_NAME_CCAR_P, EXAM_CODE_CCAR_P, EXAM_LENGTH_CCAR_P, EXAM_MINUTES_CCAR_P, PASS_PERCENT_CCAR_P } from "./blueprint-ccar-p.js";
+import { ALL_QUESTIONS_CCAR_P, STATS_CCAR_P, buildExamCcarP, buildPracticeCcarP, getByIdCcarP } from "./bank-ccar-p.js";
 
 const app = document.getElementById("app");
 // True while a runner (exam/practice/diagnostic/drill) owns #app directly,
@@ -24,10 +26,10 @@ const flagLabel = (flagged) => `${flagged ? ICONS.flagFilled(14) : ICONS.flag(14
 const hintLabel = `${ICONS.bulb(14)}<span>Hint</span>`;
 // Map a percentage to the real exam's 100–1000 scaled range, anchored so the
 // pass point lines up exactly: 0%→100, PASS_PERCENT→720, 100%→1000.
-function scaledScore(pct) {
-  const s = pct >= PASS_PERCENT
-    ? 720 + ((pct - PASS_PERCENT) / (100 - PASS_PERCENT)) * (1000 - 720)
-    : 100 + (pct / PASS_PERCENT) * (720 - 100);
+function scaledScore(pct, passPercent = PASS_PERCENT) {
+  const s = pct >= passPercent
+    ? 720 + ((pct - passPercent) / (100 - passPercent)) * (1000 - 720)
+    : 100 + (pct / passPercent) * (720 - 100);
   return Math.round(Math.max(100, Math.min(1000, s)));
 }
 
@@ -64,6 +66,39 @@ function loadExamSession() {
   } catch { return null; }
 }
 function clearExamSession() { try { localStorage.removeItem(EKEY); } catch {} }
+
+// ---------- CCAR-P: independent progress + exam-session state (see the
+// CCAR-P view/runner functions further down for why this track is kept
+// separate rather than generalizing CCA-F's own state) ----------
+const PKEY_CCAR_P = "claudecert.progress.ccar-p.v1";
+let progressCcarP = loadProgressCcarP();
+function loadProgressCcarP() {
+  try { return Object.assign(defaultProgress(), JSON.parse(localStorage.getItem(PKEY_CCAR_P) || "{}")); }
+  catch { return defaultProgress(); }
+}
+function saveProgressCcarP() { try { localStorage.setItem(PKEY_CCAR_P, JSON.stringify(progressCcarP)); } catch {} }
+function recordAnswerCcarP(q, ok) {
+  progressCcarP.answered[q.id] = { ok, ts: Date.now() };
+  progressCcarP.attempts++; if (ok) progressCcarP.correct++;
+  saveProgressCcarP();
+}
+function noteServedCcarP(qs) {
+  const ids = qs.map((q) => q.id);
+  progressCcarP.recent = [...ids, ...(progressCcarP.recent || []).filter((id) => !ids.includes(id))].slice(0, RECENT_CAP);
+  saveProgressCcarP();
+}
+const EKEY_CCAR_P = "claudecert.examSession.ccar-p.v1";
+function saveExamSessionCcarP(s) { try { localStorage.setItem(EKEY_CCAR_P, JSON.stringify(s)); } catch {} }
+function loadExamSessionCcarP() {
+  try {
+    const s = JSON.parse(localStorage.getItem(EKEY_CCAR_P) || "null");
+    if (!s || Date.now() - s.updatedAt > EXAM_SESSION_TTL_MS || s.remaining <= 0) return null;
+    const questions = s.ids.map(getByIdCcarP);
+    if (questions.some((q) => !q)) return null;
+    return { ...s, questions };
+  } catch { return null; }
+}
+function clearExamSessionCcarP() { try { localStorage.removeItem(EKEY_CCAR_P); } catch {} }
 
 // ---------- real-exam outcome self-report (anonymous, opt-in — see api/outcomes.js) ----------
 const OKEY = "claudecert.outcome.v1";
@@ -223,8 +258,8 @@ function sendTelemetry(payload) {
 }
 
 // ---------- shared render bits ----------
-function domainTag(d) {
-  const dom = DOMAINS[d];
+function domainTag(d, domainsMap = DOMAINS) {
+  const dom = domainsMap[d];
   return `<span class="tag tag-domain" style="--tag-c:${dom.color}">${esc(dom.short)}</span>`;
 }
 function renderOptions(q, { answered = false, selected = null, locked = false } = {}) {
@@ -256,7 +291,9 @@ const routes = {
   "/progress": viewProgress,
   "/prep": viewPrep,
   "/diagnostic": viewDiagnosticConfig,
-  "/drill": viewDrillConfig
+  "/drill": viewDrillConfig,
+  "/ccar-p/practice": viewCcarPPracticeConfig,
+  "/ccar-p/exam": viewCcarPExamConfig
 };
 function currentPath() {
   return location.pathname.replace(/\/+$/, "") || "/";
@@ -326,7 +363,7 @@ function viewHome() {
 
     <p class="section-title">The Claude certification program</p>
     <div class="grid grid-auto" style="margin-bottom:34px">
-      ${CERTS.map((c) => `<a class="card interactive cert-tile" href="${c.status === "live" ? "/exam" : "/certifications/" + c.slug}">
+      ${CERTS.map((c) => `<a class="card interactive cert-tile" href="${c.status === "live" ? c.examRoute : "/certifications/" + c.slug}">
         <span class="tag" style="background:color-mix(in srgb, ${c.status === "live" ? "var(--success)" : "var(--warning)"} 14%, transparent);color:${c.status === "live" ? "var(--success)" : "var(--warning)"}">${c.status === "live" ? "Live on this site" : "Blueprint available"}</span>
         <h3>${esc(c.code)} — ${esc(c.name.replace("Claude Certified ", ""))}</h3>
         <p>${esc(c.audience)}</p>
@@ -866,6 +903,349 @@ function showResults({ questions, answers, correct, pct, pass, perDomain }) {
       const ok = answers[idx] === q.correct;
       return `<div class="browse-item">
         <div class="q-tags">${domainTag(q.domain)}<span class="tag tag-diff">${ok ? "✓ correct" : (answers[idx] === null ? "skipped" : "✕ wrong")}</span></div>
+        ${q.scenario ? `<div class="q-scenario" style="margin-bottom:8px">${esc(q.scenario)}</div>` : ""}
+        <div class="bq">${idx + 1}. ${esc(q.question)}</div>
+        <div class="options">${renderOptions(q, { answered: true, selected: answers[idx], locked: true })}</div>
+        <div class="expl">${esc(q.explanation)}</div>
+      </div>`;
+    }).join("");
+  });
+  window.scrollTo({ top: 0 });
+}
+
+// ============================================================================
+// CCAR-P (Claude Certified Architect — Professional) — Practice + Mock Exam
+// ============================================================================
+// A second, independent track, scoped deliberately to just what's live here:
+// domain-filtered practice and a timed mock exam — no diagnostic/drill/browse/
+// progress-page/badges yet (those are all CCA-F-specific today; extending them
+// to a second track is future work once this content has some real usage).
+// Written as plain functions against CCAR-P's own imports rather than a
+// generic multi-track abstraction: there's exactly one call site for this
+// shape, and CCA-F's own runExam/runPractice are intentionally left untouched
+// to keep zero regression risk on the live, already-hardened track.
+
+function viewCcarPPracticeConfig(params) {
+  const preD = params.get("d");
+  const state = { domains: preD ? [Number(preD)] : [], diff: "any", count: 20 };
+  const v = el(`<div class="view"></div>`);
+  v.innerHTML = `
+    <div class="page-head"><h1>CCAR-P Practice</h1><p class="lead">Pick your domains and difficulty for the Claude Certified Architect — Professional track. Every question is a scenario judgment call — the shape of the real exam, not API trivia.</p></div>
+    <div class="card config">
+      <div class="field"><label>Domains <span style="color:var(--text-3);font-weight:500">(none = all)</span></label>
+        <div class="chips" id="domChips">
+          ${Object.values(DOMAINS_CCAR_P).map((d) => `<button class="chip" data-d="${d.id}"><span class="dot" style="background:${d.color}"></span>${esc(d.short)}</button>`).join("")}
+        </div>
+      </div>
+      <div class="field"><label>Difficulty</label>
+        <div class="chips" id="diffChips">
+          ${[["any", "Any"], ["easy", "Foundational (1–2)"], ["medium", "Applied (2–3)"], ["hard", "Advanced (3–5)"]].map(([k, l], i) => `<button class="chip ${i === 0 ? "on" : ""}" data-diff="${k}">${l}</button>`).join("")}
+        </div>
+      </div>
+      <div class="field"><label>How many questions: <b id="cntLabel">20</b></label>
+        <div class="range-row"><span style="color:var(--text-3)">5</span><input type="range" id="cnt" min="5" max="50" step="5" value="20"><span style="color:var(--text-3)">50</span></div>
+      </div>
+      <div><button class="btn btn-solid" id="startPractice">Start practice →</button></div>
+    </div>`;
+  app.appendChild(v);
+  const domChips = v.querySelector("#domChips");
+  state.domains.forEach((d) => domChips.querySelector(`[data-d="${d}"]`)?.classList.add("on"));
+  domChips.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-d]"); if (!b) return;
+    const id = Number(b.dataset.d); b.classList.toggle("on");
+    state.domains = state.domains.includes(id) ? state.domains.filter((x) => x !== id) : [...state.domains, id];
+  });
+  const diffChips = v.querySelector("#diffChips");
+  diffChips.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-diff]"); if (!b) return;
+    diffChips.querySelectorAll(".chip").forEach((c) => c.classList.remove("on"));
+    b.classList.add("on"); state.diff = b.dataset.diff;
+  });
+  v.querySelector("#cnt").addEventListener("input", (e) => { state.count = Number(e.target.value); v.querySelector("#cntLabel").textContent = state.count; });
+  v.querySelector("#startPractice").addEventListener("click", () => {
+    const range = { any: [1, 5], easy: [1, 2], medium: [2, 3], hard: [3, 5] }[state.diff];
+    const set = buildPracticeCcarP({ domains: state.domains.length ? state.domains : null, minDiff: range[0], maxDiff: range[1], count: state.count, avoid: progressCcarP.recent, seed: Date.now() });
+    if (!set.length) { toast("No questions match that filter yet."); return; }
+    noteServedCcarP(set);
+    runCcarPPractice(set);
+  });
+}
+
+function runCcarPPractice(questions) {
+  activeRunner = true;
+  let i = 0, answered = false, selected = null, hinted = false;
+  let correctCount = 0;
+  const v = el(`<div class="view"></div>`);
+  app.innerHTML = ""; app.appendChild(v);
+  let pendingStats = {};
+  function noteItemStat(q, ok) {
+    pendingStats[q.id] = ok ? 1 : 0;
+    if (Object.keys(pendingStats).length >= 20) flushItemStats();
+  }
+  function flushItemStats() { sendItemStats(pendingStats); pendingStats = {}; }
+
+  function render() {
+    const q = questions[i]; answered = false; selected = null; hinted = false;
+    v.innerHTML = `
+      <div class="runner-top">
+        <span class="crumb">CCAR-P Practice</span>
+        <div class="runner-meta">
+          <span class="pill">Score ${correctCount}/${i}</span>
+          <span class="pill">${i + 1} / ${questions.length}</span>
+          <button class="btn btn-outline btn-sm" id="quit">End session</button>
+        </div>
+      </div>
+      <div class="bigbar"><div style="width:${(i / questions.length) * 100}%"></div></div>
+      <div class="qcard">
+        <div class="q-tags">${domainTag(q.domain, DOMAINS_CCAR_P)}<span class="tag tag-diff">${DIFFICULTY[q.difficulty]}</span></div>
+        ${q.scenario ? `<div class="q-scenario">${esc(q.scenario)}</div>` : ""}
+        <div class="q-stem">${esc(q.question)}</div>
+        <div class="options">${renderOptions(q, { selected })}</div>
+        <div id="extra"></div>
+        <div class="q-actions">
+          <button class="linkbtn" id="hintBtn">${hintLabel}</button>
+          <span class="spacer"></span>
+          <button class="btn btn-solid" id="nextBtn" disabled>${i === questions.length - 1 ? "Finish" : "Next →"}</button>
+        </div>
+      </div>`;
+    const opts = v.querySelector(".options");
+    opts.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-opt]"); if (!b || answered) return;
+      selected = Number(b.dataset.opt); answered = true;
+      const ok = selected === q.correct; if (ok) correctCount++;
+      recordAnswerCcarP(q, ok);
+      noteItemStat(q, ok);
+      opts.innerHTML = renderOptions(q, { answered: true, selected, locked: true });
+      v.querySelector("#extra").innerHTML = `<div class="explanation"><b>${ok ? "Correct ✓" : "Not quite ✕"} · why</b>${esc(q.explanation)}</div>`;
+      v.querySelector("#nextBtn").disabled = false;
+      v.querySelector("#hintBtn").disabled = true;
+    });
+    v.querySelector("#hintBtn").addEventListener("click", () => {
+      if (hinted || answered) return; hinted = true;
+      const wrongs = q.options.map((_, idx) => idx).filter((idx) => idx !== q.correct);
+      const drop = wrongs[Math.floor(Math.random() * wrongs.length)];
+      v.querySelector("#extra").innerHTML = `<div class="hint"><b>Hint</b>Option <b style="display:inline">${LETTERS[drop]}</b> is not correct — rule it out.</div>`;
+    });
+    v.querySelector("#nextBtn").addEventListener("click", () => {
+      if (i === questions.length - 1) return finish();
+      i++; render();
+    });
+    v.querySelector("#quit").addEventListener("click", finish);
+  }
+  function finish() {
+    flushItemStats();
+    const acc = i ? Math.round((correctCount / Math.max(1, answered ? i + 1 : i)) * 100) : 0;
+    const done = answered ? i + 1 : i;
+    v.innerHTML = `
+      <div class="page-head"><h1>Practice complete</h1></div>
+      <div class="result-hero">
+        <div class="gauge" style="--gc:var(--primary);--val:${acc}"><div class="gauge-inner"><div class="pct">${acc}%</div><div class="lbl">${correctCount}/${done} correct</div></div></div>
+      </div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:10px">
+        <a class="btn btn-solid" href="/ccar-p/practice">New practice set</a>
+        <a class="btn btn-outline" href="/">Home</a>
+      </div>`;
+    window.scrollTo({ top: 0 });
+  }
+  render();
+}
+
+function viewCcarPExamConfig() {
+  const v = el(`<div class="view"></div>`);
+  const best = progressCcarP.exams.length ? Math.max(...progressCcarP.exams.map((e) => e.pct)) : null;
+  const bestScaled = best === null ? null : scaledScore(best, PASS_PERCENT_CCAR_P);
+  const resumable = loadExamSessionCcarP();
+  v.innerHTML = `
+    <div class="page-head"><h1>CCAR-P Mock Exam</h1><p class="lead">A full simulation of the ${esc(EXAM_NAME_CCAR_P)} (${esc(EXAM_CODE_CCAR_P)}): ${EXAM_LENGTH_CCAR_P} questions weighted by the official domain percentages, a ${EXAM_MINUTES_CCAR_P}-minute timer, and no feedback until you submit. Pass mark ${PASS_PERCENT_CCAR_P}%.</p></div>
+    ${resumable ? `<div class="callout" style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:20px">
+      <div><b>Unfinished exam</b>You have an in-progress exam with ${resumable.answers.filter((a) => a !== null).length}/${resumable.questions.length} answered and ${Math.ceil(resumable.remaining / 60)} minutes left on the clock.</div>
+      <div style="display:flex;gap:8px;flex:none">
+        <button class="btn btn-solid btn-sm" id="resumeExam">Resume exam →</button>
+        <button class="btn btn-outline btn-sm" id="discardExam">Discard</button>
+      </div>
+    </div>` : ""}
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>Exam rules</h3>
+        <ul style="color:var(--text-2);font-size:14.5px;line-height:1.9;padding-left:18px">
+          <li>${EXAM_LENGTH_CCAR_P} questions · ${EXAM_MINUTES_CCAR_P} minutes</li>
+          <li>Domain-weighted: ${Object.values(DOMAINS_CCAR_P).map((d) => d.weight + "%").join(" / ")}</li>
+          <li>Flag questions and jump around with the navigator</li>
+          <li>Auto-submits when the timer hits zero</li>
+          <li>Full review with explanations afterward</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Your record</h3>
+        <div class="statline" style="margin-bottom:18px">
+          <div class="stat-card"><div class="n">${progressCcarP.exams.length}</div><div class="l">Exams taken</div></div>
+          <div class="stat-card"><div class="n">${bestScaled === null ? "—" : bestScaled}</div><div class="l">Best score / 1000</div></div>
+        </div>
+        <button class="btn btn-solid" id="startExam">Begin ${EXAM_LENGTH_CCAR_P}-question exam →</button>
+      </div>
+    </div>`;
+  app.appendChild(v);
+  v.querySelector("#startExam").addEventListener("click", () => {
+    const exam = buildExamCcarP(Date.now(), EXAM_LENGTH_CCAR_P, progressCcarP.recent);
+    noteServedCcarP(exam);
+    runCcarPExam(exam, EXAM_MINUTES_CCAR_P);
+  });
+  v.querySelector("#resumeExam")?.addEventListener("click", () => {
+    runCcarPExam(resumable.questions, resumable.minutes, { answers: resumable.answers, i: resumable.i, remaining: resumable.remaining });
+    toast("Resumed your in-progress exam");
+  });
+  v.querySelector("#discardExam")?.addEventListener("click", () => { clearExamSessionCcarP(); router(); });
+}
+
+function runCcarPExam(questions, minutes, resume = null) {
+  activeRunner = true;
+  const answers = resume ? resume.answers.slice() : new Array(questions.length).fill(null);
+  let i = resume ? resume.i : 0;
+  let remaining = resume ? resume.remaining : minutes * 60;
+  const v = el(`<div class="view"></div>`);
+  app.innerHTML = ""; app.appendChild(v);
+
+  const sessionSnapshot = () => ({ ids: questions.map((q) => q.id), answers, i, remaining, minutes, updatedAt: Date.now() });
+  saveExamSessionCcarP(sessionSnapshot());
+  window.addEventListener("beforeunload", persistSession);
+  function persistSession() { saveExamSessionCcarP(sessionSnapshot()); }
+
+  const timer = setInterval(() => {
+    remaining--;
+    const t = v.querySelector("#timer");
+    if (t) {
+      t.textContent = mmss(remaining);
+      t.classList.toggle("warn", remaining <= 600 && remaining > 120);
+      t.classList.toggle("danger", remaining <= 120);
+    }
+    if (remaining % 20 === 0) persistSession();
+    if (remaining <= 0) { clearInterval(timer); submit(); }
+  }, 1000);
+  const mmss = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+
+  function render() {
+    const q = questions[i];
+    v.innerHTML = `
+      <div class="runner-top">
+        <span class="crumb">CCAR-P Mock Exam</span>
+        <div class="runner-meta">
+          <span class="pill timer" id="timer">${mmss(remaining)}</span>
+          <span class="pill">${answers.filter((a) => a !== null).length}/${questions.length} answered</span>
+        </div>
+      </div>
+      <div class="exam-grid">
+        <div class="exam-main">
+          <div class="bigbar"><div style="width:${((i + 1) / questions.length) * 100}%"></div></div>
+          <div class="qcard">
+            <div class="q-tags">${domainTag(q.domain, DOMAINS_CCAR_P)}<span class="tag tag-diff">Q${i + 1}</span></div>
+            ${q.scenario ? `<div class="q-scenario">${esc(q.scenario)}</div>` : ""}
+            <div class="q-stem">${esc(q.question)}</div>
+            <div class="options">${renderOptions(q, { selected: answers[i] })}</div>
+            <div class="q-actions">
+              <button class="btn btn-outline btn-sm" id="prev" ${i === 0 ? "disabled" : ""}>← Prev</button>
+              <button class="linkbtn ${progressCcarP.flags[q.id] ? "flagged" : ""}" id="flag">${flagLabel(progressCcarP.flags[q.id])}</button>
+              <span class="spacer"></span>
+              <button class="btn btn-solid btn-sm" id="next">${i === questions.length - 1 ? "Review" : "Next →"}</button>
+            </div>
+          </div>
+        </div>
+        <aside class="navigator card">
+          <div style="font-weight:800;font-size:14px">Navigator</div>
+          <div class="nav-grid">${questions.map((_, idx) => `<button class="nav-cell ${answers[idx] !== null ? "answered" : ""} ${idx === i ? "current" : ""} ${progressCcarP.flags[questions[idx].id] ? "flagged" : ""}" data-go="${idx}">${idx + 1}</button>`).join("")}</div>
+          <button class="btn btn-solid btn-sm" id="submit" style="width:100%">Submit exam</button>
+          <button class="btn btn-outline btn-sm" id="abort" style="width:100%;margin-top:8px">Abandon</button>
+        </aside>
+      </div>`;
+
+    v.querySelector(".options").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-opt]"); if (!b) return;
+      answers[i] = Number(b.dataset.opt);
+      v.querySelectorAll(".options .option").forEach((o, idx) => o.classList.toggle("selected", idx === answers[i]));
+      v.querySelector(`[data-go="${i}"]`)?.classList.add("answered");
+      v.querySelector(".runner-meta .pill:last-child").textContent = `${answers.filter((a) => a !== null).length}/${questions.length} answered`;
+      persistSession();
+    });
+    v.querySelector("#prev").addEventListener("click", () => { if (i > 0) { i--; render(); persistSession(); } });
+    v.querySelector("#next").addEventListener("click", () => { if (i < questions.length - 1) { i++; render(); persistSession(); } else confirmSubmit(); });
+    v.querySelector("#flag").addEventListener("click", (e) => {
+      const id = q.id; if (progressCcarP.flags[id]) delete progressCcarP.flags[id]; else progressCcarP.flags[id] = true; saveProgressCcarP();
+      e.currentTarget.classList.toggle("flagged"); e.currentTarget.innerHTML = flagLabel(progressCcarP.flags[id]);
+      v.querySelector(`[data-go="${i}"]`)?.classList.toggle("flagged", !!progressCcarP.flags[id]);
+    });
+    v.querySelector(".nav-grid").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-go]"); if (!b) return; i = Number(b.dataset.go); render(); persistSession();
+    });
+    v.querySelector("#submit").addEventListener("click", confirmSubmit);
+    v.querySelector("#abort").addEventListener("click", () => {
+      if (!confirm("Abandon this exam? Your in-progress answers will be discarded.")) return;
+      clearInterval(timer); cleanupSession(); navigate("/ccar-p/exam");
+    });
+  }
+  function cleanupSession() {
+    clearExamSessionCcarP();
+    window.removeEventListener("beforeunload", persistSession);
+  }
+  function confirmSubmit() {
+    const unanswered = answers.filter((a) => a === null).length;
+    if (unanswered && !confirm(`${unanswered} question(s) are unanswered. Submit anyway?`)) return;
+    clearInterval(timer); submit();
+  }
+  function submit() {
+    let correct = 0;
+    const perDomain = {};
+    const perQuestion = {};
+    Object.keys(DOMAINS_CCAR_P).forEach((d) => (perDomain[d] = { total: 0, ok: 0 }));
+    questions.forEach((q, idx) => {
+      const ok = answers[idx] === q.correct;
+      if (ok) correct++;
+      perDomain[q.domain].total++; if (ok) perDomain[q.domain].ok++;
+      if (answers[idx] !== null) { recordAnswerCcarP(q, ok); perQuestion[q.id] = ok ? 1 : 0; }
+    });
+    const pct = Math.round((correct / questions.length) * 100);
+    const pass = pct >= PASS_PERCENT_CCAR_P;
+    progressCcarP.exams.push({ date: Date.now(), pct, correct, total: questions.length, pass });
+    saveProgressCcarP();
+    cleanupSession();
+    sendItemStats(perQuestion);
+    showResultsCcarP({ questions, answers, correct, pct, pass, perDomain });
+  }
+  render();
+}
+
+function showResultsCcarP({ questions, answers, correct, pct, pass, perDomain }) {
+  const v = el(`<div class="view"></div>`);
+  app.innerHTML = ""; app.appendChild(v);
+  const scaled = scaledScore(pct, PASS_PERCENT_CCAR_P);
+  v.innerHTML = `
+    <div class="result-hero">
+      <div class="gauge" style="--gc:${pass ? "var(--success)" : "var(--error)"};--val:${pct}">
+        <div class="gauge-inner"><div class="pct">${scaled}</div><div class="lbl">out of 1000</div></div>
+      </div>
+      <div class="verdict ${pass ? "pass" : "fail"}">${pass ? "PASS ✓" : "Keep studying"}</div>
+      <p style="color:var(--text-2);margin-top:6px">Scaled 100–1000 · pass mark <b>720</b> · you scored <b>${scaled}</b> (${correct}/${questions.length}, ${pct}%). ${pass ? "You'd clear the CCAR-P at this level." : `${720 - scaled} scaled points short of passing.`}</p>
+    </div>
+    <p class="section-title" style="margin-top:30px">Domain breakdown</p>
+    <div class="breakdown card">
+      ${Object.values(DOMAINS_CCAR_P).map((d) => {
+        const s = perDomain[d.id]; const p = s.total ? Math.round((s.ok / s.total) * 100) : 0;
+        return `<div class="bd-row"><div class="bd-name">${esc(d.short)}</div>
+          <div class="bd-bar progress-track"><div class="progress-fill" style="width:${p}%;background:${d.color}"></div></div>
+          <div class="bd-val">${s.ok}/${s.total}</div></div>`;
+      }).join("")}
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin:22px 0 30px">
+      <a class="btn btn-solid" href="/ccar-p/exam">Take another exam</a>
+      <button class="btn btn-outline" id="reviewToggle">Review all answers</button>
+      <a class="btn btn-outline" href="/">Home</a>
+    </div>
+    <div id="review"></div>`;
+  v.querySelector("#reviewToggle").addEventListener("click", () => {
+    const r = v.querySelector("#review");
+    if (r.innerHTML) { r.innerHTML = ""; return; }
+    r.innerHTML = `<p class="section-title">Full review</p>` + questions.map((q, idx) => {
+      const ok = answers[idx] === q.correct;
+      return `<div class="browse-item">
+        <div class="q-tags">${domainTag(q.domain, DOMAINS_CCAR_P)}<span class="tag tag-diff">${ok ? "✓ correct" : (answers[idx] === null ? "skipped" : "✕ wrong")}</span></div>
         ${q.scenario ? `<div class="q-scenario" style="margin-bottom:8px">${esc(q.scenario)}</div>` : ""}
         <div class="bq">${idx + 1}. ${esc(q.question)}</div>
         <div class="options">${renderOptions(q, { answered: true, selected: answers[idx], locked: true })}</div>

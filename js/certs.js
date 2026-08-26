@@ -6,18 +6,22 @@ export const CERTS = [
     "code": "CCA-F",
     "name": "Claude Certified Architect — Foundations",
     "status": "live",
+    "examRoute": "/exam",
+    "practiceRoute": "/practice",
     "audience": "Solution architects designing Claude-powered agentic systems.",
     "examLength": 60,
     "examMinutes": 120,
     "passScore": 720,
     "domainCount": 5,
-    "blurb": "Agentic architecture, tool design & MCP, Claude Code configuration, prompt engineering, and context management. The only track with a full question bank, curriculum, and mock exams live today."
+    "blurb": "Agentic architecture, tool design & MCP, Claude Code configuration, prompt engineering, and context management. The most complete track here — full question bank, curriculum, and mock exams."
   },
   {
     "slug": "ccar-p",
     "code": "CCAR-P",
     "name": "Claude Certified Architect — Professional",
-    "status": "in-development",
+    "status": "live",
+    "examRoute": "/ccar-p/exam",
+    "practiceRoute": "/ccar-p/practice",
     "audience": "Senior architects, AI/ML engineers, and technical leads designing production-scale Claude systems.",
     "prereq": "Recommended, not required: 3+ years in architecture/platform roles and 6+ months hands-on with Claude or LLM systems.",
     "examLength": 63,
@@ -55,7 +59,7 @@ export const CERTS = [
         "weight": 7
       }
     ],
-    "blurb": "The advanced companion to CCA-F, for architects operating past foundational agentic design into production-scale system decisions, governance, and cross-team enablement."
+    "blurb": "The advanced companion to CCA-F, for architects operating past foundational agentic design into production-scale system decisions, governance, and cross-team enablement. Practice and mock exams are live now."
   },
   {
     "slug": "ccao-f",

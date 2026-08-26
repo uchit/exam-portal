@@ -2,6 +2,9 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "trailingSlash": false,
+  "redirects": [
+    { "source": "/certifications/ccar-p", "destination": "/ccar-p/exam", "permanent": true }
+  ],
   "headers": [
     {
       "source": "/(.*)",

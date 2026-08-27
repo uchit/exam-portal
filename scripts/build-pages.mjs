@@ -592,6 +592,7 @@ write("certifications.html", staticPage({
       <h1>Claude Certifications</h1>
       <p class="prose-dek">Anthropic's certification program has four tracks. CCA-F is fully built out, with a 10,000+ question bank, full curriculum, diagnostic, and spaced-repetition drill. CCAR-P's practice and mock exams are live too. The remaining two are on the roadmap; we build one track at a time rather than shipping thin placeholders across all four.</p>
     </div>
+    <div class="callout" style="margin-bottom:6px"><b>No paywall, ever</b>Most other Claude certification prep out there — Udemy courses, bundled question banks — charges upfront. Every practice mode, mock exam, and diagnostic here is free; the only thing a free account unlocks is seeing your own results and syncing them across devices.</div>
     ${CERTS.map((c) => `<div class="card" style="margin-top:14px">
       <span class="card-accent" style="background:${c.status === "live" ? "var(--success)" : "var(--warning)"}"></span>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
@@ -676,7 +677,20 @@ write("about.html", staticPage({
       <h2>How the question bank is built</h2>
       <p>Three sources are merged: hand-authored scenario questions matching the exam's architecture-decision style, seed questions extracted from official study-guide practice patterns, and a deterministic parametric generator that produces thousands of provably-correct computed and matching questions — token budgeting, caching savings, retry backoff, and more, each stating its own givens so the answer is exact and never goes stale.</p>
       <p>That last part matters: most of this bank can be regenerated against the current Claude API and exam guide on demand, rather than drifting out of date the way a fixed, hand-written bank does.</p>
-      <div class="callout"><b>Freshness</b>Content on this site was last verified against the Claude API and the CCA-F exam guide on ${BUILD_DATE_DISPLAY}. When Anthropic changes the exam guide, we aim to publish a changelog entry within 24-48 hours — see the <a href="/changelog">changelog</a> for the update history.</div>
+      <div class="callout"><b>Freshness</b>Content on this site was last verified against the Claude API and the CCA-F exam guide on ${BUILD_DATE_DISPLAY}. When Anthropic changes the exam guide, we aim to publish a changelog entry within 24-48 hours — see the <a href="/changelog">changelog</a> for the update history.<div id="freshnessAuto" style="margin-top:8px;font-size:13px;color:var(--text-3)"></div></div>
+      <script>
+      (function(){
+        fetch("/api/freshness").then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+          var el = document.getElementById("freshnessAuto");
+          if (!el || !d || !d.lastCheckedAt) return;
+          var checked = new Date(Number(d.lastCheckedAt)).toLocaleDateString();
+          var needsReview = d.needsReview === "true" || d.needsReview === true;
+          el.innerHTML = needsReview
+            ? '\\u26A0\\uFE0F Automated check (' + checked + '): Anthropic\\u2019s API release notes show an entry (' + d.anthropicLatestEntryDate + ') newer than our last content review \\u2014 we\\u2019re looking at it.'
+            : '\\u2713 Automated check (' + checked + '): no Claude API changes since our last content review.';
+        }).catch(function(){});
+      })();
+      </script>
       <h2>What "free" means here</h2>
       <p>Every practice mode, the full mock exam, the diagnostic, the glossary, and the quick reference are entirely free — there's no paywall, no ads, no upsell. Taking a practice set, a mock exam, or the diagnostic doesn't require an account; you only need a free account (email sign-in via Clerk, a third-party auth provider) to view your score, domain breakdown, and explanations once you finish, so that your history can follow you across devices instead of living only in one browser. When you finish a mock exam, an anonymous, aggregate result (pass/fail, score, per-domain breakdown — no identifiers of any kind) is added to the community stats below. Answering any question, anywhere on the site, also anonymously increments a shown/correct counter for that specific question — no identifiers, just a running tally we use to catch questions that are miscalibrated or have a weak wrong answer.</p>
       <p>Your account only stores your own progress data — never sold, never shared, and you can sign out or ask us to delete it at any time.</p>
@@ -933,6 +947,11 @@ const handbookRoutes = DOMAINS.map((d) => `/handbook/${HANDBOOK_BY_DOMAIN[d.id].
 const certTrackRoutes = CERTS.filter((c) => c.status !== "live").map((c) => `/certifications/${c.slug}`);
 const allRoutes = [...staticRoutes, ...domainRoutes, ...blogRoutes, ...lessonRoutes, ...handbookRoutes, ...certTrackRoutes];
 
+// Written on every build so api/cron/freshness-check.js (a serverless
+// function, which can't import build-time-only consts like BUILD_DATE) has a
+// stable, deployed-with-the-site record of when content was last verified.
+write("data/build-meta.json", JSON.stringify({ buildDate: BUILD_DATE }));
+
 write("sitemap.xml", `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${allRoutes.map((r) => `  <url><loc>${SITE}${r}</loc><lastmod>${BUILD_DATE}</lastmod></url>`).join("\n")}
@@ -975,7 +994,7 @@ Sitemap: ${SITE}/sitemap.xml
 // highest-signal pages, grouped by section.
 write("llms.txt", `# ${SITE_NAME}
 
-> Free, unofficial practice portal for Anthropic's Claude certification program. Two tracks are fully live today: Claude Certified Architect — Foundations (CCA-F), with a 10,000+ question bank, a 30-lesson curriculum, mock exams, a diagnostic placement test, and spaced-repetition drill; and Claude Certified Architect — Professional (CCAR-P), with a 500-question bank across all 7 domains, domain-weighted mock exams, and per-domain practice. No account or sign-up required. Not affiliated with, endorsed by, or sponsored by Anthropic.
+> Free, unofficial practice portal for Anthropic's Claude certification program — unlike most other Claude cert prep (Udemy courses, paid question banks), every practice mode, mock exam, and diagnostic here is free with no paywall or premium tier; a free account is only needed to view your own results. Two tracks are fully live today: Claude Certified Architect — Foundations (CCA-F), with a 10,000+ question bank, a 30-lesson curriculum, mock exams, a diagnostic placement test, and spaced-repetition drill; and Claude Certified Architect — Professional (CCAR-P), with a 500-question bank across all 7 domains, domain-weighted mock exams, and per-domain practice. Not affiliated with, endorsed by, or sponsored by Anthropic.
 
 ## CCA-F study tools
 - [Mock Exam](${SITE}/exam): 60 domain-weighted questions, 120-minute timer, scaled 100-1000 score, pass mark 720.

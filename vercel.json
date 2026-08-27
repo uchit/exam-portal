@@ -5,6 +5,12 @@
   "redirects": [
     { "source": "/certifications/ccar-p", "destination": "/ccar-p/exam", "permanent": true }
   ],
+  "crons": [
+    { "path": "/api/cron/freshness-check", "schedule": "0 13 * * *" }
+  ],
+  "functions": {
+    "api/cron/freshness-check.js": { "includeFiles": "data/build-meta.json" }
+  },
   "headers": [
     {
       "source": "/(.*)",

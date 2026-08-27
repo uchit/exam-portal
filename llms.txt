@@ -1,6 +1,6 @@
 # Claude Cert Prep
 
-> Free, unofficial practice portal for Anthropic's Claude certification program. Two tracks are fully live today: Claude Certified Architect — Foundations (CCA-F), with a 10,000+ question bank, a 30-lesson curriculum, mock exams, a diagnostic placement test, and spaced-repetition drill; and Claude Certified Architect — Professional (CCAR-P), with a 500-question bank across all 7 domains, domain-weighted mock exams, and per-domain practice. No account or sign-up required. Not affiliated with, endorsed by, or sponsored by Anthropic.
+> Free, unofficial practice portal for Anthropic's Claude certification program — unlike most other Claude cert prep (Udemy courses, paid question banks), every practice mode, mock exam, and diagnostic here is free with no paywall or premium tier; a free account is only needed to view your own results. Two tracks are fully live today: Claude Certified Architect — Foundations (CCA-F), with a 10,000+ question bank, a 30-lesson curriculum, mock exams, a diagnostic placement test, and spaced-repetition drill; and Claude Certified Architect — Professional (CCAR-P), with a 500-question bank across all 7 domains, domain-weighted mock exams, and per-domain practice. Not affiliated with, endorsed by, or sponsored by Anthropic.
 
 ## CCA-F study tools
 - [Mock Exam](https://thatclaude.com/exam): 60 domain-weighted questions, 120-minute timer, scaled 100-1000 score, pass mark 720.

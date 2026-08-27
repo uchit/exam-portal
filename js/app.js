@@ -951,6 +951,8 @@ function showResults({ questions, answers, correct, pct, pass, perDomain }) {
         <button class="btn btn-outline" id="reviewToggle">Review all answers</button>
         <a class="btn btn-outline" href="/">Home</a>
       </div>
+      <div id="readinessCard"></div>
+      <div id="outcomeCard"></div>
       <div id="review"></div>`;
     v.querySelector("#reviewToggle").addEventListener("click", () => {
       const r = v.querySelector("#review");
@@ -966,6 +968,13 @@ function showResults({ questions, answers, correct, pct, pass, perDomain }) {
         </div>`;
       }).join("");
     });
+    // Right after finishing an exam is the single highest-intent moment to
+    // ask for a real-exam self-report — much higher-converting than waiting
+    // for someone to separately visit /progress, and this is the one data
+    // set that compounds into a moat no competitor can shortcut (see
+    // api/outcomes.js).
+    renderOutcomeCard(v.querySelector("#outcomeCard"));
+    renderReadinessCard(v.querySelector("#readinessCard"));
     window.scrollTo({ top: 0 });
   });
 }

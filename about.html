@@ -74,7 +74,20 @@
       <h2>How the question bank is built</h2>
       <p>Three sources are merged: hand-authored scenario questions matching the exam's architecture-decision style, seed questions extracted from official study-guide practice patterns, and a deterministic parametric generator that produces thousands of provably-correct computed and matching questions — token budgeting, caching savings, retry backoff, and more, each stating its own givens so the answer is exact and never goes stale.</p>
       <p>That last part matters: most of this bank can be regenerated against the current Claude API and exam guide on demand, rather than drifting out of date the way a fixed, hand-written bank does.</p>
-      <div class="callout"><b>Freshness</b>Content on this site was last verified against the Claude API and the CCA-F exam guide on August 27, 2026. When Anthropic changes the exam guide, we aim to publish a changelog entry within 24-48 hours — see the <a href="/changelog">changelog</a> for the update history.</div>
+      <div class="callout"><b>Freshness</b>Content on this site was last verified against the Claude API and the CCA-F exam guide on August 27, 2026. When Anthropic changes the exam guide, we aim to publish a changelog entry within 24-48 hours — see the <a href="/changelog">changelog</a> for the update history.<div id="freshnessAuto" style="margin-top:8px;font-size:13px;color:var(--text-3)"></div></div>
+      <script>
+      (function(){
+        fetch("/api/freshness").then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+          var el = document.getElementById("freshnessAuto");
+          if (!el || !d || !d.lastCheckedAt) return;
+          var checked = new Date(Number(d.lastCheckedAt)).toLocaleDateString();
+          var needsReview = d.needsReview === "true" || d.needsReview === true;
+          el.innerHTML = needsReview
+            ? '\u26A0\uFE0F Automated check (' + checked + '): Anthropic\u2019s API release notes show an entry (' + d.anthropicLatestEntryDate + ') newer than our last content review \u2014 we\u2019re looking at it.'
+            : '\u2713 Automated check (' + checked + '): no Claude API changes since our last content review.';
+        }).catch(function(){});
+      })();
+      </script>
       <h2>What "free" means here</h2>
       <p>Every practice mode, the full mock exam, the diagnostic, the glossary, and the quick reference are entirely free — there's no paywall, no ads, no upsell. Taking a practice set, a mock exam, or the diagnostic doesn't require an account; you only need a free account (email sign-in via Clerk, a third-party auth provider) to view your score, domain breakdown, and explanations once you finish, so that your history can follow you across devices instead of living only in one browser. When you finish a mock exam, an anonymous, aggregate result (pass/fail, score, per-domain breakdown — no identifiers of any kind) is added to the community stats below. Answering any question, anywhere on the site, also anonymously increments a shown/correct counter for that specific question — no identifiers, just a running tally we use to catch questions that are miscalibrated or have a weak wrong answer.</p>
       <p>Your account only stores your own progress data — never sold, never shared, and you can sign out or ask us to delete it at any time.</p>

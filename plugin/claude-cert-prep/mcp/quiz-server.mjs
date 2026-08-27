@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // Zero-dependency MCP stdio server bundled with the claude-cert-prep plugin.
-// Serves real questions from thatclaude.com's own CCA-F and CCAR-P question
-// banks (data/cca-f.json, data/ccar-p.json — snapshotted from the live site
-// on every deploy by scripts/build-pages.mjs, so this never drifts from what
-// the website itself serves) and grades answers against them, entirely
-// locally — no network calls, no account, nothing written back anywhere.
-// Read-only, stateless drilling: get_question, then submit_answer.
+// Serves real questions from thatclaude.com's own CCA-F, CCAR-P, and CCAO-F
+// question banks (data/*.json — snapshotted from the live site on every
+// deploy by scripts/build-pages.mjs, so this never drifts from what the
+// website itself serves) and grades answers against them, entirely locally
+// — no network calls, no account, nothing written back anywhere. Read-only,
+// stateless drilling: get_question, then submit_answer.
 //
 // Hand-rolled rather than built on @modelcontextprotocol/sdk to keep this
 // plugin a true zero-dependency Node script, matching the rest of this
@@ -18,17 +18,19 @@ import { createInterface } from "node:readline";
 const HERE = new URL(".", import.meta.url);
 const ccafQuestions = JSON.parse(readFileSync(new URL("data/cca-f.json", HERE), "utf8"));
 const ccarpQuestions = JSON.parse(readFileSync(new URL("data/ccar-p.json", HERE), "utf8"));
-const ALL = [...ccafQuestions, ...ccarpQuestions];
+const ccaofQuestions = JSON.parse(readFileSync(new URL("data/ccao-f.json", HERE), "utf8"));
+const POOLS = { "cca-f": ccafQuestions, "ccar-p": ccarpQuestions, "ccao-f": ccaofQuestions };
+const ALL = [...ccafQuestions, ...ccarpQuestions, ...ccaofQuestions];
 const LETTERS = ["A", "B", "C", "D"];
 
 const TOOLS = [
   {
     name: "get_question",
-    description: "Get a random Claude certification practice question from thatclaude.com's real question bank (CCA-F or CCAR-P), to quiz the user with. Does not reveal the correct answer — present it, get the user's letter answer, then call submit_answer.",
+    description: "Get a random Claude certification practice question from thatclaude.com's real question bank (CCA-F, CCAR-P, or CCAO-F), to quiz the user with. Does not reveal the correct answer — present it, get the user's letter answer, then call submit_answer.",
     inputSchema: {
       type: "object",
       properties: {
-        track: { type: "string", enum: ["cca-f", "ccar-p"], description: "cca-f = Claude Certified Architect — Foundations (technical: agentic architecture, tool use, prompt engineering). ccar-p = — Professional (non-technical judgment scenarios). Defaults to cca-f." },
+        track: { type: "string", enum: ["cca-f", "ccar-p", "ccao-f"], description: "cca-f = Claude Certified Architect — Foundations (technical: agentic architecture, tool use, prompt engineering). ccar-p = — Professional (non-technical judgment scenarios for senior architects). ccao-f = Claude Certified Associate — Foundations (non-technical, for everyday business users of Claude). Defaults to cca-f." },
         domain: { type: "string", description: "Optional: filter to a domain by its short name, e.g. \"Agentic Architecture\"." },
         difficulty: { type: "number", description: "Optional: filter to difficulty 1 (easiest) to 5 (hardest)." }
       }
@@ -49,7 +51,7 @@ const TOOLS = [
 ];
 
 function getQuestion({ track = "cca-f", domain, difficulty } = {}) {
-  const pool = track === "ccar-p" ? ccarpQuestions : ccafQuestions;
+  const pool = POOLS[track] || ccafQuestions;
   let filtered = pool;
   if (domain) filtered = filtered.filter((q) => q.domain.toLowerCase() === String(domain).toLowerCase());
   if (difficulty != null) filtered = filtered.filter((q) => q.difficulty === Number(difficulty));

@@ -65,7 +65,9 @@ export const CERTS = [
     "slug": "ccao-f",
     "code": "CCAO-F",
     "name": "Claude Certified Associate — Foundations",
-    "status": "in-development",
+    "status": "live",
+    "examRoute": "/ccao-f/exam",
+    "practiceRoute": "/ccao-f/practice",
     "audience": "Business professionals — operations, marketing, project management, education, and similar roles. No development or API experience required.",
     "prereq": "None stated.",
     "examLength": 60,
@@ -103,7 +105,7 @@ export const CERTS = [
         "weight": 10
       }
     ],
-    "blurb": "A non-engineering track for people who use Claude to get work done day to day, not build with the API — the highest-weighted domain is judging whether Claude's output is actually right."
+    "blurb": "A non-engineering track for people who use Claude to get work done day to day, not build with the API — the highest-weighted domain is judging whether Claude's output is actually right. Practice and mock exams are live now."
   },
   {
     "slug": "ccdv-f",

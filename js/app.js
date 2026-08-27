@@ -10,6 +10,7 @@ import { FAQ_ITEMS } from "./faq.js";
 import { onAuthChange, openSignUp, openSignIn, signOut, fetchServerProgress, pushProgressToServer, mergeProgress, getClerk } from "./auth.js";
 import { sendItemStats, submitOutcome, fetchOutcomeStats } from "./outcomes.js";
 import { fetchAdminUsers, fetchAdminStats } from "./admin.js";
+import { gradeResponse } from "./grading.js";
 import { DOMAINS_CCAR_P, EXAM_NAME_CCAR_P, EXAM_CODE_CCAR_P, EXAM_LENGTH_CCAR_P, EXAM_MINUTES_CCAR_P, PASS_PERCENT_CCAR_P } from "./blueprint-ccar-p.js";
 import { ALL_QUESTIONS_CCAR_P, STATS_CCAR_P, buildExamCcarP, buildPracticeCcarP, getByIdCcarP } from "./bank-ccar-p.js";
 
@@ -1037,6 +1038,41 @@ function viewCcarPPracticeConfig(params) {
   });
 }
 
+// CCAR-P practice: optional AI-graded free-response feedback on the user's
+// own reasoning, not just their MCQ pick — see api/grade-response.js. Gated
+// behind sign-in (the grading call has a real, if small, cost) and
+// rate-limited server-side; independent of the results sign-in gate above.
+function renderFreeResponseGrader(container, q) {
+  container.innerHTML = `<button class="linkbtn" id="fbToggle">Explain your reasoning → get AI feedback</button><div id="fbBody"></div>`;
+  container.querySelector("#fbToggle").addEventListener("click", async (e) => {
+    const body = container.querySelector("#fbBody");
+    e.currentTarget.remove();
+    const signedIn = await isSignedInCheck();
+    if (!signedIn) {
+      body.innerHTML = `<div class="hint">Sign in for free AI feedback on your reasoning (a few per day). <button class="btn btn-solid btn-sm" id="fbSignIn" style="margin-left:8px">Sign in</button></div>`;
+      body.querySelector("#fbSignIn").addEventListener("click", () => openSignIn());
+      return;
+    }
+    body.innerHTML = `
+      <div class="hint" style="display:flex;flex-direction:column;gap:8px">
+        <textarea id="fbInput" class="search-input" rows="3" maxlength="2000" placeholder="Why did you pick that answer? A sentence or two is plenty."></textarea>
+        <div><button class="btn btn-solid btn-sm" id="fbSubmit">Get AI feedback</button></div>
+      </div>`;
+    body.querySelector("#fbSubmit").addEventListener("click", async () => {
+      const text = body.querySelector("#fbInput").value.trim();
+      if (!text) return;
+      body.innerHTML = `<div class="hint">Grading…</div>`;
+      const { status, data } = await gradeResponse({
+        scenario: q.scenario || undefined, question: q.question, options: q.options, correctIndex: q.correct, userAnswer: text
+      });
+      if (status === 429) { body.innerHTML = `<div class="hint">You've used today's free AI feedback — come back tomorrow.</div>`; return; }
+      if (status !== 200 || !data) { body.innerHTML = `<div class="hint">Couldn't grade that right now — try again later.</div>`; return; }
+      const label = data.verdict === "strong" ? "Strong ✓" : data.verdict === "partial" ? "Partial" : "Missed the mark";
+      body.innerHTML = `<div class="hint"><b>AI feedback · ${label}</b>${esc(data.feedback)}</div>`;
+    });
+  });
+}
+
 function runCcarPPractice(questions) {
   activeRunner = true;
   let i = 0, answered = false, selected = null, hinted = false;
@@ -1082,7 +1118,8 @@ function runCcarPPractice(questions) {
       recordAnswerCcarP(q, ok);
       noteItemStat(q, ok);
       opts.innerHTML = renderOptions(q, { answered: true, selected, locked: true });
-      v.querySelector("#extra").innerHTML = `<div class="explanation"><b>${ok ? "Correct ✓" : "Not quite ✕"} · why</b>${esc(q.explanation)}</div>`;
+      v.querySelector("#extra").innerHTML = `<div class="explanation"><b>${ok ? "Correct ✓" : "Not quite ✕"} · why</b>${esc(q.explanation)}</div><div id="fbSlot" style="margin-top:10px"></div>`;
+      renderFreeResponseGrader(v.querySelector("#fbSlot"), q);
       v.querySelector("#nextBtn").disabled = false;
       v.querySelector("#hintBtn").disabled = true;
     });

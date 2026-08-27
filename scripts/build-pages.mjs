@@ -154,7 +154,7 @@ const FOOTER = `  <footer class="footer">
         <a href="/about">About</a>
         <a href="/changelog">Changelog</a>
       </nav>
-      <span>Covering Anthropic's full Claude certification program, one track at a time. CCA-F is live today.</span>
+      <span>Covering Anthropic's full Claude certification program, one track at a time. CCA-F and CCAR-P are live today.</span>
       <span>Developed by <a href="https://hellouchit.com" target="_blank" rel="noopener noreferrer">Uchit Vyas</a></span>
     </div>
   </footer>
@@ -619,7 +619,7 @@ for (const c of CERTS.filter((x) => x.status !== "live")) {
       <h1>${c.code} — ${escAttr(c.name)}</h1>
       <p class="prose-dek">${escAttr(c.blurb)}</p>
     </div>
-    <div class="callout"><b>Status</b>This certification is live and administered by Anthropic via Pearson VUE. Free practice content for it isn't published on thatclaude.com yet — we build one track at a time, fully; <a href="/exam">CCA-F is live today</a>. This page has the domain blueprint to help you start planning, and we'll link real practice content here as it ships. Watch the <a href="/changelog">changelog</a> for updates.</div>
+    <div class="callout"><b>Status</b>This certification is live and administered by Anthropic via Pearson VUE. Free practice content for it isn't published on thatclaude.com yet — we build one track at a time, fully; <a href="/exam">CCA-F</a> and <a href="/ccar-p/exam">CCAR-P</a> are live today. This page has the domain blueprint to help you start planning, and we'll link real practice content here as it ships. Watch the <a href="/changelog">changelog</a> for updates.</div>
 
     <p class="section-title">Exam format</p>
     <div class="card">
@@ -1015,8 +1015,8 @@ ${POSTS.map((p) => `  <item>
 // hero markup inside <main> is left untouched.
 // ============================================================================
 {
-  const HOME_TITLE = "Claude Certified Architect — Exam Prep Portal";
-  const HOME_DESC = "Free practice portal for the Claude Certified Architect (CCA-F) exam: 10,000+ questions, timed mock exams, hints, and full answer explanations across all five domains.";
+  const HOME_TITLE = "Claude Cert Prep — Practice for CCA-F & CCAR-P Exams";
+  const HOME_DESC = "Free, independent practice portal for Anthropic's Claude certification program — CCA-F and CCAR-P are live today with 11,000+ questions, timed mock exams, and a full explanation on every answer.";
   const HOME_JSONLD = [
     {
       "@type": "WebSite", "@id": `${SITE}/#website`, url: SITE, name: SITE_NAME, description: HOME_DESC,

@@ -239,7 +239,7 @@ themeToggle.addEventListener("click", () => {
   document.documentElement.dataset.theme = next;
   localStorage.setItem("claudecert.theme", next);
 });
-document.getElementById("bankChip").textContent = `${fmt(STATS.total)} questions`;
+document.getElementById("bankChip").textContent = `${fmt(STATS.total + STATS_CCAR_P.total)} questions`;
 
 // ---------- toast ----------
 let toastTimer;
@@ -341,24 +341,26 @@ router();
 // ============================================================================
 function viewHome() {
   const acc = progress.attempts ? Math.round((progress.correct / progress.attempts) * 100) : 0;
+  const liveTracks = CERTS.filter((c) => c.status === "live");
+  const totalQuestions = STATS.total + STATS_CCAR_P.total;
+  const totalDomains = Object.keys(DOMAINS).length + Object.keys(DOMAINS_CCAR_P).length;
   const v = el(`<div class="view"></div>`);
   v.innerHTML = `
     <section class="hero">
-      <span class="hero-badge">● ${esc(EXAM_CODE)} · ${esc(EXAM_NAME)}</span>
-      <h1>Pass the Claude Certified Architect exam with confidence.</h1>
-      <p>A free, open practice portal built on the official 5-domain blueprint. Mock exams use ${fmt(STATS.byStyle.scenario + STATS.byStyle.recall)} architecture-decision scenarios — the real exam's shape — backed by a ${fmt(STATS.total)}-question bank for unlimited drilling, with hints and an explanation on every answer. Part of a growing effort to cover <a href="/certifications" style="color:inherit;text-decoration:underline">all four Anthropic certification tracks</a>, one built fully before the next starts.</p>
+      <span class="hero-badge">● ${liveTracks.length} Claude certification tracks live</span>
+      <h1>Practice for the Claude certification program, free.</h1>
+      <p>An independent practice portal covering Anthropic's Claude certifications — ${liveTracks.map((c) => esc(c.code)).join(" and ")} are fully live today, each with real domain-weighted mock exams, per-domain practice, and an explanation on every answer. Part of a growing effort to cover <a href="/certifications" style="color:inherit;text-decoration:underline">all four tracks</a>, one built fully before the next starts.</p>
       <div class="hero-stats">
-        <div class="hero-stat"><div class="n">${fmt(STATS.total)}</div><div class="l">Questions</div></div>
-        <div class="hero-stat"><div class="n">5</div><div class="l">Domains</div></div>
-        <div class="hero-stat"><div class="n">${EXAM_LENGTH}</div><div class="l">Q / mock exam</div></div>
+        <div class="hero-stat"><div class="n">${fmt(totalQuestions)}</div><div class="l">Questions total</div></div>
+        <div class="hero-stat"><div class="n">${liveTracks.length}</div><div class="l">Tracks live</div></div>
+        <div class="hero-stat"><div class="n">${totalDomains}</div><div class="l">Domains covered</div></div>
         <div class="hero-stat"><div class="n">${PASS_PERCENT}%</div><div class="l">Pass mark</div></div>
       </div>
       <div class="hero-cta">
-        <a class="btn btn-primary" href="/exam">Start a mock exam →</a>
-        <a class="btn btn-ghost" href="/practice">Quick practice</a>
-        <a class="btn btn-ghost" href="/prep">How to pass</a>
+        ${liveTracks.map((c) => `<a class="btn btn-primary" href="${c.examRoute}">${esc(c.code)} mock exam →</a>`).join("")}
+        <a class="btn btn-ghost" href="/certifications">Explore all tracks</a>
       </div>
-      <p class="hero-note">New here? <a href="/diagnostic">Take the 15-minute diagnostic →</a> to see which domain to study first.</p>
+      <p class="hero-note">New to CCA-F? <a href="/diagnostic">Take the 15-minute diagnostic →</a> to see which domain to study first.</p>
     </section>
 
     <p class="section-title">The Claude certification program</p>
@@ -370,14 +372,14 @@ function viewHome() {
       </a>`).join("")}
     </div>
 
-    <p class="section-title">Choose how you want to study</p>
+    <p class="section-title">CCA-F study modes</p>
     <div class="grid grid-3" style="margin-bottom:34px">
       ${modeTile("Quick Practice", "Mixed questions with instant feedback, hints and explanations. Learn as you go.", "/practice", "var(--primary)", ICONS.bolt(20))}
       ${modeTile("Full Mock Exam", `${EXAM_LENGTH} domain-weighted questions, ${EXAM_MINUTES}-minute timer, scored like the real CCA-F.`, "/exam", "var(--accent)", ICONS.timer(20))}
-      ${modeTile("Question Bank", `Browse and search all ${fmt(STATS.total)} questions with answers and explanations.`, "/browse", "var(--success)", ICONS.book(20))}
+      ${modeTile("Question Bank", `Browse and search all ${fmt(STATS.total)} CCA-F questions with answers and explanations.`, "/browse", "var(--success)", ICONS.book(20))}
     </div>
 
-    <p class="section-title">The five exam domains</p>
+    <p class="section-title">CCA-F's five domains</p>
     <div class="grid grid-auto">${Object.values(DOMAINS).map(domainCard).join("")}</div>
 
     <div class="statline" style="margin-top:34px">

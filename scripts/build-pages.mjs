@@ -11,6 +11,7 @@ import { readFileSync } from "node:fs";
 import { CERTS, UPCOMING_TRACK_MECHANICS } from "../js/certs.js";
 import { ICONS } from "../js/icons.js";
 import { DOMAINS_LIST as DOMAINS } from "../js/blueprint-domains.js";
+import { DOMAINS_LIST_CCAR_P } from "../js/blueprint-domains-ccar-p.js";
 import { FAQ_ITEMS } from "../js/faq.js";
 import { GLOSSARY } from "../content/glossary.mjs";
 import { REFERENCE } from "../content/reference.mjs";
@@ -44,9 +45,13 @@ const LESSONS_BY_DOMAIN = { 1: LESSONS_1, 2: LESSONS_2, 3: LESSONS_3, 4: LESSONS
 const HANDBOOK_BY_DOMAIN = { 1: HANDBOOK_1, 2: HANDBOOK_2, 3: HANDBOOK_3, 4: HANDBOOK_4, 5: HANDBOOK_5 };
 
 // ---------------------------------------------------------------- chrome ---
-const HEAD_ICON = `<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235B4FE0'/%3E%3Ctext x='50' y='69' font-size='56' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'%3EC%3C/text%3E%3C/svg%3E" />`;
+const HEAD_ICON = `<link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="icon" href="/favicon-16.png" sizes="16x16" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />`;
 const SITE_NAME = "Claude Cert Prep";
-const OG_IMAGE = `${SITE}/og-image.svg`;
+const OG_IMAGE = `${SITE}/og-image.png`;
 const AUTHOR = { "@type": "Person", name: "Uchit Vyas", url: "https://hellouchit.com" };
 
 const escAttr = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
@@ -76,7 +81,7 @@ function head(title, description, path, { ogType = "website", jsonLd = null } = 
   const canonical = `${SITE}${path === "/" ? "" : path}`;
   const t = escAttr(title), d = escAttr(description);
   return `<!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -84,7 +89,7 @@ function head(title, description, path, { ogType = "website", jsonLd = null } = 
   <meta name="description" content="${d}" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <meta name="author" content="Uchit Vyas" />
-  <meta name="theme-color" content="#121214" />
+  <meta name="theme-color" content="#F5F5F3" />
   <link rel="canonical" href="${canonical}" />
   <meta property="og:site_name" content="${SITE_NAME}" />
   <meta property="og:type" content="${ogType}" />
@@ -92,6 +97,9 @@ function head(title, description, path, { ogType = "website", jsonLd = null } = 
   <meta property="og:description" content="${d}" />
   <meta property="og:url" content="${canonical}" />
   <meta property="og:image" content="${OG_IMAGE}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:type" content="image/png" />
   <meta property="og:locale" content="en_US" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${t}" />
@@ -120,7 +128,7 @@ function header(active) {
   return `  <header class="topbar">
     <div class="topbar-inner">
       <a class="brand" href="/" aria-label="Home">
-        <span class="brand-mark">C</span>
+        <img class="brand-mark" src="/icon.svg" width="34" height="34" alt="" />
         <span class="brand-text">
           <strong>Claude Cert Prep</strong>
           <span class="brand-sub">All Claude Certifications</span>
@@ -572,13 +580,13 @@ write("certifications.html", staticPage({
   path: "/certifications", active: "certifications",
   jsonLd: [
     breadcrumbLd([{ name: "Certifications", path: "/certifications" }]),
-    {
+    ...CERTS.map((c) => ({
       "@type": "EducationalOccupationalCredential",
-      name: "Claude Certified Architect — Foundations (CCA-F)",
-      description: "Anthropic certification for solution architects designing Claude-powered agentic systems. Free unofficial practice available on this site.",
+      name: c.name,
+      description: `${c.blurb} ${c.status === "live" ? "Free unofficial practice available on this site." : "Free unofficial practice not yet published on this site."}`,
       credentialCategory: "certificate",
-      url: `${SITE}/certifications`
-    }
+      url: c.status === "live" ? `${SITE}${c.examRoute}` : `${SITE}/certifications/${c.slug}`
+    }))
   ],
   bodyHtml: `    <div class="prose page-head">
       <h1>Claude Certifications</h1>
@@ -926,6 +934,30 @@ ${allRoutes.map((r) => `  <url><loc>${SITE}${r}</loc><lastmod>${BUILD_DATE}</las
 write("robots.txt", `User-agent: *
 Allow: /
 
+# Explicit welcome for AI answer-engine crawlers — the wildcard rule above
+# already allows everyone, but naming these makes the intent unambiguous
+# for engines that check a named rule before falling back to the wildcard.
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
 Sitemap: ${SITE}/sitemap.xml
 `);
 
@@ -935,28 +967,35 @@ Sitemap: ${SITE}/sitemap.xml
 // highest-signal pages, grouped by section.
 write("llms.txt", `# ${SITE_NAME}
 
-> Free, unofficial practice portal for Anthropic's Claude certification program. The Claude Certified Architect — Foundations (CCA-F) track is fully built: a 10,000+ question bank, a 30-lesson curriculum, mock exams, a diagnostic placement test, and spaced-repetition drill — no account or sign-up required. Not affiliated with, endorsed by, or sponsored by Anthropic.
+> Free, unofficial practice portal for Anthropic's Claude certification program. Two tracks are fully live today: Claude Certified Architect — Foundations (CCA-F), with a 10,000+ question bank, a 30-lesson curriculum, mock exams, a diagnostic placement test, and spaced-repetition drill; and Claude Certified Architect — Professional (CCAR-P), with a 500-question bank across all 7 domains, domain-weighted mock exams, and per-domain practice. No account or sign-up required. Not affiliated with, endorsed by, or sponsored by Anthropic.
 
-## Study tools
+## CCA-F study tools
 - [Mock Exam](${SITE}/exam): 60 domain-weighted questions, 120-minute timer, scaled 100-1000 score, pass mark 720.
 - [Diagnostic](${SITE}/diagnostic): 25-question untimed placement test with a per-domain study order.
 - [Quick Practice](${SITE}/practice): configurable practice sets by domain and difficulty.
 - [Drill](${SITE}/drill): spaced-repetition review of previously-answered questions.
 - [Question Bank](${SITE}/browse): search all questions with answers and explanations.
 
-## Curriculum and reference
+## CCA-F curriculum and reference
 - [Curriculum](${SITE}/learn): 30 lessons across the 5 CCA-F domains.
 - [Glossary](${SITE}/glossary): exam-focused term definitions per domain.
 - [Quick Reference](${SITE}/reference): condensed decision-rule cheat sheets per domain.
 - [How to Pass](${SITE}/prep): study strategy, mental models, and an FAQ.
 - [Blog](${SITE}/blog): study-strategy and domain deep-dive posts.
 
+## CCAR-P study tools
+- [Mock Exam](${SITE}/ccar-p/exam): 63 domain-weighted questions across 7 domains, 120-minute timer, scaled 100-1000 score, pass mark 720.
+- [Quick Practice](${SITE}/ccar-p/practice): configurable practice sets by domain and difficulty.
+
 ## Program
-- [Certifications](${SITE}/certifications): status of all four Anthropic certification tracks (CCA-F is live; CCAR-P, CCAO-F, CCDV-F are in development).
+- [Certifications](${SITE}/certifications): status of all four Anthropic certification tracks (CCA-F and CCAR-P are live; CCAO-F and CCDV-F are in development).
 - [About](${SITE}/about): who built this and why, and how the question bank is generated.
 
-## Exam blueprint (CCA-F)
+## Exam blueprint — CCA-F
 ${DOMAINS.map((d) => `- ${d.short} — ${d.weight}%`).join("\n")}
+
+## Exam blueprint — CCAR-P
+${DOMAINS_LIST_CCAR_P.map((d) => `- ${d.short} — ${d.weight}%`).join("\n")}
 `);
 
 // RSS feed for the blog — standard discoverability signal, linked from <head>.

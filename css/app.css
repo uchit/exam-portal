@@ -131,11 +131,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-vis
 }
 .topbar-inner { max-width:var(--maxw); margin:0 auto; height:100%; padding:0 22px; display:flex; align-items:center; gap:20px; }
 .brand { display:flex; align-items:center; gap:11px; flex:none; }
-.brand-mark {
-  width:34px; height:34px; border-radius:9px; display:grid; place-items:center;
-  font-weight:800; color:#fff; font-size:17px;
-  background:var(--primary);
-}
+.brand-mark { width:34px; height:34px; border-radius:9px; display:block; flex:none; }
 .brand-text { display:flex; flex-direction:column; line-height:1.15; }
 .brand-text strong { font-size:15px; font-weight:800; letter-spacing:-.01em; white-space:nowrap; }
 .brand-sub { font-size:11px; color:var(--text-3); font-weight:600; letter-spacing:.04em; text-transform:uppercase; }
@@ -505,7 +501,7 @@ input[type=range]{ accent-color:var(--primary); flex:1; }
   .footer { margin-bottom:64px; }
   :root { --nav-h:56px; }
   .topbar-inner { padding:0 14px; gap:10px; }
-  .brand-mark { width:34px; height:34px; font-size:18px; }
+  .brand-mark { width:34px; height:34px; }
   .brand-sub { display:none; }
   .bank-chip { font-size:11px; padding:5px 9px; }
   .app { padding:20px 14px 36px; }

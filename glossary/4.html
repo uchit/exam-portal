@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,24 +7,31 @@
   <meta name="description" content="Prompt Engineering &amp; Structured Output: exam-focused glossary terms with definitions and exam-context notes for the Claude Certified Architect (CCA-F) exam." />
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <meta name="author" content="Uchit Vyas" />
-  <meta name="theme-color" content="#121214" />
+  <meta name="theme-color" content="#F5F5F3" />
   <link rel="canonical" href="https://thatclaude.com/glossary/4" />
   <meta property="og:site_name" content="Claude Cert Prep" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Prompt Engineering Glossary — Claude Cert Prep" />
   <meta property="og:description" content="Prompt Engineering &amp; Structured Output: exam-focused glossary terms with definitions and exam-context notes for the Claude Certified Architect (CCA-F) exam." />
   <meta property="og:url" content="https://thatclaude.com/glossary/4" />
-  <meta property="og:image" content="https://thatclaude.com/og-image.svg" />
+  <meta property="og:image" content="https://thatclaude.com/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:type" content="image/png" />
   <meta property="og:locale" content="en_US" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Prompt Engineering Glossary — Claude Cert Prep" />
   <meta name="twitter:description" content="Prompt Engineering &amp; Structured Output: exam-focused glossary terms with definitions and exam-context notes for the Claude Certified Architect (CCA-F) exam." />
-  <meta name="twitter:image" content="https://thatclaude.com/og-image.svg" />
+  <meta name="twitter:image" content="https://thatclaude.com/og-image.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Figtree:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/app.css" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235B4FE0'/%3E%3Ctext x='50' y='69' font-size='56' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'%3EC%3C/text%3E%3C/svg%3E" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="icon" href="/favicon-16.png" sizes="16x16" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
   <link rel="alternate" type="application/rss+xml" title="Claude Cert Prep Blog" href="/blog/feed.xml" />
   <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://thatclaude.com"},{"@type":"ListItem","position":2,"name":"Glossary","item":"https://thatclaude.com/glossary"},{"@type":"ListItem","position":3,"name":"Prompt Engineering","item":"https://thatclaude.com/glossary/4"}]},{"@type":"DefinedTermSet","name":"Prompt Engineering Glossary","description":"Exam-focused glossary terms for Prompt Engineering & Structured Output (Claude Certified Architect — Foundations).","url":"https://thatclaude.com/glossary/4","hasDefinedTerm":[{"@type":"DefinedTerm","name":"System prompt","description":"The top-level instruction set establishing role, constraints, and behavior for the whole conversation."},{"@type":"DefinedTerm","name":"XML structuring","description":"Wrapping distinct prompt components — instructions, context, examples — in XML-like tags so the model reliably tells them apart."},{"@type":"DefinedTerm","name":"Few-shot prompting","description":"Including 2–5 worked examples in the prompt to show the exact input/output pattern wanted."},{"@type":"DefinedTerm","name":"Chain-of-thought","description":"Asking the model to reason step by step before answering, improving accuracy on multi-step problems at the cost of latency and tokens."},{"@type":"DefinedTerm","name":"Prefill","description":"Seeding the start of the assistant's response to force a format — e.g. starting with { to guarantee JSON — or skip preamble."},{"@type":"DefinedTerm","name":"Structured output","description":"Constraining the model's response to a defined schema so downstream code can parse it reliably."},{"@type":"DefinedTerm","name":"Validation/retry loop","description":"Programmatically validating a structured response against its schema and re-prompting with the specific error on failure."},{"@type":"DefinedTerm","name":"Batch processing","description":"Using an asynchronous batch API to process many independent prompts at lower cost when latency isn't critical."},{"@type":"DefinedTerm","name":"Multi-pass review","description":"Splitting generation and review into separate calls so the reviewing pass isn't anchored by the generation pass's own reasoning."},{"@type":"DefinedTerm","name":"Prompt anti-pattern","description":"Common mistakes like negative-only instructions ('don't do X') with no positive alternative, or one prompt overloaded with unrelated tasks."}]}]}</script>
 </head>
@@ -33,7 +40,7 @@
   <header class="topbar">
     <div class="topbar-inner">
       <a class="brand" href="/" aria-label="Home">
-        <span class="brand-mark">C</span>
+        <img class="brand-mark" src="/icon.svg" width="34" height="34" alt="" />
         <span class="brand-text">
           <strong>Claude Cert Prep</strong>
           <span class="brand-sub">All Claude Certifications</span>

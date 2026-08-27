@@ -1,28 +1,41 @@
 # Claude Cert Prep
 
-> Free, unofficial practice portal for Anthropic's Claude certification program. The Claude Certified Architect — Foundations (CCA-F) track is fully built: a 10,000+ question bank, a 30-lesson curriculum, mock exams, a diagnostic placement test, and spaced-repetition drill — no account or sign-up required. Not affiliated with, endorsed by, or sponsored by Anthropic.
+> Free, unofficial practice portal for Anthropic's Claude certification program. Two tracks are fully live today: Claude Certified Architect — Foundations (CCA-F), with a 10,000+ question bank, a 30-lesson curriculum, mock exams, a diagnostic placement test, and spaced-repetition drill; and Claude Certified Architect — Professional (CCAR-P), with a 500-question bank across all 7 domains, domain-weighted mock exams, and per-domain practice. No account or sign-up required. Not affiliated with, endorsed by, or sponsored by Anthropic.
 
-## Study tools
+## CCA-F study tools
 - [Mock Exam](https://thatclaude.com/exam): 60 domain-weighted questions, 120-minute timer, scaled 100-1000 score, pass mark 720.
 - [Diagnostic](https://thatclaude.com/diagnostic): 25-question untimed placement test with a per-domain study order.
 - [Quick Practice](https://thatclaude.com/practice): configurable practice sets by domain and difficulty.
 - [Drill](https://thatclaude.com/drill): spaced-repetition review of previously-answered questions.
 - [Question Bank](https://thatclaude.com/browse): search all questions with answers and explanations.
 
-## Curriculum and reference
+## CCA-F curriculum and reference
 - [Curriculum](https://thatclaude.com/learn): 30 lessons across the 5 CCA-F domains.
 - [Glossary](https://thatclaude.com/glossary): exam-focused term definitions per domain.
 - [Quick Reference](https://thatclaude.com/reference): condensed decision-rule cheat sheets per domain.
 - [How to Pass](https://thatclaude.com/prep): study strategy, mental models, and an FAQ.
 - [Blog](https://thatclaude.com/blog): study-strategy and domain deep-dive posts.
 
+## CCAR-P study tools
+- [Mock Exam](https://thatclaude.com/ccar-p/exam): 63 domain-weighted questions across 7 domains, 120-minute timer, scaled 100-1000 score, pass mark 720.
+- [Quick Practice](https://thatclaude.com/ccar-p/practice): configurable practice sets by domain and difficulty.
+
 ## Program
-- [Certifications](https://thatclaude.com/certifications): status of all four Anthropic certification tracks (CCA-F is live; CCAR-P, CCAO-F, CCDV-F are in development).
+- [Certifications](https://thatclaude.com/certifications): status of all four Anthropic certification tracks (CCA-F and CCAR-P are live; CCAO-F and CCDV-F are in development).
 - [About](https://thatclaude.com/about): who built this and why, and how the question bank is generated.
 
-## Exam blueprint (CCA-F)
+## Exam blueprint — CCA-F
 - Agentic Architecture — 27%
 - Tools & MCP — 18%
 - Claude Code — 20%
 - Prompt Engineering — 20%
 - Context & Reliability — 15%
+
+## Exam blueprint — CCAR-P
+- Solution Design — 17%
+- Prompting & Context — 13%
+- Integration — 19%
+- Eval & Optimisation — 16%
+- Governance & Safety — 14%
+- Stakeholder & Lifecycle — 14%
+- Dev Productivity — 7%

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,24 +7,31 @@
   <meta name="description" content="Tool Design &amp; MCP Integration: the full lesson track for this CCA-F domain, with exam-trap callouts, worked scenarios, and hands-on exercises." />
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <meta name="author" content="Uchit Vyas" />
-  <meta name="theme-color" content="#121214" />
+  <meta name="theme-color" content="#F5F5F3" />
   <link rel="canonical" href="https://thatclaude.com/learn/2" />
   <meta property="og:site_name" content="Claude Cert Prep" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Tools &amp; MCP Curriculum — Claude Cert Prep" />
   <meta property="og:description" content="Tool Design &amp; MCP Integration: the full lesson track for this CCA-F domain, with exam-trap callouts, worked scenarios, and hands-on exercises." />
   <meta property="og:url" content="https://thatclaude.com/learn/2" />
-  <meta property="og:image" content="https://thatclaude.com/og-image.svg" />
+  <meta property="og:image" content="https://thatclaude.com/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:type" content="image/png" />
   <meta property="og:locale" content="en_US" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Tools &amp; MCP Curriculum — Claude Cert Prep" />
   <meta name="twitter:description" content="Tool Design &amp; MCP Integration: the full lesson track for this CCA-F domain, with exam-trap callouts, worked scenarios, and hands-on exercises." />
-  <meta name="twitter:image" content="https://thatclaude.com/og-image.svg" />
+  <meta name="twitter:image" content="https://thatclaude.com/og-image.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Figtree:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/app.css" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%235B4FE0'/%3E%3Ctext x='50' y='69' font-size='56' text-anchor='middle' fill='white' font-family='-apple-system,sans-serif' font-weight='700'%3EC%3C/text%3E%3C/svg%3E" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="icon" href="/favicon-16.png" sizes="16x16" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
   <link rel="alternate" type="application/rss+xml" title="Claude Cert Prep Blog" href="/blog/feed.xml" />
   <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://thatclaude.com"},{"@type":"ListItem","position":2,"name":"Curriculum","item":"https://thatclaude.com/learn"},{"@type":"ListItem","position":3,"name":"Tools & MCP","item":"https://thatclaude.com/learn/2"}]},{"@type":"ItemList","name":"Tools & MCP Curriculum","itemListElement":[{"@type":"ListItem","position":1,"name":"Designing Tool Schemas","url":"https://thatclaude.com/learn/2/2-1-tool-schemas"},{"@type":"ListItem","position":2,"name":"tool_use and tool_result in Practice","url":"https://thatclaude.com/learn/2/2-2-tool-use-tool-result"},{"@type":"ListItem","position":3,"name":"MCP Fundamentals: Servers, Clients, Hosts","url":"https://thatclaude.com/learn/2/2-3-mcp-fundamentals"},{"@type":"ListItem","position":4,"name":"MCP Primitives: Tools, Resources, Prompts","url":"https://thatclaude.com/learn/2/2-4-mcp-primitives"},{"@type":"ListItem","position":5,"name":"Transport Choice: stdio vs. Streamable HTTP","url":"https://thatclaude.com/learn/2/2-5-transport-choice"},{"@type":"ListItem","position":6,"name":"Error Handling and Tool Distribution Choices","url":"https://thatclaude.com/learn/2/2-6-error-handling-distribution"}]}]}</script>
 </head>
@@ -33,7 +40,7 @@
   <header class="topbar">
     <div class="topbar-inner">
       <a class="brand" href="/" aria-label="Home">
-        <span class="brand-mark">C</span>
+        <img class="brand-mark" src="/icon.svg" width="34" height="34" alt="" />
         <span class="brand-text">
           <strong>Claude Cert Prep</strong>
           <span class="brand-sub">All Claude Certifications</span>

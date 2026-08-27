@@ -533,6 +533,33 @@ function viewPracticeConfig(params) {
   });
 }
 
+// The whole site works anonymously, so a runner's final results are the only
+// place an account gets captured — gate them behind sign-in. renderContent
+// is called exactly once, only once signedIn is true; onAuthChange fires
+// immediately with the current state, so this also handles the initial check.
+function gateResults(v, renderContent) {
+  let gated = false, shown = false;
+  onAuthChange(({ signedIn }) => {
+    if (signedIn) {
+      if (shown) return;
+      shown = true;
+      renderContent();
+      return;
+    }
+    if (gated) return;
+    gated = true;
+    v.innerHTML = `
+      <div class="page-head"><h1>Sign in to see your results</h1><p class="lead">Create a free account (10 seconds, no password needed) to view your score, domain breakdown, and full explanations — and keep progress synced across devices.</p></div>
+      <div class="card" style="max-width:420px;margin:0 auto;text-align:center;padding:32px 28px">
+        <button class="btn btn-solid" id="gateSignUp">Create free account</button>
+        <button class="btn btn-outline" id="gateSignIn" style="margin-left:8px">Sign in</button>
+      </div>`;
+    v.querySelector("#gateSignUp").addEventListener("click", () => openSignUp());
+    v.querySelector("#gateSignIn").addEventListener("click", () => openSignIn());
+    window.scrollTo({ top: 0 });
+  });
+}
+
 function runPractice(questions) {
   activeRunner = true;
   let i = 0, answered = false, selected = null, hinted = false;
@@ -612,17 +639,19 @@ function runPractice(questions) {
     flushItemStats();
     const acc = i ? Math.round((correctCount / Math.max(1, answered ? i + 1 : i)) * 100) : 0;
     const done = answered ? i + 1 : i;
-    v.innerHTML = `
-      <div class="page-head"><h1>Practice complete</h1></div>
-      <div class="result-hero">
-        <div class="gauge" style="--gc:var(--primary);--val:${acc}"><div class="gauge-inner"><div class="pct">${acc}%</div><div class="lbl">${correctCount}/${done} correct</div></div></div>
-      </div>
-      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:10px">
-        <a class="btn btn-solid" href="/practice">New practice set</a>
-        <a class="btn btn-outline" href="/progress">View progress</a>
-        <a class="btn btn-outline" href="/">Home</a>
-      </div>`;
-    window.scrollTo({ top: 0 });
+    gateResults(v, () => {
+      v.innerHTML = `
+        <div class="page-head"><h1>Practice complete</h1></div>
+        <div class="result-hero">
+          <div class="gauge" style="--gc:var(--primary);--val:${acc}"><div class="gauge-inner"><div class="pct">${acc}%</div><div class="lbl">${correctCount}/${done} correct</div></div></div>
+        </div>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:10px">
+          <a class="btn btn-solid" href="/practice">New practice set</a>
+          <a class="btn btn-outline" href="/progress">View progress</a>
+          <a class="btn btn-outline" href="/">Home</a>
+        </div>`;
+      window.scrollTo({ top: 0 });
+    });
   }
   render();
 }
@@ -707,18 +736,20 @@ function runAdaptivePractice({ domains, styles, count }) {
     flushItemStats();
     noteServed([...served].map((id) => ({ id })));
     const pct = i ? Math.round((correctCount / i) * 100) : 0;
-    v.innerHTML = `
-      <div class="page-head"><h1>Adaptive practice complete</h1></div>
-      <div class="result-hero">
-        <div class="gauge" style="--gc:var(--primary);--val:${pct}"><div class="gauge-inner"><div class="pct">${pct}%</div><div class="lbl">${correctCount}/${i} correct</div></div></div>
-      </div>
-      <p style="text-align:center;color:var(--text-2)">You finished at difficulty level <b>${level}/5</b>.</p>
-      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:10px">
-        <a class="btn btn-solid" href="/practice">New practice set</a>
-        <a class="btn btn-outline" href="/progress">View progress</a>
-        <a class="btn btn-outline" href="/">Home</a>
-      </div>`;
-    window.scrollTo({ top: 0 });
+    gateResults(v, () => {
+      v.innerHTML = `
+        <div class="page-head"><h1>Adaptive practice complete</h1></div>
+        <div class="result-hero">
+          <div class="gauge" style="--gc:var(--primary);--val:${pct}"><div class="gauge-inner"><div class="pct">${pct}%</div><div class="lbl">${correctCount}/${i} correct</div></div></div>
+        </div>
+        <p style="text-align:center;color:var(--text-2)">You finished at difficulty level <b>${level}/5</b>.</p>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:10px">
+          <a class="btn btn-solid" href="/practice">New practice set</a>
+          <a class="btn btn-outline" href="/progress">View progress</a>
+          <a class="btn btn-outline" href="/">Home</a>
+        </div>`;
+      window.scrollTo({ top: 0 });
+    });
   }
   render();
 }
@@ -897,60 +928,46 @@ function showResults({ questions, answers, correct, pct, pass, perDomain }) {
   const v = el(`<div class="view"></div>`);
   app.innerHTML = ""; app.appendChild(v);
   const scaled = scaledScore((correct / questions.length) * 100);
-  v.innerHTML = `
-    <div class="result-hero">
-      <div class="gauge" style="--gc:${pass ? "var(--success)" : "var(--error)"};--val:${pct}">
-        <div class="gauge-inner"><div class="pct">${scaled}</div><div class="lbl">out of 1000</div></div>
+  gateResults(v, () => {
+    v.innerHTML = `
+      <div class="result-hero">
+        <div class="gauge" style="--gc:${pass ? "var(--success)" : "var(--error)"};--val:${pct}">
+          <div class="gauge-inner"><div class="pct">${scaled}</div><div class="lbl">out of 1000</div></div>
+        </div>
+        <div class="verdict ${pass ? "pass" : "fail"}">${pass ? "PASS ✓" : "Keep studying"}</div>
+        <p style="color:var(--text-2);margin-top:6px">Scaled 100–1000 · pass mark <b>720</b> · you scored <b>${scaled}</b> (${correct}/${questions.length}, ${pct}%). ${pass ? "You'd clear the CCA-F at this level." : `${720 - scaled} scaled points short of passing.`}</p>
       </div>
-      <div class="verdict ${pass ? "pass" : "fail"}">${pass ? "PASS ✓" : "Keep studying"}</div>
-      <p style="color:var(--text-2);margin-top:6px">Scaled 100–1000 · pass mark <b>720</b> · you scored <b>${scaled}</b> (${correct}/${questions.length}, ${pct}%). ${pass ? "You'd clear the CCA-F at this level." : `${720 - scaled} scaled points short of passing.`}</p>
-    </div>
-    <p class="section-title" style="margin-top:30px">Domain breakdown</p>
-    <div class="breakdown card">
-      ${Object.values(DOMAINS).map((d) => {
-        const s = perDomain[d.id]; const p = s.total ? Math.round((s.ok / s.total) * 100) : 0;
-        return `<div class="bd-row"><div class="bd-name">${esc(d.short)}</div>
-          <div class="bd-bar progress-track"><div class="progress-fill" style="width:${p}%;background:${d.color}"></div></div>
-          <div class="bd-val">${s.ok}/${s.total}</div></div>`;
-      }).join("")}
-    </div>
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin:22px 0 30px">
-      <a class="btn btn-solid" href="/exam">Take another exam</a>
-      <button class="btn btn-outline" id="reviewToggle">Review all answers</button>
-      <a class="btn btn-outline" href="/">Home</a>
-    </div>
-    <div id="signupNudge"></div>
-    <div id="review"></div>`;
-  onAuthChange(({ signedIn }) => {
-    if (signedIn) return;
-    const nudge = v.querySelector("#signupNudge");
-    if (!nudge || nudge.dataset.shown) return;
-    nudge.dataset.shown = "1";
-    nudge.innerHTML = `<div class="callout" style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">
-      <div><b>Save this result</b>Create a free account to sync your progress, flags, and exam history across devices.</div>
-      <div style="display:flex;gap:8px;flex:none">
-        <button class="btn btn-solid btn-sm" id="nudgeSignUp">Create free account</button>
-        <button class="btn btn-outline btn-sm" id="nudgeDismiss">Not now</button>
+      <p class="section-title" style="margin-top:30px">Domain breakdown</p>
+      <div class="breakdown card">
+        ${Object.values(DOMAINS).map((d) => {
+          const s = perDomain[d.id]; const p = s.total ? Math.round((s.ok / s.total) * 100) : 0;
+          return `<div class="bd-row"><div class="bd-name">${esc(d.short)}</div>
+            <div class="bd-bar progress-track"><div class="progress-fill" style="width:${p}%;background:${d.color}"></div></div>
+            <div class="bd-val">${s.ok}/${s.total}</div></div>`;
+        }).join("")}
       </div>
-    </div>`;
-    nudge.querySelector("#nudgeSignUp").addEventListener("click", () => openSignUp());
-    nudge.querySelector("#nudgeDismiss").addEventListener("click", () => { nudge.innerHTML = ""; });
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin:22px 0 30px">
+        <a class="btn btn-solid" href="/exam">Take another exam</a>
+        <button class="btn btn-outline" id="reviewToggle">Review all answers</button>
+        <a class="btn btn-outline" href="/">Home</a>
+      </div>
+      <div id="review"></div>`;
+    v.querySelector("#reviewToggle").addEventListener("click", () => {
+      const r = v.querySelector("#review");
+      if (r.innerHTML) { r.innerHTML = ""; return; }
+      r.innerHTML = `<p class="section-title">Full review</p>` + questions.map((q, idx) => {
+        const ok = answers[idx] === q.correct;
+        return `<div class="browse-item">
+          <div class="q-tags">${domainTag(q.domain)}<span class="tag tag-diff">${ok ? "✓ correct" : (answers[idx] === null ? "skipped" : "✕ wrong")}</span></div>
+          ${q.scenario ? `<div class="q-scenario" style="margin-bottom:8px">${esc(q.scenario)}</div>` : ""}
+          <div class="bq">${idx + 1}. ${esc(q.question)}</div>
+          <div class="options">${renderOptions(q, { answered: true, selected: answers[idx], locked: true })}</div>
+          <div class="expl">${esc(q.explanation)}</div>
+        </div>`;
+      }).join("");
+    });
+    window.scrollTo({ top: 0 });
   });
-  v.querySelector("#reviewToggle").addEventListener("click", () => {
-    const r = v.querySelector("#review");
-    if (r.innerHTML) { r.innerHTML = ""; return; }
-    r.innerHTML = `<p class="section-title">Full review</p>` + questions.map((q, idx) => {
-      const ok = answers[idx] === q.correct;
-      return `<div class="browse-item">
-        <div class="q-tags">${domainTag(q.domain)}<span class="tag tag-diff">${ok ? "✓ correct" : (answers[idx] === null ? "skipped" : "✕ wrong")}</span></div>
-        ${q.scenario ? `<div class="q-scenario" style="margin-bottom:8px">${esc(q.scenario)}</div>` : ""}
-        <div class="bq">${idx + 1}. ${esc(q.question)}</div>
-        <div class="options">${renderOptions(q, { answered: true, selected: answers[idx], locked: true })}</div>
-        <div class="expl">${esc(q.explanation)}</div>
-      </div>`;
-    }).join("");
-  });
-  window.scrollTo({ top: 0 });
 }
 
 // ============================================================================
@@ -1076,16 +1093,18 @@ function runCcarPPractice(questions) {
     flushItemStats();
     const acc = i ? Math.round((correctCount / Math.max(1, answered ? i + 1 : i)) * 100) : 0;
     const done = answered ? i + 1 : i;
-    v.innerHTML = `
-      <div class="page-head"><h1>Practice complete</h1></div>
-      <div class="result-hero">
-        <div class="gauge" style="--gc:var(--primary);--val:${acc}"><div class="gauge-inner"><div class="pct">${acc}%</div><div class="lbl">${correctCount}/${done} correct</div></div></div>
-      </div>
-      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:10px">
-        <a class="btn btn-solid" href="/ccar-p/practice">New practice set</a>
-        <a class="btn btn-outline" href="/">Home</a>
-      </div>`;
-    window.scrollTo({ top: 0 });
+    gateResults(v, () => {
+      v.innerHTML = `
+        <div class="page-head"><h1>Practice complete</h1></div>
+        <div class="result-hero">
+          <div class="gauge" style="--gc:var(--primary);--val:${acc}"><div class="gauge-inner"><div class="pct">${acc}%</div><div class="lbl">${correctCount}/${done} correct</div></div></div>
+        </div>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:10px">
+          <a class="btn btn-solid" href="/ccar-p/practice">New practice set</a>
+          <a class="btn btn-outline" href="/">Home</a>
+        </div>`;
+      window.scrollTo({ top: 0 });
+    });
   }
   render();
 }
@@ -1256,44 +1275,46 @@ function showResultsCcarP({ questions, answers, correct, pct, pass, perDomain })
   const v = el(`<div class="view"></div>`);
   app.innerHTML = ""; app.appendChild(v);
   const scaled = scaledScore(pct, PASS_PERCENT_CCAR_P);
-  v.innerHTML = `
-    <div class="result-hero">
-      <div class="gauge" style="--gc:${pass ? "var(--success)" : "var(--error)"};--val:${pct}">
-        <div class="gauge-inner"><div class="pct">${scaled}</div><div class="lbl">out of 1000</div></div>
+  gateResults(v, () => {
+    v.innerHTML = `
+      <div class="result-hero">
+        <div class="gauge" style="--gc:${pass ? "var(--success)" : "var(--error)"};--val:${pct}">
+          <div class="gauge-inner"><div class="pct">${scaled}</div><div class="lbl">out of 1000</div></div>
+        </div>
+        <div class="verdict ${pass ? "pass" : "fail"}">${pass ? "PASS ✓" : "Keep studying"}</div>
+        <p style="color:var(--text-2);margin-top:6px">Scaled 100–1000 · pass mark <b>720</b> · you scored <b>${scaled}</b> (${correct}/${questions.length}, ${pct}%). ${pass ? "You'd clear the CCAR-P at this level." : `${720 - scaled} scaled points short of passing.`}</p>
       </div>
-      <div class="verdict ${pass ? "pass" : "fail"}">${pass ? "PASS ✓" : "Keep studying"}</div>
-      <p style="color:var(--text-2);margin-top:6px">Scaled 100–1000 · pass mark <b>720</b> · you scored <b>${scaled}</b> (${correct}/${questions.length}, ${pct}%). ${pass ? "You'd clear the CCAR-P at this level." : `${720 - scaled} scaled points short of passing.`}</p>
-    </div>
-    <p class="section-title" style="margin-top:30px">Domain breakdown</p>
-    <div class="breakdown card">
-      ${Object.values(DOMAINS_CCAR_P).map((d) => {
-        const s = perDomain[d.id]; const p = s.total ? Math.round((s.ok / s.total) * 100) : 0;
-        return `<div class="bd-row"><div class="bd-name">${esc(d.short)}</div>
-          <div class="bd-bar progress-track"><div class="progress-fill" style="width:${p}%;background:${d.color}"></div></div>
-          <div class="bd-val">${s.ok}/${s.total}</div></div>`;
-      }).join("")}
-    </div>
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin:22px 0 30px">
-      <a class="btn btn-solid" href="/ccar-p/exam">Take another exam</a>
-      <button class="btn btn-outline" id="reviewToggle">Review all answers</button>
-      <a class="btn btn-outline" href="/">Home</a>
-    </div>
-    <div id="review"></div>`;
-  v.querySelector("#reviewToggle").addEventListener("click", () => {
-    const r = v.querySelector("#review");
-    if (r.innerHTML) { r.innerHTML = ""; return; }
-    r.innerHTML = `<p class="section-title">Full review</p>` + questions.map((q, idx) => {
-      const ok = answers[idx] === q.correct;
-      return `<div class="browse-item">
-        <div class="q-tags">${domainTag(q.domain, DOMAINS_CCAR_P)}<span class="tag tag-diff">${ok ? "✓ correct" : (answers[idx] === null ? "skipped" : "✕ wrong")}</span></div>
-        ${q.scenario ? `<div class="q-scenario" style="margin-bottom:8px">${esc(q.scenario)}</div>` : ""}
-        <div class="bq">${idx + 1}. ${esc(q.question)}</div>
-        <div class="options">${renderOptions(q, { answered: true, selected: answers[idx], locked: true })}</div>
-        <div class="expl">${esc(q.explanation)}</div>
-      </div>`;
-    }).join("");
+      <p class="section-title" style="margin-top:30px">Domain breakdown</p>
+      <div class="breakdown card">
+        ${Object.values(DOMAINS_CCAR_P).map((d) => {
+          const s = perDomain[d.id]; const p = s.total ? Math.round((s.ok / s.total) * 100) : 0;
+          return `<div class="bd-row"><div class="bd-name">${esc(d.short)}</div>
+            <div class="bd-bar progress-track"><div class="progress-fill" style="width:${p}%;background:${d.color}"></div></div>
+            <div class="bd-val">${s.ok}/${s.total}</div></div>`;
+        }).join("")}
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin:22px 0 30px">
+        <a class="btn btn-solid" href="/ccar-p/exam">Take another exam</a>
+        <button class="btn btn-outline" id="reviewToggle">Review all answers</button>
+        <a class="btn btn-outline" href="/">Home</a>
+      </div>
+      <div id="review"></div>`;
+    v.querySelector("#reviewToggle").addEventListener("click", () => {
+      const r = v.querySelector("#review");
+      if (r.innerHTML) { r.innerHTML = ""; return; }
+      r.innerHTML = `<p class="section-title">Full review</p>` + questions.map((q, idx) => {
+        const ok = answers[idx] === q.correct;
+        return `<div class="browse-item">
+          <div class="q-tags">${domainTag(q.domain, DOMAINS_CCAR_P)}<span class="tag tag-diff">${ok ? "✓ correct" : (answers[idx] === null ? "skipped" : "✕ wrong")}</span></div>
+          ${q.scenario ? `<div class="q-scenario" style="margin-bottom:8px">${esc(q.scenario)}</div>` : ""}
+          <div class="bq">${idx + 1}. ${esc(q.question)}</div>
+          <div class="options">${renderOptions(q, { answered: true, selected: answers[idx], locked: true })}</div>
+          <div class="expl">${esc(q.explanation)}</div>
+        </div>`;
+      }).join("");
+    });
+    window.scrollTo({ top: 0 });
   });
-  window.scrollTo({ top: 0 });
 }
 
 // ============================================================================
@@ -1719,21 +1740,23 @@ function runDiagnostic(questions) {
       .map((d) => ({ d, pct: perDomain[d.id].total ? Math.round((perDomain[d.id].ok / perDomain[d.id].total) * 100) : 0 }))
       .sort((a, b) => a.pct - b.pct || b.d.weight - a.d.weight);
     const overall = Math.round((Object.values(perDomain).reduce((s, x) => s + x.ok, 0) / questions.length) * 100);
-    v.innerHTML = `
-      <div class="page-head"><h1>Your diagnostic results</h1><p class="lead">${overall}% overall on this baseline read. Study order below is weakest domain first, ties broken toward the higher-weighted domain — that's where fixing gaps pays off most on exam day.</p></div>
-      <p class="section-title">Recommended study order</p>
-      <div class="breakdown card">
-        ${order.map(({ d, pct }, idx) => `<div class="bd-row">
-          <div class="bd-name">${idx + 1}. ${esc(d.short)} <span style="color:var(--text-3);font-weight:600">(${d.weight}% of exam)</span></div>
-          <div class="bd-bar progress-track"><div class="progress-fill" style="width:${pct}%;background:${d.color}"></div></div>
-          <div class="bd-val">${pct}%</div></div>`).join("")}
-      </div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:22px">
-        <a class="btn btn-solid" href="/practice?d=${order[0].d.id}">Study ${esc(order[0].d.short)} first →</a>
-        <a class="btn btn-outline" href="/diagnostic">Retake diagnostic</a>
-        <a class="btn btn-outline" href="/progress">View full progress</a>
-      </div>`;
-    window.scrollTo({ top: 0 });
+    gateResults(v, () => {
+      v.innerHTML = `
+        <div class="page-head"><h1>Your diagnostic results</h1><p class="lead">${overall}% overall on this baseline read. Study order below is weakest domain first, ties broken toward the higher-weighted domain — that's where fixing gaps pays off most on exam day.</p></div>
+        <p class="section-title">Recommended study order</p>
+        <div class="breakdown card">
+          ${order.map(({ d, pct }, idx) => `<div class="bd-row">
+            <div class="bd-name">${idx + 1}. ${esc(d.short)} <span style="color:var(--text-3);font-weight:600">(${d.weight}% of exam)</span></div>
+            <div class="bd-bar progress-track"><div class="progress-fill" style="width:${pct}%;background:${d.color}"></div></div>
+            <div class="bd-val">${pct}%</div></div>`).join("")}
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:22px">
+          <a class="btn btn-solid" href="/practice?d=${order[0].d.id}">Study ${esc(order[0].d.short)} first →</a>
+          <a class="btn btn-outline" href="/diagnostic">Retake diagnostic</a>
+          <a class="btn btn-outline" href="/progress">View full progress</a>
+        </div>`;
+      window.scrollTo({ top: 0 });
+    });
   }
   render();
 }

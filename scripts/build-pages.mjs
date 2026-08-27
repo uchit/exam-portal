@@ -13,9 +13,11 @@ import { ICONS } from "../js/icons.js";
 import { DOMAINS_LIST as DOMAINS } from "../js/blueprint-domains.js";
 import { DOMAINS_LIST_CCAR_P } from "../js/blueprint-domains-ccar-p.js";
 import { DOMAINS_LIST_CCAO_F } from "../js/blueprint-domains-ccao-f.js";
+import { DOMAINS_LIST_CCDV_F } from "../js/blueprint-domains-ccdv-f.js";
 import { ALL_QUESTIONS } from "../js/bank.js";
 import { ALL_QUESTIONS_CCAR_P } from "../js/bank-ccar-p.js";
 import { ALL_QUESTIONS_CCAO_F } from "../js/bank-ccao-f.js";
+import { ALL_QUESTIONS_CCDV_F } from "../js/bank-ccdv-f.js";
 import { FAQ_ITEMS } from "../js/faq.js";
 import { GLOSSARY } from "../content/glossary.mjs";
 import { REFERENCE } from "../content/reference.mjs";
@@ -166,7 +168,7 @@ const FOOTER = `  <footer class="footer">
         <a href="/about">About</a>
         <a href="/changelog">Changelog</a>
       </nav>
-      <span>Covering Anthropic's full Claude certification program, one track at a time. CCA-F, CCAR-P, and CCAO-F are live today.</span>
+      <span>Covering Anthropic's full Claude certification program. All four tracks — CCA-F, CCAR-P, CCAO-F, and CCDV-F — are live today.</span>
       <span>Developed by <a href="https://hellouchit.com" target="_blank" rel="noopener noreferrer">Uchit Vyas</a></span>
     </div>
   </footer>
@@ -594,7 +596,7 @@ write("certifications.html", staticPage({
   ],
   bodyHtml: `    <div class="prose page-head">
       <h1>Claude Certifications</h1>
-      <p class="prose-dek">Anthropic's certification program has four tracks. CCA-F is fully built out, with a 10,000+ question bank, full curriculum, diagnostic, and spaced-repetition drill. CCAR-P and CCAO-F's practice and mock exams are live too. The remaining track is on the roadmap; we build one track at a time rather than shipping thin placeholders across all four.</p>
+      <p class="prose-dek">Anthropic's certification program has four tracks, and all four are now fully live here. CCA-F is the most complete, with a 10,000+ question bank, full curriculum, diagnostic, and spaced-repetition drill. CCAR-P, CCAO-F, and CCDV-F each have a full domain-weighted question bank with practice and mock exams — built one track at a time, fully, rather than as thin placeholders.</p>
     </div>
     <div class="callout" style="margin-bottom:6px"><b>No paywall, ever</b>Most other Claude certification prep out there — Udemy courses, bundled question banks — charges upfront. Every practice mode, mock exam, and diagnostic here is free; the only thing a free account unlocks is seeing your own results and syncing them across devices.</div>
     ${CERTS.map((c) => `<div class="card" style="margin-top:14px">
@@ -900,6 +902,22 @@ write("ccao-f/exam.html", appPage({
   intro: "CCAO-F Mock Exam: 60 domain-weighted questions across 7 domains, a 120-minute timer, and a scaled 100–1000 score.",
   jsonLd: [breadcrumbLd([{ name: "Certifications", path: "/certifications" }, { name: "CCAO-F Mock Exam", path: "/ccao-f/exam" }])]
 }));
+write("ccdv-f/practice.html", appPage({
+  h1: "CCDV-F Practice",
+  title: "CCDV-F Practice — Claude Cert Prep",
+  description: "Practice Claude Certified Developer — Foundations (CCDV-F) exam scenarios by domain and difficulty, with hints and a full explanation on every question.",
+  path: "/ccdv-f/practice", active: "certifications",
+  intro: "CCDV-F Practice: pick your domains and difficulty, get instant feedback with hints and full explanations on every question.",
+  jsonLd: [breadcrumbLd([{ name: "Certifications", path: "/certifications" }, { name: "CCDV-F Practice", path: "/ccdv-f/practice" }])]
+}));
+write("ccdv-f/exam.html", appPage({
+  h1: "CCDV-F Mock Exam",
+  title: "CCDV-F Mock Exam — Claude Cert Prep",
+  description: "A full timed simulation of the Claude Certified Developer — Foundations (CCDV-F) exam: 53 domain-weighted questions, 120-minute timer, scored 100–1000.",
+  path: "/ccdv-f/exam", active: "certifications",
+  intro: "CCDV-F Mock Exam: 53 domain-weighted questions across 8 domains, a 120-minute timer, and a scaled 100–1000 score.",
+  jsonLd: [breadcrumbLd([{ name: "Certifications", path: "/certifications" }, { name: "CCDV-F Mock Exam", path: "/ccdv-f/exam" }])]
+}));
 write("diagnostic.html", appPage({
   h1: "Diagnostic",
   title: "Diagnostic — Claude Cert Prep",
@@ -958,7 +976,7 @@ write("admin.html", appPage({
 const staticRoutes = [
   "/", "/practice", "/exam", "/diagnostic", "/drill", "/browse", "/prep", "/progress",
   "/about", "/resources", "/changelog", "/glossary", "/reference", "/blog", "/learn", "/certifications", "/handbook",
-  "/ccar-p/practice", "/ccar-p/exam", "/ccao-f/practice", "/ccao-f/exam"
+  "/ccar-p/practice", "/ccar-p/exam", "/ccao-f/practice", "/ccao-f/exam", "/ccdv-f/practice", "/ccdv-f/exam"
 ];
 const domainRoutes = DOMAINS.flatMap((d) => [`/glossary/${d.id}`, `/reference/${d.id}`, `/learn/${d.id}`]);
 const blogRoutes = POSTS.map((p) => `/blog/${p.slug}`);
@@ -1014,7 +1032,7 @@ Sitemap: ${SITE}/sitemap.xml
 // highest-signal pages, grouped by section.
 write("llms.txt", `# ${SITE_NAME}
 
-> Free, unofficial practice portal for Anthropic's Claude certification program — unlike most other Claude cert prep (Udemy courses, paid question banks), every practice mode, mock exam, and diagnostic here is free with no paywall or premium tier; a free account is only needed to view your own results. Three tracks are fully live today: Claude Certified Architect — Foundations (CCA-F), with a 10,000+ question bank, a 30-lesson curriculum, mock exams, a diagnostic placement test, and spaced-repetition drill; Claude Certified Architect — Professional (CCAR-P), with a 500-question bank across all 7 domains, domain-weighted mock exams, and per-domain practice; and Claude Certified Associate — Foundations (CCAO-F), a non-technical track for business users of Claude, also with a 500-question bank across 7 domains. Not affiliated with, endorsed by, or sponsored by Anthropic.
+> Free, unofficial practice portal for Anthropic's Claude certification program — unlike most other Claude cert prep (Udemy courses, paid question banks), every practice mode, mock exam, and diagnostic here is free with no paywall or premium tier; a free account is only needed to view your own results. All four tracks are fully live today: Claude Certified Architect — Foundations (CCA-F), with a 10,000+ question bank, a 30-lesson curriculum, mock exams, a diagnostic placement test, and spaced-repetition drill; Claude Certified Architect — Professional (CCAR-P), a 500-question bank across 7 domains for senior architects; Claude Certified Associate — Foundations (CCAO-F), a non-technical 500-question bank across 7 domains for business users of Claude; and Claude Certified Developer — Foundations (CCDV-F), a hands-on implementation-focused 500-question bank across 8 domains for developers building on the Claude API. Not affiliated with, endorsed by, or sponsored by Anthropic.
 
 ## CCA-F study tools
 - [Mock Exam](${SITE}/exam): 60 domain-weighted questions, 120-minute timer, scaled 100-1000 score, pass mark 720.
@@ -1038,8 +1056,12 @@ write("llms.txt", `# ${SITE_NAME}
 - [Mock Exam](${SITE}/ccao-f/exam): 60 domain-weighted questions across 7 domains, 120-minute timer, scaled 100-1000 score, pass mark 720.
 - [Quick Practice](${SITE}/ccao-f/practice): configurable practice sets by domain and difficulty.
 
+## CCDV-F study tools
+- [Mock Exam](${SITE}/ccdv-f/exam): 53 domain-weighted questions across 8 domains, 120-minute timer, scaled 100-1000 score, pass mark 720.
+- [Quick Practice](${SITE}/ccdv-f/practice): configurable practice sets by domain and difficulty.
+
 ## Program
-- [Certifications](${SITE}/certifications): status of all four Anthropic certification tracks (CCA-F, CCAR-P, and CCAO-F are live; CCDV-F is in development).
+- [Certifications](${SITE}/certifications): status of all four Anthropic certification tracks — CCA-F, CCAR-P, CCAO-F, and CCDV-F are all live.
 - [About](${SITE}/about): who built this and why, and how the question bank is generated.
 
 ## Exam blueprint — CCA-F
@@ -1050,6 +1072,9 @@ ${DOMAINS_LIST_CCAR_P.map((d) => `- ${d.short} — ${d.weight}%`).join("\n")}
 
 ## Exam blueprint — CCAO-F
 ${DOMAINS_LIST_CCAO_F.map((d) => `- ${d.short} — ${d.weight}%`).join("\n")}
+
+## Exam blueprint — CCDV-F
+${DOMAINS_LIST_CCDV_F.map((d) => `- ${d.short} — ${d.weight}%`).join("\n")}
 `);
 
 // RSS feed for the blog — standard discoverability signal, linked from <head>.
@@ -1113,6 +1138,7 @@ ${POSTS.map((p) => `  <item>
   const domainShortById = Object.fromEntries(DOMAINS.map((d) => [d.id, d.short]));
   const domainShortByIdCcarP = Object.fromEntries(DOMAINS_LIST_CCAR_P.map((d) => [d.id, d.short]));
   const domainShortByIdCcaoF = Object.fromEntries(DOMAINS_LIST_CCAO_F.map((d) => [d.id, d.short]));
+  const domainShortByIdCcdvF = Object.fromEntries(DOMAINS_LIST_CCDV_F.map((d) => [d.id, d.short]));
   const forMcp = (q, track, domainShort) => ({
     id: q.id, track, domain: domainShort, difficulty: q.difficulty,
     scenario: q.scenario || "", question: q.question, options: q.options,
@@ -1125,9 +1151,12 @@ ${POSTS.map((p) => `  <item>
     .map((q) => forMcp(q, "ccar-p", domainShortByIdCcarP[q.domain] || String(q.domain)));
   const mcpCcaoF = ALL_QUESTIONS_CCAO_F
     .map((q) => forMcp(q, "ccao-f", domainShortByIdCcaoF[q.domain] || String(q.domain)));
+  const mcpCcdvF = ALL_QUESTIONS_CCDV_F
+    .map((q) => forMcp(q, "ccdv-f", domainShortByIdCcdvF[q.domain] || String(q.domain)));
   write("plugin/claude-cert-prep/mcp/data/cca-f.json", JSON.stringify(mcpCcaF));
   write("plugin/claude-cert-prep/mcp/data/ccar-p.json", JSON.stringify(mcpCcarP));
   write("plugin/claude-cert-prep/mcp/data/ccao-f.json", JSON.stringify(mcpCcaoF));
+  write("plugin/claude-cert-prep/mcp/data/ccdv-f.json", JSON.stringify(mcpCcdvF));
 }
 
 // ============================================================================
@@ -1138,8 +1167,8 @@ ${POSTS.map((p) => `  <item>
 // hero markup inside <main> is left untouched.
 // ============================================================================
 {
-  const HOME_TITLE = "Claude Cert Prep — Practice for CCA-F, CCAR-P & CCAO-F Exams";
-  const HOME_DESC = "Free, independent practice portal for Anthropic's Claude certification program — CCA-F, CCAR-P, and CCAO-F are live today with 11,500+ questions, timed mock exams, and a full explanation on every answer.";
+  const HOME_TITLE = "Claude Cert Prep — Practice for All 4 Claude Certifications";
+  const HOME_DESC = "Free, independent practice portal for Anthropic's Claude certification program — CCA-F, CCAR-P, CCAO-F, and CCDV-F are all live today with 12,000+ questions, timed mock exams, and a full explanation on every answer.";
   const HOME_JSONLD = [
     {
       "@type": "WebSite", "@id": `${SITE}/#website`, url: SITE, name: SITE_NAME, description: HOME_DESC,

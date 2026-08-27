@@ -15,6 +15,8 @@ import { DOMAINS_CCAR_P, EXAM_NAME_CCAR_P, EXAM_CODE_CCAR_P, EXAM_LENGTH_CCAR_P,
 import { ALL_QUESTIONS_CCAR_P, STATS_CCAR_P, buildExamCcarP, buildPracticeCcarP, getByIdCcarP } from "./bank-ccar-p.js";
 import { DOMAINS_CCAO_F, EXAM_NAME_CCAO_F, EXAM_CODE_CCAO_F, EXAM_LENGTH_CCAO_F, EXAM_MINUTES_CCAO_F, PASS_PERCENT_CCAO_F } from "./blueprint-ccao-f.js";
 import { ALL_QUESTIONS_CCAO_F, STATS_CCAO_F, buildExamCcaoF, buildPracticeCcaoF, getByIdCcaoF } from "./bank-ccao-f.js";
+import { DOMAINS_CCDV_F, EXAM_NAME_CCDV_F, EXAM_CODE_CCDV_F, EXAM_LENGTH_CCDV_F, EXAM_MINUTES_CCDV_F, PASS_PERCENT_CCDV_F } from "./blueprint-ccdv-f.js";
+import { ALL_QUESTIONS_CCDV_F, STATS_CCDV_F, buildExamCcdvF, buildPracticeCcdvF, getByIdCcdvF } from "./bank-ccdv-f.js";
 
 const app = document.getElementById("app");
 // True while a runner (exam/practice/diagnostic/drill) owns #app directly,
@@ -169,6 +171,38 @@ function loadExamSessionCcaoF() {
 }
 function clearExamSessionCcaoF() { try { localStorage.removeItem(EKEY_CCAO_F); } catch {} }
 
+// ---------- CCDV-F: independent progress + exam-session state (same
+// isolation rationale as CCAR-P/CCAO-F above — a fourth fully independent track) ----------
+const PKEY_CCDV_F = "claudecert.progress.ccdv-f.v1";
+let progressCcdvF = loadProgressCcdvF();
+function loadProgressCcdvF() {
+  try { return Object.assign(defaultProgress(), JSON.parse(localStorage.getItem(PKEY_CCDV_F) || "{}")); }
+  catch { return defaultProgress(); }
+}
+function saveProgressCcdvF() { try { localStorage.setItem(PKEY_CCDV_F, JSON.stringify(progressCcdvF)); } catch {} }
+function recordAnswerCcdvF(q, ok) {
+  progressCcdvF.answered[q.id] = { ok, ts: Date.now() };
+  progressCcdvF.attempts++; if (ok) progressCcdvF.correct++;
+  saveProgressCcdvF();
+}
+function noteServedCcdvF(qs) {
+  const ids = qs.map((q) => q.id);
+  progressCcdvF.recent = [...ids, ...(progressCcdvF.recent || []).filter((id) => !ids.includes(id))].slice(0, RECENT_CAP);
+  saveProgressCcdvF();
+}
+const EKEY_CCDV_F = "claudecert.examSession.ccdv-f.v1";
+function saveExamSessionCcdvF(s) { try { localStorage.setItem(EKEY_CCDV_F, JSON.stringify(s)); } catch {} }
+function loadExamSessionCcdvF() {
+  try {
+    const s = JSON.parse(localStorage.getItem(EKEY_CCDV_F) || "null");
+    if (!s || Date.now() - s.updatedAt > EXAM_SESSION_TTL_MS || s.remaining <= 0) return null;
+    const questions = s.ids.map(getByIdCcdvF);
+    if (questions.some((q) => !q)) return null;
+    return { ...s, questions };
+  } catch { return null; }
+}
+function clearExamSessionCcdvF() { try { localStorage.removeItem(EKEY_CCDV_F); } catch {} }
+
 // ---------- real-exam outcome self-report (anonymous, opt-in — see api/outcomes.js) ----------
 const OKEY = "claudecert.outcome.v1";
 const OUTCOME_DISMISS_DAYS = 14;
@@ -308,7 +342,7 @@ themeToggle.addEventListener("click", () => {
   document.documentElement.dataset.theme = next;
   localStorage.setItem("claudecert.theme", next);
 });
-document.getElementById("bankChip").textContent = `${fmt(STATS.total + STATS_CCAR_P.total + STATS_CCAO_F.total)} questions`;
+document.getElementById("bankChip").textContent = `${fmt(STATS.total + STATS_CCAR_P.total + STATS_CCAO_F.total + STATS_CCDV_F.total)} questions`;
 
 // ---------- toast ----------
 let toastTimer;
@@ -365,6 +399,8 @@ const routes = {
   "/ccar-p/exam": viewCcarPExamConfig,
   "/ccao-f/practice": viewCcaoFPracticeConfig,
   "/ccao-f/exam": viewCcaoFExamConfig,
+  "/ccdv-f/practice": viewCcdvFPracticeConfig,
+  "/ccdv-f/exam": viewCcdvFExamConfig,
   "/admin": viewAdmin
 };
 function currentPath() {
@@ -414,8 +450,8 @@ router();
 function viewHome() {
   const acc = progress.attempts ? Math.round((progress.correct / progress.attempts) * 100) : 0;
   const liveTracks = CERTS.filter((c) => c.status === "live");
-  const totalQuestions = STATS.total + STATS_CCAR_P.total + STATS_CCAO_F.total;
-  const totalDomains = Object.keys(DOMAINS).length + Object.keys(DOMAINS_CCAR_P).length + Object.keys(DOMAINS_CCAO_F).length;
+  const totalQuestions = STATS.total + STATS_CCAR_P.total + STATS_CCAO_F.total + STATS_CCDV_F.total;
+  const totalDomains = Object.keys(DOMAINS).length + Object.keys(DOMAINS_CCAR_P).length + Object.keys(DOMAINS_CCAO_F).length + Object.keys(DOMAINS_CCDV_F).length;
   const v = el(`<div class="view"></div>`);
   v.innerHTML = `
     <section class="hero">
@@ -1731,6 +1767,348 @@ function showResultsCcaoF({ questions, answers, correct, pct, pass, perDomain })
         const ok = answers[idx] === q.correct;
         return `<div class="browse-item">
           <div class="q-tags">${domainTag(q.domain, DOMAINS_CCAO_F)}<span class="tag tag-diff">${ok ? "✓ correct" : (answers[idx] === null ? "skipped" : "✕ wrong")}</span></div>
+          ${q.scenario ? `<div class="q-scenario" style="margin-bottom:8px">${esc(q.scenario)}</div>` : ""}
+          <div class="bq">${idx + 1}. ${esc(q.question)}</div>
+          <div class="options">${renderOptions(q, { answered: true, selected: answers[idx], locked: true })}</div>
+          <div class="expl">${esc(q.explanation)}</div>
+        </div>`;
+      }).join("");
+    });
+    window.scrollTo({ top: 0 });
+  });
+}
+
+// ============================================================================
+// CCDV-F (Claude Certified Developer — Foundations) — Practice + Mock Exam
+// ============================================================================
+// A fourth, independent track — same scoping/isolation rationale as
+// CCAR-P/CCAO-F above (practice + mock exam only). No free-response AI
+// grading here either (CCAR-P-specific feature).
+
+function viewCcdvFPracticeConfig(params) {
+  const preD = params.get("d");
+  const state = { domains: preD ? [Number(preD)] : [], diff: "any", count: 20 };
+  const v = el(`<div class="view"></div>`);
+  v.innerHTML = `
+    <div class="page-head"><h1>CCDV-F Practice</h1><p class="lead">Pick your domains and difficulty for the Claude Certified Developer — Foundations track. Every question is a hands-on implementation scenario — the shape of the real exam, closer to the code than architecture-decision trivia.</p></div>
+    <div class="card config">
+      <div class="field"><label>Domains <span style="color:var(--text-3);font-weight:500">(none = all)</span></label>
+        <div class="chips" id="domChips">
+          ${Object.values(DOMAINS_CCDV_F).map((d) => `<button class="chip" data-d="${d.id}"><span class="dot" style="background:${d.color}"></span>${esc(d.short)}</button>`).join("")}
+        </div>
+      </div>
+      <div class="field"><label>Difficulty</label>
+        <div class="chips" id="diffChips">
+          ${[["any", "Any"], ["easy", "Foundational (1–2)"], ["medium", "Applied (2–3)"], ["hard", "Advanced (3–5)"]].map(([k, l], i) => `<button class="chip ${i === 0 ? "on" : ""}" data-diff="${k}">${l}</button>`).join("")}
+        </div>
+      </div>
+      <div class="field"><label>How many questions: <b id="cntLabel">20</b></label>
+        <div class="range-row"><span style="color:var(--text-3)">5</span><input type="range" id="cnt" min="5" max="50" step="5" value="20"><span style="color:var(--text-3)">50</span></div>
+      </div>
+      <div><button class="btn btn-solid" id="startPractice">Start practice →</button></div>
+    </div>`;
+  app.appendChild(v);
+  const domChips = v.querySelector("#domChips");
+  state.domains.forEach((d) => domChips.querySelector(`[data-d="${d}"]`)?.classList.add("on"));
+  domChips.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-d]"); if (!b) return;
+    const id = Number(b.dataset.d); b.classList.toggle("on");
+    state.domains = state.domains.includes(id) ? state.domains.filter((x) => x !== id) : [...state.domains, id];
+  });
+  const diffChips = v.querySelector("#diffChips");
+  diffChips.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-diff]"); if (!b) return;
+    diffChips.querySelectorAll(".chip").forEach((c) => c.classList.remove("on"));
+    b.classList.add("on"); state.diff = b.dataset.diff;
+  });
+  v.querySelector("#cnt").addEventListener("input", (e) => { state.count = Number(e.target.value); v.querySelector("#cntLabel").textContent = state.count; });
+  v.querySelector("#startPractice").addEventListener("click", () => {
+    const range = { any: [1, 5], easy: [1, 2], medium: [2, 3], hard: [3, 5] }[state.diff];
+    const set = buildPracticeCcdvF({ domains: state.domains.length ? state.domains : null, minDiff: range[0], maxDiff: range[1], count: state.count, avoid: progressCcdvF.recent, seed: Date.now() });
+    if (!set.length) { toast("No questions match that filter yet."); return; }
+    noteServedCcdvF(set);
+    runCcdvFPractice(set);
+  });
+}
+
+function runCcdvFPractice(questions) {
+  activeRunner = true;
+  let i = 0, answered = false, selected = null, hinted = false;
+  let correctCount = 0;
+  const v = el(`<div class="view"></div>`);
+  app.innerHTML = ""; app.appendChild(v);
+  let pendingStats = {};
+  function noteItemStat(q, ok) {
+    pendingStats[q.id] = ok ? 1 : 0;
+    if (Object.keys(pendingStats).length >= 20) flushItemStats();
+  }
+  function flushItemStats() { sendItemStats(pendingStats); pendingStats = {}; }
+
+  function render() {
+    const q = questions[i]; answered = false; selected = null; hinted = false;
+    v.innerHTML = `
+      <div class="runner-top">
+        <span class="crumb">CCDV-F Practice</span>
+        <div class="runner-meta">
+          <span class="pill">Score ${correctCount}/${i}</span>
+          <span class="pill">${i + 1} / ${questions.length}</span>
+          <button class="btn btn-outline btn-sm" id="quit">End session</button>
+        </div>
+      </div>
+      <div class="bigbar"><div style="width:${(i / questions.length) * 100}%"></div></div>
+      <div class="qcard">
+        <div class="q-tags">${domainTag(q.domain, DOMAINS_CCDV_F)}<span class="tag tag-diff">${DIFFICULTY[q.difficulty]}</span></div>
+        ${q.scenario ? `<div class="q-scenario">${esc(q.scenario)}</div>` : ""}
+        <div class="q-stem">${esc(q.question)}</div>
+        <div class="options">${renderOptions(q, { selected })}</div>
+        <div id="extra"></div>
+        <div class="q-actions">
+          <button class="linkbtn" id="hintBtn">${hintLabel}</button>
+          <span class="spacer"></span>
+          <button class="btn btn-solid" id="nextBtn" disabled>${i === questions.length - 1 ? "Finish" : "Next →"}</button>
+        </div>
+      </div>`;
+    const opts = v.querySelector(".options");
+    opts.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-opt]"); if (!b || answered) return;
+      selected = Number(b.dataset.opt); answered = true;
+      const ok = selected === q.correct; if (ok) correctCount++;
+      recordAnswerCcdvF(q, ok);
+      noteItemStat(q, ok);
+      opts.innerHTML = renderOptions(q, { answered: true, selected, locked: true });
+      v.querySelector("#extra").innerHTML = `<div class="explanation"><b>${ok ? "Correct ✓" : "Not quite ✕"} · why</b>${esc(q.explanation)}</div>`;
+      v.querySelector("#nextBtn").disabled = false;
+      v.querySelector("#hintBtn").disabled = true;
+    });
+    v.querySelector("#hintBtn").addEventListener("click", () => {
+      if (hinted || answered) return; hinted = true;
+      const wrongs = q.options.map((_, idx) => idx).filter((idx) => idx !== q.correct);
+      const drop = wrongs[Math.floor(Math.random() * wrongs.length)];
+      v.querySelector("#extra").innerHTML = `<div class="hint"><b>Hint</b>Option <b style="display:inline">${LETTERS[drop]}</b> is not correct — rule it out.</div>`;
+    });
+    v.querySelector("#nextBtn").addEventListener("click", () => {
+      if (i === questions.length - 1) return finish();
+      i++; render();
+    });
+    v.querySelector("#quit").addEventListener("click", finish);
+  }
+  function finish() {
+    flushItemStats();
+    const acc = i ? Math.round((correctCount / Math.max(1, answered ? i + 1 : i)) * 100) : 0;
+    const done = answered ? i + 1 : i;
+    gateResults(v, () => {
+      v.innerHTML = `
+        <div class="page-head"><h1>Practice complete</h1></div>
+        <div class="result-hero">
+          <div class="gauge" style="--gc:var(--primary);--val:${acc}"><div class="gauge-inner"><div class="pct">${acc}%</div><div class="lbl">${correctCount}/${done} correct</div></div></div>
+        </div>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:10px">
+          <a class="btn btn-solid" href="/ccdv-f/practice">New practice set</a>
+          <a class="btn btn-outline" href="/">Home</a>
+        </div>`;
+      window.scrollTo({ top: 0 });
+    });
+  }
+  render();
+}
+
+function viewCcdvFExamConfig() {
+  const v = el(`<div class="view"></div>`);
+  const best = progressCcdvF.exams.length ? Math.max(...progressCcdvF.exams.map((e) => e.pct)) : null;
+  const bestScaled = best === null ? null : scaledScore(best, PASS_PERCENT_CCDV_F);
+  const resumable = loadExamSessionCcdvF();
+  v.innerHTML = `
+    <div class="page-head"><h1>CCDV-F Mock Exam</h1><p class="lead">A full simulation of the ${esc(EXAM_NAME_CCDV_F)} (${esc(EXAM_CODE_CCDV_F)}): ${EXAM_LENGTH_CCDV_F} questions weighted by the official domain percentages, a ${EXAM_MINUTES_CCDV_F}-minute timer, and no feedback until you submit. Pass mark ${PASS_PERCENT_CCDV_F}%.</p></div>
+    ${resumable ? `<div class="callout" style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:20px">
+      <div><b>Unfinished exam</b>You have an in-progress exam with ${resumable.answers.filter((a) => a !== null).length}/${resumable.questions.length} answered and ${Math.ceil(resumable.remaining / 60)} minutes left on the clock.</div>
+      <div style="display:flex;gap:8px;flex:none">
+        <button class="btn btn-solid btn-sm" id="resumeExam">Resume exam →</button>
+        <button class="btn btn-outline btn-sm" id="discardExam">Discard</button>
+      </div>
+    </div>` : ""}
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>Exam rules</h3>
+        <ul style="color:var(--text-2);font-size:14.5px;line-height:1.9;padding-left:18px">
+          <li>${EXAM_LENGTH_CCDV_F} questions · ${EXAM_MINUTES_CCDV_F} minutes</li>
+          <li>Domain-weighted: ${Object.values(DOMAINS_CCDV_F).map((d) => d.weight + "%").join(" / ")}</li>
+          <li>Flag questions and jump around with the navigator</li>
+          <li>Auto-submits when the timer hits zero</li>
+          <li>Full review with explanations afterward</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Your record</h3>
+        <div class="statline" style="margin-bottom:18px">
+          <div class="stat-card"><div class="n">${progressCcdvF.exams.length}</div><div class="l">Exams taken</div></div>
+          <div class="stat-card"><div class="n">${bestScaled === null ? "—" : bestScaled}</div><div class="l">Best score / 1000</div></div>
+        </div>
+        <button class="btn btn-solid" id="startExam">Begin ${EXAM_LENGTH_CCDV_F}-question exam →</button>
+      </div>
+    </div>`;
+  app.appendChild(v);
+  v.querySelector("#startExam").addEventListener("click", () => {
+    const exam = buildExamCcdvF(Date.now(), EXAM_LENGTH_CCDV_F, progressCcdvF.recent);
+    noteServedCcdvF(exam);
+    runCcdvFExam(exam, EXAM_MINUTES_CCDV_F);
+  });
+  v.querySelector("#resumeExam")?.addEventListener("click", () => {
+    runCcdvFExam(resumable.questions, resumable.minutes, { answers: resumable.answers, i: resumable.i, remaining: resumable.remaining });
+    toast("Resumed your in-progress exam");
+  });
+  v.querySelector("#discardExam")?.addEventListener("click", () => { clearExamSessionCcdvF(); router(); });
+}
+
+function runCcdvFExam(questions, minutes, resume = null) {
+  activeRunner = true;
+  const answers = resume ? resume.answers.slice() : new Array(questions.length).fill(null);
+  let i = resume ? resume.i : 0;
+  let remaining = resume ? resume.remaining : minutes * 60;
+  const v = el(`<div class="view"></div>`);
+  app.innerHTML = ""; app.appendChild(v);
+
+  const sessionSnapshot = () => ({ ids: questions.map((q) => q.id), answers, i, remaining, minutes, updatedAt: Date.now() });
+  saveExamSessionCcdvF(sessionSnapshot());
+  window.addEventListener("beforeunload", persistSession);
+  function persistSession() { saveExamSessionCcdvF(sessionSnapshot()); }
+
+  const timer = setInterval(() => {
+    remaining--;
+    const t = v.querySelector("#timer");
+    if (t) {
+      t.textContent = mmss(remaining);
+      t.classList.toggle("warn", remaining <= 600 && remaining > 120);
+      t.classList.toggle("danger", remaining <= 120);
+    }
+    if (remaining % 20 === 0) persistSession();
+    if (remaining <= 0) { clearInterval(timer); submit(); }
+  }, 1000);
+  const mmss = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+
+  function render() {
+    const q = questions[i];
+    v.innerHTML = `
+      <div class="runner-top">
+        <span class="crumb">CCDV-F Mock Exam</span>
+        <div class="runner-meta">
+          <span class="pill timer" id="timer">${mmss(remaining)}</span>
+          <span class="pill">${answers.filter((a) => a !== null).length}/${questions.length} answered</span>
+        </div>
+      </div>
+      <div class="exam-grid">
+        <div class="exam-main">
+          <div class="bigbar"><div style="width:${((i + 1) / questions.length) * 100}%"></div></div>
+          <div class="qcard">
+            <div class="q-tags">${domainTag(q.domain, DOMAINS_CCDV_F)}<span class="tag tag-diff">Q${i + 1}</span></div>
+            ${q.scenario ? `<div class="q-scenario">${esc(q.scenario)}</div>` : ""}
+            <div class="q-stem">${esc(q.question)}</div>
+            <div class="options">${renderOptions(q, { selected: answers[i] })}</div>
+            <div class="q-actions">
+              <button class="btn btn-outline btn-sm" id="prev" ${i === 0 ? "disabled" : ""}>← Prev</button>
+              <button class="linkbtn ${progressCcdvF.flags[q.id] ? "flagged" : ""}" id="flag">${flagLabel(progressCcdvF.flags[q.id])}</button>
+              <span class="spacer"></span>
+              <button class="btn btn-solid btn-sm" id="next">${i === questions.length - 1 ? "Review" : "Next →"}</button>
+            </div>
+          </div>
+        </div>
+        <aside class="navigator card">
+          <div style="font-weight:800;font-size:14px">Navigator</div>
+          <div class="nav-grid">${questions.map((_, idx) => `<button class="nav-cell ${answers[idx] !== null ? "answered" : ""} ${idx === i ? "current" : ""} ${progressCcdvF.flags[questions[idx].id] ? "flagged" : ""}" data-go="${idx}">${idx + 1}</button>`).join("")}</div>
+          <button class="btn btn-solid btn-sm" id="submit" style="width:100%">Submit exam</button>
+          <button class="btn btn-outline btn-sm" id="abort" style="width:100%;margin-top:8px">Abandon</button>
+        </aside>
+      </div>`;
+
+    v.querySelector(".options").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-opt]"); if (!b) return;
+      answers[i] = Number(b.dataset.opt);
+      v.querySelectorAll(".options .option").forEach((o, idx) => o.classList.toggle("selected", idx === answers[i]));
+      v.querySelector(`[data-go="${i}"]`)?.classList.add("answered");
+      v.querySelector(".runner-meta .pill:last-child").textContent = `${answers.filter((a) => a !== null).length}/${questions.length} answered`;
+      persistSession();
+    });
+    v.querySelector("#prev").addEventListener("click", () => { if (i > 0) { i--; render(); persistSession(); } });
+    v.querySelector("#next").addEventListener("click", () => { if (i < questions.length - 1) { i++; render(); persistSession(); } else confirmSubmit(); });
+    v.querySelector("#flag").addEventListener("click", (e) => {
+      const id = q.id; if (progressCcdvF.flags[id]) delete progressCcdvF.flags[id]; else progressCcdvF.flags[id] = true; saveProgressCcdvF();
+      e.currentTarget.classList.toggle("flagged"); e.currentTarget.innerHTML = flagLabel(progressCcdvF.flags[id]);
+      v.querySelector(`[data-go="${i}"]`)?.classList.toggle("flagged", !!progressCcdvF.flags[id]);
+    });
+    v.querySelector(".nav-grid").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-go]"); if (!b) return; i = Number(b.dataset.go); render(); persistSession();
+    });
+    v.querySelector("#submit").addEventListener("click", confirmSubmit);
+    v.querySelector("#abort").addEventListener("click", () => {
+      if (!confirm("Abandon this exam? Your in-progress answers will be discarded.")) return;
+      clearInterval(timer); cleanupSession(); navigate("/ccdv-f/exam");
+    });
+  }
+  function cleanupSession() {
+    clearExamSessionCcdvF();
+    window.removeEventListener("beforeunload", persistSession);
+  }
+  function confirmSubmit() {
+    const unanswered = answers.filter((a) => a === null).length;
+    if (unanswered && !confirm(`${unanswered} question(s) are unanswered. Submit anyway?`)) return;
+    clearInterval(timer); submit();
+  }
+  function submit() {
+    let correct = 0;
+    const perDomain = {};
+    const perQuestion = {};
+    Object.keys(DOMAINS_CCDV_F).forEach((d) => (perDomain[d] = { total: 0, ok: 0 }));
+    questions.forEach((q, idx) => {
+      const ok = answers[idx] === q.correct;
+      if (ok) correct++;
+      perDomain[q.domain].total++; if (ok) perDomain[q.domain].ok++;
+      if (answers[idx] !== null) { recordAnswerCcdvF(q, ok); perQuestion[q.id] = ok ? 1 : 0; }
+    });
+    const pct = Math.round((correct / questions.length) * 100);
+    const pass = pct >= PASS_PERCENT_CCDV_F;
+    progressCcdvF.exams.push({ date: Date.now(), pct, correct, total: questions.length, pass });
+    saveProgressCcdvF();
+    cleanupSession();
+    sendItemStats(perQuestion);
+    showResultsCcdvF({ questions, answers, correct, pct, pass, perDomain });
+  }
+  render();
+}
+
+function showResultsCcdvF({ questions, answers, correct, pct, pass, perDomain }) {
+  const v = el(`<div class="view"></div>`);
+  app.innerHTML = ""; app.appendChild(v);
+  const scaled = scaledScore(pct, PASS_PERCENT_CCDV_F);
+  gateResults(v, () => {
+    v.innerHTML = `
+      <div class="result-hero">
+        <div class="gauge" style="--gc:${pass ? "var(--success)" : "var(--error)"};--val:${pct}">
+          <div class="gauge-inner"><div class="pct">${scaled}</div><div class="lbl">out of 1000</div></div>
+        </div>
+        <div class="verdict ${pass ? "pass" : "fail"}">${pass ? "PASS ✓" : "Keep studying"}</div>
+        <p style="color:var(--text-2);margin-top:6px">Scaled 100–1000 · pass mark <b>720</b> · you scored <b>${scaled}</b> (${correct}/${questions.length}, ${pct}%). ${pass ? "You'd clear the CCDV-F at this level." : `${720 - scaled} scaled points short of passing.`}</p>
+      </div>
+      <p class="section-title" style="margin-top:30px">Domain breakdown</p>
+      <div class="breakdown card">
+        ${Object.values(DOMAINS_CCDV_F).map((d) => {
+          const s = perDomain[d.id]; const p = s.total ? Math.round((s.ok / s.total) * 100) : 0;
+          return `<div class="bd-row"><div class="bd-name">${esc(d.short)}</div>
+            <div class="bd-bar progress-track"><div class="progress-fill" style="width:${p}%;background:${d.color}"></div></div>
+            <div class="bd-val">${s.ok}/${s.total}</div></div>`;
+        }).join("")}
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin:22px 0 30px">
+        <a class="btn btn-solid" href="/ccdv-f/exam">Take another exam</a>
+        <button class="btn btn-outline" id="reviewToggle">Review all answers</button>
+        <a class="btn btn-outline" href="/">Home</a>
+      </div>
+      <div id="review"></div>`;
+    v.querySelector("#reviewToggle").addEventListener("click", () => {
+      const r = v.querySelector("#review");
+      if (r.innerHTML) { r.innerHTML = ""; return; }
+      r.innerHTML = `<p class="section-title">Full review</p>` + questions.map((q, idx) => {
+        const ok = answers[idx] === q.correct;
+        return `<div class="browse-item">
+          <div class="q-tags">${domainTag(q.domain, DOMAINS_CCDV_F)}<span class="tag tag-diff">${ok ? "✓ correct" : (answers[idx] === null ? "skipped" : "✕ wrong")}</span></div>
           ${q.scenario ? `<div class="q-scenario" style="margin-bottom:8px">${esc(q.scenario)}</div>` : ""}
           <div class="bq">${idx + 1}. ${esc(q.question)}</div>
           <div class="options">${renderOptions(q, { answered: true, selected: answers[idx], locked: true })}</div>

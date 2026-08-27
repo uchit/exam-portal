@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Zero-dependency MCP stdio server bundled with the claude-cert-prep plugin.
-// Serves real questions from thatclaude.com's own CCA-F, CCAR-P, and CCAO-F
-// question banks (data/*.json — snapshotted from the live site on every
+// Serves real questions from thatclaude.com's own CCA-F, CCAR-P, CCAO-F, and
+// CCDV-F question banks (data/*.json — snapshotted from the live site on every
 // deploy by scripts/build-pages.mjs, so this never drifts from what the
 // website itself serves) and grades answers against them, entirely locally
 // — no network calls, no account, nothing written back anywhere. Read-only,
@@ -19,18 +19,19 @@ const HERE = new URL(".", import.meta.url);
 const ccafQuestions = JSON.parse(readFileSync(new URL("data/cca-f.json", HERE), "utf8"));
 const ccarpQuestions = JSON.parse(readFileSync(new URL("data/ccar-p.json", HERE), "utf8"));
 const ccaofQuestions = JSON.parse(readFileSync(new URL("data/ccao-f.json", HERE), "utf8"));
-const POOLS = { "cca-f": ccafQuestions, "ccar-p": ccarpQuestions, "ccao-f": ccaofQuestions };
-const ALL = [...ccafQuestions, ...ccarpQuestions, ...ccaofQuestions];
+const ccdvfQuestions = JSON.parse(readFileSync(new URL("data/ccdv-f.json", HERE), "utf8"));
+const POOLS = { "cca-f": ccafQuestions, "ccar-p": ccarpQuestions, "ccao-f": ccaofQuestions, "ccdv-f": ccdvfQuestions };
+const ALL = [...ccafQuestions, ...ccarpQuestions, ...ccaofQuestions, ...ccdvfQuestions];
 const LETTERS = ["A", "B", "C", "D"];
 
 const TOOLS = [
   {
     name: "get_question",
-    description: "Get a random Claude certification practice question from thatclaude.com's real question bank (CCA-F, CCAR-P, or CCAO-F), to quiz the user with. Does not reveal the correct answer — present it, get the user's letter answer, then call submit_answer.",
+    description: "Get a random Claude certification practice question from thatclaude.com's real question bank (CCA-F, CCAR-P, CCAO-F, or CCDV-F), to quiz the user with. Does not reveal the correct answer — present it, get the user's letter answer, then call submit_answer.",
     inputSchema: {
       type: "object",
       properties: {
-        track: { type: "string", enum: ["cca-f", "ccar-p", "ccao-f"], description: "cca-f = Claude Certified Architect — Foundations (technical: agentic architecture, tool use, prompt engineering). ccar-p = — Professional (non-technical judgment scenarios for senior architects). ccao-f = Claude Certified Associate — Foundations (non-technical, for everyday business users of Claude). Defaults to cca-f." },
+        track: { type: "string", enum: ["cca-f", "ccar-p", "ccao-f", "ccdv-f"], description: "cca-f = Claude Certified Architect — Foundations (technical: agentic architecture, tool use, prompt engineering). ccar-p = — Professional (non-technical judgment scenarios for senior architects). ccao-f = Claude Certified Associate — Foundations (non-technical, for everyday business users of Claude). ccdv-f = Claude Certified Developer — Foundations (hands-on API implementation for developers). Defaults to cca-f." },
         domain: { type: "string", description: "Optional: filter to a domain by its short name, e.g. \"Agentic Architecture\"." },
         difficulty: { type: "number", description: "Optional: filter to difficulty 1 (easiest) to 5 (hardest)." }
       }

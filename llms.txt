@@ -1,6 +1,6 @@
 # Claude Cert Prep
 
-> Free, unofficial practice portal for Anthropic's Claude certification program — unlike most other Claude cert prep (Udemy courses, paid question banks), every practice mode, mock exam, and diagnostic here is free with no paywall or premium tier; a free account is only needed to view your own results. Three tracks are fully live today: Claude Certified Architect — Foundations (CCA-F), with a 10,000+ question bank, a 30-lesson curriculum, mock exams, a diagnostic placement test, and spaced-repetition drill; Claude Certified Architect — Professional (CCAR-P), with a 500-question bank across all 7 domains, domain-weighted mock exams, and per-domain practice; and Claude Certified Associate — Foundations (CCAO-F), a non-technical track for business users of Claude, also with a 500-question bank across 7 domains. Not affiliated with, endorsed by, or sponsored by Anthropic.
+> Free, unofficial practice portal for Anthropic's Claude certification program — unlike most other Claude cert prep (Udemy courses, paid question banks), every practice mode, mock exam, and diagnostic here is free with no paywall or premium tier; a free account is only needed to view your own results. All four tracks are fully live today: Claude Certified Architect — Foundations (CCA-F), with a 10,000+ question bank, a 30-lesson curriculum, mock exams, a diagnostic placement test, and spaced-repetition drill; Claude Certified Architect — Professional (CCAR-P), a 500-question bank across 7 domains for senior architects; Claude Certified Associate — Foundations (CCAO-F), a non-technical 500-question bank across 7 domains for business users of Claude; and Claude Certified Developer — Foundations (CCDV-F), a hands-on implementation-focused 500-question bank across 8 domains for developers building on the Claude API. Not affiliated with, endorsed by, or sponsored by Anthropic.
 
 ## CCA-F study tools
 - [Mock Exam](https://thatclaude.com/exam): 60 domain-weighted questions, 120-minute timer, scaled 100-1000 score, pass mark 720.
@@ -24,8 +24,12 @@
 - [Mock Exam](https://thatclaude.com/ccao-f/exam): 60 domain-weighted questions across 7 domains, 120-minute timer, scaled 100-1000 score, pass mark 720.
 - [Quick Practice](https://thatclaude.com/ccao-f/practice): configurable practice sets by domain and difficulty.
 
+## CCDV-F study tools
+- [Mock Exam](https://thatclaude.com/ccdv-f/exam): 53 domain-weighted questions across 8 domains, 120-minute timer, scaled 100-1000 score, pass mark 720.
+- [Quick Practice](https://thatclaude.com/ccdv-f/practice): configurable practice sets by domain and difficulty.
+
 ## Program
-- [Certifications](https://thatclaude.com/certifications): status of all four Anthropic certification tracks (CCA-F, CCAR-P, and CCAO-F are live; CCDV-F is in development).
+- [Certifications](https://thatclaude.com/certifications): status of all four Anthropic certification tracks — CCA-F, CCAR-P, CCAO-F, and CCDV-F are all live.
 - [About](https://thatclaude.com/about): who built this and why, and how the question bank is generated.
 
 ## Exam blueprint — CCA-F
@@ -52,3 +56,13 @@
 - Configuration — 12%
 - Governance & Risk — 15%
 - Troubleshooting — 10%
+
+## Exam blueprint — CCDV-F
+- Apps & Integration — 33.1%
+- Model & Optimisation — 16.8%
+- Agents & Workflows — 14.7%
+- Prompt & Context — 11%
+- Tools & MCPs — 10.6%
+- Security & Safety — 8.1%
+- Eval & Testing — 2.6%
+- Claude Code — 3.1%

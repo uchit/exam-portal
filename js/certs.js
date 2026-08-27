@@ -111,7 +111,9 @@ export const CERTS = [
     "slug": "ccdv-f",
     "code": "CCDV-F",
     "name": "Claude Certified Developer — Foundations",
-    "status": "in-development",
+    "status": "live",
+    "examRoute": "/ccdv-f/exam",
+    "practiceRoute": "/ccdv-f/practice",
     "audience": "AI engineers and developers building applications on the Claude API, roughly 1-5 years of experience.",
     "prereq": "Recommended, not required: 6+ months hands-on with Claude or LLM systems; comfort with Python or TypeScript and REST/CLI tooling.",
     "examLength": 53,
@@ -153,7 +155,7 @@ export const CERTS = [
         "weight": 3.1
       }
     ],
-    "blurb": "Hands-on API implementation — closer to the code than CCA-F's architecture-decision focus, weighted heavily toward actually building and integrating Claude applications."
+    "blurb": "Hands-on API implementation — closer to the code than CCA-F's architecture-decision focus, weighted heavily toward actually building and integrating Claude applications. Practice and mock exams are live now."
   }
 ];
 

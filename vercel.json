@@ -4,7 +4,8 @@
   "trailingSlash": false,
   "redirects": [
     { "source": "/certifications/ccar-p", "destination": "/ccar-p/exam", "permanent": true },
-    { "source": "/certifications/ccao-f", "destination": "/ccao-f/exam", "permanent": true }
+    { "source": "/certifications/ccao-f", "destination": "/ccao-f/exam", "permanent": true },
+    { "source": "/certifications/ccdv-f", "destination": "/ccdv-f/exam", "permanent": true }
   ],
   "crons": [
     { "path": "/api/cron/freshness-check", "schedule": "0 13 * * *" }

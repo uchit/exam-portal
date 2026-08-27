@@ -12,6 +12,8 @@ import { CERTS, UPCOMING_TRACK_MECHANICS } from "../js/certs.js";
 import { ICONS } from "../js/icons.js";
 import { DOMAINS_LIST as DOMAINS } from "../js/blueprint-domains.js";
 import { DOMAINS_LIST_CCAR_P } from "../js/blueprint-domains-ccar-p.js";
+import { ALL_QUESTIONS } from "../js/bank.js";
+import { ALL_QUESTIONS_CCAR_P } from "../js/bank-ccar-p.js";
 import { FAQ_ITEMS } from "../js/faq.js";
 import { GLOSSARY } from "../content/glossary.mjs";
 import { REFERENCE } from "../content/reference.mjs";
@@ -1071,6 +1073,32 @@ ${POSTS.map((p) => `  <item>
       domain: d.short, domainId: d.id,
       rules: REFERENCE[d.id].rules.map(([title, body]) => ({ title, body: body.replace(/<\/?[^>]+>/g, "") }))
     })), null, 2));
+}
+
+// ============================================================================
+// GENERATE: Claude Code plugin MCP quiz data (plugin/claude-cert-prep/mcp/data)
+// A snapshot of real bank questions for the bundled quiz-server.mjs MCP
+// server to serve — the parametric/computational slice of the CCA-F bank is
+// left out (it's effectively infinite and less suited to a fixed offline
+// snapshot; the site itself is the place for that). Regenerated from the
+// same ALL_QUESTIONS/ALL_QUESTIONS_CCAR_P the website itself uses, so the
+// plugin can never quietly drift from what thatclaude.com actually serves.
+// ============================================================================
+{
+  const domainShortById = Object.fromEntries(DOMAINS.map((d) => [d.id, d.short]));
+  const domainShortByIdCcarP = Object.fromEntries(DOMAINS_LIST_CCAR_P.map((d) => [d.id, d.short]));
+  const forMcp = (q, track, domainShort) => ({
+    id: q.id, track, domain: domainShort, difficulty: q.difficulty,
+    scenario: q.scenario || "", question: q.question, options: q.options,
+    correct: q.correct, explanation: q.explanation
+  });
+  const mcpCcaF = ALL_QUESTIONS
+    .filter((q) => q.style !== "computational")
+    .map((q) => forMcp(q, "cca-f", domainShortById[q.domain] || String(q.domain)));
+  const mcpCcarP = ALL_QUESTIONS_CCAR_P
+    .map((q) => forMcp(q, "ccar-p", domainShortByIdCcarP[q.domain] || String(q.domain)));
+  write("plugin/claude-cert-prep/mcp/data/cca-f.json", JSON.stringify(mcpCcaF));
+  write("plugin/claude-cert-prep/mcp/data/ccar-p.json", JSON.stringify(mcpCcarP));
 }
 
 // ============================================================================

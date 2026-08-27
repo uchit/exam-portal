@@ -1,7 +1,7 @@
 {
   "name": "claude-cert-prep",
-  "description": "Exam-accurate Claude Certified Architect (CCA-F) reference and drilling, right inside Claude Code — glossary, quick-reference decision rules, and scenario-style quiz generation across all five exam domains.",
-  "version": "1.0.0",
+  "description": "Exam-accurate Claude Certified Architect (CCA-F and CCAR-P) reference and drilling, right inside Claude Code — glossary, quick-reference decision rules, and a bundled MCP quiz server that serves real questions from thatclaude.com's own bank and grades your answers, no browser or account needed.",
+  "version": "1.1.0",
   "author": {
     "name": "Uchit Vyas",
     "url": "https://hellouchit.com"

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "claude-cert-quiz": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/quiz-server.mjs"]
+    }
+  }
+}

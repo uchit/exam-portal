@@ -1,6 +1,6 @@
 ---
 name: cca-f-reference
-description: Use when the user asks about the Claude Certified Architect — Foundations (CCA-F) exam, or about concepts it covers — agentic loops, stop_reason, orchestration patterns, MCP (Model Context Protocol), tool schema design, CLAUDE.md / Claude Code configuration, prompt engineering techniques, context management, prompt caching, or exam prep strategy. Also use when the user asks to be quizzed, drilled, or tested on any of these topics.
+description: Use when the user asks about the Claude Certified Architect — Foundations (CCA-F) exam, or about concepts it covers — agentic loops, stop_reason, orchestration patterns, MCP (Model Context Protocol), tool schema design, CLAUDE.md / Claude Code configuration, prompt engineering techniques, context management, prompt caching, or exam prep strategy. Also use when the user asks to be quizzed, drilled, or tested on any of these topics, or on Claude Certified Architect — Professional (CCAR-P) scenario judgment questions.
 ---
 
 # CCA-F Reference
@@ -20,6 +20,14 @@ This data is generated from the same source that powers [thatclaude.com](https:/
 **When asked "which is correct" or for a decision rule** (e.g. "should this be a skill or a slash command", "when do I use prompt chaining vs routing"): check `reference.json` first — these are pre-distilled decision rules for exactly this kind of question.
 
 **When asked to quiz, drill, or test the user** on a domain or topic:
+
+If the `get_question` and `submit_answer` tools are available (from this plugin's bundled `claude-cert-quiz` MCP server), prefer them — they serve real, already-quality-checked questions straight from thatclaude.com's own bank (CCA-F and CCAR-P) instead of improvised ones:
+1. Call `get_question` — pass `track` ("cca-f" or "ccar-p", ask the user if unclear which they're studying for), and optionally `domain`/`difficulty` if the user specified a focus.
+2. Present the scenario, question, and lettered options exactly as returned. Ask the user to answer before revealing anything.
+3. Call `submit_answer` with the question's `id` and the user's letter. Report whether they were right, the correct letter, and the explanation verbatim.
+4. Keep going with fresh `get_question` calls for as long as the user wants to drill.
+
+If those tools aren't available (older Claude Code, or the MCP server failed to start), fall back to improvising from the reference data:
 1. Pick 1 concept from `glossary.json` or a rule from `reference.json` for the relevant domain.
 2. Write a short scenario (2-4 sentences) describing a realistic situation that tests understanding of that concept — not a recall question ("what does X mean") but an applied one ("given this situation, what should you do").
 3. Give 4 plausible options, only one clearly correct per the reference data.

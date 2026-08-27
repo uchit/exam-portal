@@ -99,7 +99,7 @@ function head(title, description, path, { ogType = "website", jsonLd = null } = 
   <meta name="twitter:image" content="${OG_IMAGE}" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Figtree:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/app.css" />
   ${HEAD_ICON}
   <link rel="alternate" type="application/rss+xml" title="${SITE_NAME} Blog" href="/blog/feed.xml" />

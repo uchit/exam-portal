@@ -33,6 +33,39 @@ function scaledScore(pct, passPercent = PASS_PERCENT) {
   return Math.round(Math.max(100, Math.min(1000, s)));
 }
 
+// Decorative hero visual: a small node/line network (an "agentic
+// architecture" motif, fitting both the exam content and the "architect"
+// certification branding) rendered as inline SVG so it costs nothing but a
+// few hundred bytes of markup — no image asset, no canvas, no JS animation
+// loop (drift/pulse are pure CSS keyframes, see .hero-visual in app.css).
+// A fixed seed keeps the layout stable across reloads instead of jittering.
+function heroNetworkSVG() {
+  const W = 600, H = 460, N = 20;
+  let seed = 42;
+  const rand = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+  const pts = Array.from({ length: N }, () => ({ x: rand() * W, y: rand() * H }));
+  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const lines = [];
+  pts.forEach((p, i) => {
+    pts.map((q, j) => ({ j, d: dist(p, q) })).filter((o) => o.j !== i).sort((a, b) => a.d - b.d).slice(0, 2)
+      .forEach((o) => {
+        const key = [i, o.j].sort((a, b) => a - b).join("-");
+        if (!lines.some((l) => l.key === key)) lines.push({ key, a: p, b: pts[o.j] });
+      });
+  });
+  const linesSVG = lines.map((l, i) => {
+    const cls = i % 4 === 0 ? "link pulse" : "link";
+    return `<line class="${cls}" x1="${l.a.x.toFixed(1)}" y1="${l.a.y.toFixed(1)}" x2="${l.b.x.toFixed(1)}" y2="${l.b.y.toFixed(1)}" style="animation-delay:-${(rand() * 6).toFixed(1)}s" />`;
+  }).join("");
+  const nodesSVG = pts.map((p, i) => {
+    const r = 2 + (i % 3);
+    const dx = (rand() * 16 - 8).toFixed(1), dy = (rand() * 16 - 8).toFixed(1);
+    const dur = (18 + rand() * 10).toFixed(1), delay = (rand() * 8).toFixed(1);
+    return `<circle class="node" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${r}" style="--dx:${dx}px;--dy:${dy}px;animation-duration:${dur}s;animation-delay:-${delay}s" />`;
+  }).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice">${linesSVG}${nodesSVG}</svg>`;
+}
+
 // ---------- progress (localStorage) ----------
 const PKEY = "claudecert.progress.v1";
 const defaultProgress = () => ({ answered: {}, flags: {}, exams: [], streak: 0, bestStreak: 0, attempts: 0, correct: 0, recent: [], srs: {}, completedLessons: {} });
@@ -347,6 +380,8 @@ function viewHome() {
   const v = el(`<div class="view"></div>`);
   v.innerHTML = `
     <section class="hero">
+      <div class="hero-visual" aria-hidden="true">${heroNetworkSVG()}</div>
+      <div class="hero-content">
       <span class="hero-badge">● ${liveTracks.length} Claude certification tracks live</span>
       <h1>Practice for the Claude certification program, free.</h1>
       <p>An independent practice portal covering Anthropic's Claude certifications — ${liveTracks.map((c) => esc(c.code)).join(" and ")} are fully live today, each with real domain-weighted mock exams, per-domain practice, and an explanation on every answer. Part of a growing effort to cover <a href="/certifications" style="color:inherit;text-decoration:underline">all four tracks</a>, one built fully before the next starts.</p>
@@ -354,13 +389,14 @@ function viewHome() {
         <div class="hero-stat"><div class="n">${fmt(totalQuestions)}</div><div class="l">Questions total</div></div>
         <div class="hero-stat"><div class="n">${liveTracks.length}</div><div class="l">Tracks live</div></div>
         <div class="hero-stat"><div class="n">${totalDomains}</div><div class="l">Domains covered</div></div>
-        <div class="hero-stat"><div class="n">${PASS_PERCENT}%</div><div class="l">Pass mark</div></div>
+        <div class="hero-stat"><div class="n" style="color:var(--credential)">${PASS_PERCENT}%</div><div class="l">Pass mark</div></div>
       </div>
       <div class="hero-cta">
         ${liveTracks.map((c) => `<a class="btn btn-primary" href="${c.examRoute}">${esc(c.code)} mock exam →</a>`).join("")}
         <a class="btn btn-ghost" href="/certifications">Explore all tracks</a>
       </div>
       <p class="hero-note">New to CCA-F? <a href="/diagnostic">Take the 15-minute diagnostic →</a> to see which domain to study first.</p>
+      </div>
     </section>
 
     <p class="section-title">The Claude certification program</p>

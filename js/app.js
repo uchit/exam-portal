@@ -7,8 +7,9 @@ import { ICONS } from "./icons.js";
 import { drawBadge, downloadBadge } from "./badge.js";
 import { CERTS } from "./certs.js";
 import { FAQ_ITEMS } from "./faq.js";
-import { onAuthChange, openSignUp, openSignIn, signOut, fetchServerProgress, pushProgressToServer, mergeProgress } from "./auth.js";
+import { onAuthChange, openSignUp, openSignIn, signOut, fetchServerProgress, pushProgressToServer, mergeProgress, getClerk } from "./auth.js";
 import { sendItemStats, submitOutcome, fetchOutcomeStats } from "./outcomes.js";
+import { fetchAdminUsers, fetchAdminStats } from "./admin.js";
 import { DOMAINS_CCAR_P, EXAM_NAME_CCAR_P, EXAM_CODE_CCAR_P, EXAM_LENGTH_CCAR_P, EXAM_MINUTES_CCAR_P, PASS_PERCENT_CCAR_P } from "./blueprint-ccar-p.js";
 import { ALL_QUESTIONS_CCAR_P, STATS_CCAR_P, buildExamCcarP, buildPracticeCcarP, getByIdCcarP } from "./bank-ccar-p.js";
 
@@ -326,7 +327,8 @@ const routes = {
   "/diagnostic": viewDiagnosticConfig,
   "/drill": viewDrillConfig,
   "/ccar-p/practice": viewCcarPPracticeConfig,
-  "/ccar-p/exam": viewCcarPExamConfig
+  "/ccar-p/exam": viewCcarPExamConfig,
+  "/admin": viewAdmin
 };
 function currentPath() {
   return location.pathname.replace(/\/+$/, "") || "/";
@@ -1330,6 +1332,76 @@ function browseItem(q) {
     <div class="ans">✓ ${esc(q.options[q.correct])}</div>
     <details><summary>Show explanation</summary><div class="expl">${esc(q.explanation)}</div></details>
   </div>`;
+}
+
+// ============================================================================
+// ADMIN — private usage dashboard (not linked from nav; server-side gated by
+// api/admin/* + lib/admin-auth.mjs against ADMIN_EMAILS, not just hidden)
+// ============================================================================
+async function viewAdmin() {
+  const v = el(`<div class="view"></div>`);
+  v.innerHTML = `<div class="page-head"><h1>Admin</h1><p class="lead">Site usage — visible only to the site owner.</p></div><div id="adminBody"><p style="color:var(--text-3)">Checking access…</p></div>`;
+  app.appendChild(v);
+  const body = v.querySelector("#adminBody");
+
+  const signedIn = await isSignedInCheck();
+  if (!signedIn) {
+    body.innerHTML = `<div class="card"><p style="margin-bottom:14px">Sign in to continue.</p><button class="btn btn-solid btn-sm" id="adminSignIn">Sign in</button></div>`;
+    body.querySelector("#adminSignIn").addEventListener("click", () => openSignIn());
+    return;
+  }
+
+  const [statsRes, usersRes] = await Promise.all([fetchAdminStats(), fetchAdminUsers(200)]);
+  if (statsRes.status === 403 || usersRes.status === 403) {
+    body.innerHTML = `<div class="card"><p>You don't have access to this page.</p></div>`;
+    return;
+  }
+  if (statsRes.status !== 200 || usersRes.status !== 200) {
+    body.innerHTML = `<div class="card"><p>Couldn't load admin data right now — try reloading.</p></div>`;
+    return;
+  }
+  const s = statsRes.data, u = usersRes.data;
+  const fmtDate = (ms) => ms ? new Date(ms).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "—";
+
+  body.innerHTML = `
+    <p class="section-title">Accounts</p>
+    <div class="statline" style="margin-bottom:32px">
+      <div class="stat-card"><div class="n">${fmt(u.totalCount)}</div><div class="l">Registered (Clerk)</div></div>
+      <div class="stat-card"><div class="n">${fmt(s.accounts.syncedCount)}${s.accounts.syncedCountTruncated ? "+" : ""}</div><div class="l">Have synced progress</div></div>
+    </div>
+
+    <p class="section-title">CCA-F mock exams (anonymous, aggregate)</p>
+    <div class="statline" style="margin-bottom:32px">
+      <div class="stat-card"><div class="n">${fmt(s.ccaf.examAttempts)}</div><div class="l">Attempts</div></div>
+      <div class="stat-card"><div class="n">${s.ccaf.passRate === null ? "—" : s.ccaf.passRate + "%"}</div><div class="l">Pass rate</div></div>
+      <div class="stat-card"><div class="n">${s.ccaf.avgScore === null ? "—" : s.ccaf.avgScore}</div><div class="l">Avg scaled score</div></div>
+      <div class="stat-card"><div class="n">${fmt(s.itemStats.distinctQuestionsShown)}</div><div class="l">Distinct questions practiced</div></div>
+    </div>
+
+    <p class="section-title">Real-exam self-reports</p>
+    <div class="statline" style="margin-bottom:32px">
+      <div class="stat-card"><div class="n">${fmt(s.outcomes.reports)}</div><div class="l">Reports</div></div>
+      <div class="stat-card"><div class="n">${s.outcomes.reports ? Math.round((s.outcomes.passes / s.outcomes.reports) * 100) + "%" : "—"}</div><div class="l">Self-reported pass rate</div></div>
+    </div>
+
+    <p class="section-title">Registered users (${fmt(u.totalCount)})</p>
+    <div class="card" style="overflow-x:auto">
+      <table class="admin-table">
+        <thead><tr><th>Email</th><th>Joined</th><th>Last sign-in</th><th>ID</th></tr></thead>
+        <tbody>
+          ${u.users.map((usr) => `<tr>
+            <td>${esc(usr.email || "—")}${usr.banned ? ' <span class="tag" style="background:color-mix(in srgb,var(--error) 14%,transparent);color:var(--error)">banned</span>' : ""}</td>
+            <td>${fmtDate(usr.createdAt)}</td>
+            <td>${fmtDate(usr.lastSignInAt)}</td>
+            <td class="mono">${esc(usr.id.slice(0, 14))}…</td>
+          </tr>`).join("") || `<tr><td colspan="4" style="text-align:center;color:var(--text-3)">No registered users yet.</td></tr>`}
+        </tbody>
+      </table>
+    </div>`;
+}
+async function isSignedInCheck() {
+  const clerk = await getClerk();
+  return !!(clerk && clerk.isSignedIn);
 }
 
 // ============================================================================

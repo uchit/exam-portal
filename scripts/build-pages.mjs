@@ -77,7 +77,7 @@ function breadcrumbLd(trail) {
   };
 }
 
-function head(title, description, path, { ogType = "website", jsonLd = null } = {}) {
+function head(title, description, path, { ogType = "website", jsonLd = null, noindex = false } = {}) {
   const canonical = `${SITE}${path === "/" ? "" : path}`;
   const t = escAttr(title), d = escAttr(description);
   return `<!DOCTYPE html>
@@ -87,7 +87,7 @@ function head(title, description, path, { ogType = "website", jsonLd = null } = 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${t}</title>
   <meta name="description" content="${d}" />
-  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="robots" content="${noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large"}" />
   <meta name="author" content="Uchit Vyas" />
   <meta name="theme-color" content="#F5F5F3" />
   <link rel="canonical" href="${canonical}" />
@@ -185,8 +185,8 @@ ${CLERK_FAPI ? `  <script defer crossorigin="anonymous" src="https://${CLERK_FAP
 
 // A "static" page: real content lives in #app; app.js's router leaves it
 // alone because the path isn't a registered SPA route.
-function staticPage({ title, description, path, active, bodyHtml, ogType, jsonLd }) {
-  return `${head(title, description, path, { ogType, jsonLd })}
+function staticPage({ title, description, path, active, bodyHtml, ogType, jsonLd, noindex }) {
+  return `${head(title, description, path, { ogType, jsonLd, noindex })}
 <body>
   <a class="skip-link" href="#app">Skip to content</a>
 ${header(active)}
@@ -199,9 +199,9 @@ ${FOOTER}`;
 // An "app" page: JS renders the real view on load; ships a real static <h1>
 // (matching what JS renders once mounted) plus intro text for crawlers/no-js,
 // then the same boot placeholder as index.html.
-function appPage({ h1, title, description, path, active, intro, jsonLd }) {
+function appPage({ h1, title, description, path, active, intro, jsonLd, noindex }) {
   return staticPage({
-    title, description, path, active, jsonLd,
+    title, description, path, active, jsonLd, noindex,
     bodyHtml: `    <div class="page-head" style="margin-bottom:0"><h1>${h1}</h1></div>
     <noscript><p class="lead" style="padding:12px 0 24px">${intro}</p></noscript>
     <div class="boot">${intro}<br />Loading…</div>`
@@ -908,6 +908,14 @@ write("progress.html", appPage({
   path: "/progress", active: "progress",
   intro: "Your Progress: domain mastery, flagged questions, and mock-exam history, saved locally in your browser.",
   jsonLd: [breadcrumbLd([{ name: "Progress", path: "/progress" }])]
+}));
+write("admin.html", appPage({
+  h1: "Admin",
+  title: "Admin — Claude Cert Prep",
+  description: "Private usage dashboard.",
+  path: "/admin",
+  intro: "Admin: site usage, visible only to the site owner.",
+  noindex: true
 }));
 
 // ============================================================================

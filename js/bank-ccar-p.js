@@ -32,7 +32,27 @@ function shuffleOptions(options, correctIdx, seed) {
     const j = Math.floor(r() * (i + 1));
     [order[i], order[j]] = [order[j], order[i]];
   }
-  return { options: order.map((i) => options[i]), correct: order.indexOf(correctIdx) };
+  return { options: order.map((i) => options[i]), correct: order.indexOf(correctIdx), order };
+}
+
+// The agent-authored explanations frequently reference options by their
+// original letter ("adds latency (A)") — natural to write, but wrong once
+// shuffleOptions() reorders things, since "(A)" no longer points at the same
+// option on screen. Rather than rewrite 500 explanations, remap every letter
+// reference through the same permutation the options themselves went
+// through, so "(A)" always resolves to wherever that specific option ended
+// up post-shuffle.
+const OPT_LETTERS = ["A", "B", "C", "D"];
+// Matches "(A)" and comma-list forms like "(A, C, D)" — both show up in the
+// authored explanations.
+function remapExplanationLetters(text, order) {
+  return text.replace(/\(([ABCD](?:,\s*[ABCD])*)\)/g, (whole, letters) => {
+    const remapped = letters.split(/,\s*/).map((letter) => {
+      const newIdx = order.indexOf(OPT_LETTERS.indexOf(letter));
+      return newIdx === -1 ? letter : OPT_LETTERS[newIdx];
+    }).sort();
+    return `(${remapped.join(", ")})`;
+  });
 }
 function sampleN(arr, n, r) {
   const pool = arr.slice();
@@ -58,11 +78,11 @@ function drawFresh(arr, n, r, avoid) {
 // of thing you compute), so every one gets the position-debiasing shuffle.
 function normalize(q, idx) {
   const id = `ccarp-d${q.domain}-${String(idx).padStart(4, "0")}`;
-  const { options, correct } = shuffleOptions(q.options, q.correct, hashStr(id));
+  const { options, correct, order } = shuffleOptions(q.options, q.correct, hashStr(id));
   return {
     id, domain: q.domain, difficulty: q.difficulty || 3,
     scenario: q.scenario || "", question: q.question,
-    options, correct, explanation: q.explanation || "",
+    options, correct, explanation: remapExplanationLetters(q.explanation || "", order),
     style: "scenario"
   };
 }
